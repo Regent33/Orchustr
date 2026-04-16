@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 default = []
 python = ["dep:pyo3"]
 node = ["dep:napi", "dep:napi-derive"]
+dart = []
 
 [dependencies]
 or-beacon = { path = "../or-beacon" }

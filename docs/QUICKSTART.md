@@ -5,6 +5,7 @@
 - Rust `1.87.0` with `clippy` and `rustfmt`
 - Python if you want `bindings/python`
 - Node.js `20` if you want `bindings/typescript`
+- Dart SDK if you want `bindings/dart`
 
 ## Build the Rust Workspace
 
@@ -36,10 +37,11 @@ let graph = GraphBuilder::<DynState>::new()
 # Ok(()) }
 ```
 
-## Python and TypeScript
+## Python, TypeScript, and Dart
 
 - Python: `cd bindings/python && maturin develop && pytest tests/`
 - TypeScript: `cd bindings/typescript && npm ci && npm run typecheck && npm test`
+- Dart: `cd bindings/dart && dart pub get && dart run tool/build_native.dart && dart run test/bindings_test.dart`
 
 ⚠️ Known Gaps & Limitations
 - Some advanced features described in docs, such as full native binding parity, are not yet complete in code.

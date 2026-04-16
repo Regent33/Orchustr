@@ -23,3 +23,6 @@ fn normalize_state_json_rejects_non_object_payloads() {
     let result = normalize_state_json("[1,2,3]");
     assert_eq!(result, Err(BridgeError::InvalidState));
 }
+
+#[cfg(feature = "dart")]
+mod dart;

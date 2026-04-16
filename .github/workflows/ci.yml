@@ -49,3 +49,17 @@ jobs:
         with:
           node-version: "20"
       - run: cd bindings/typescript && npm ci && npm run typecheck && npm test
+
+  bindings-dart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.87.0"
+      - uses: dart-lang/setup-dart@v1
+      - run: cd bindings/dart && dart pub get
+      - run: cd bindings/dart && dart format --output=none --set-exit-if-changed .
+      - run: cd bindings/dart && dart analyze
+      - run: cd bindings/dart && dart run tool/build_native.dart
+      - run: cd bindings/dart && dart run test/bindings_test.dart

@@ -9,7 +9,7 @@
 </p>
 
 
-Orchustr is a Rust-based AI agent orchestration framework organized as a multi-crate Cargo workspace. It implements explicit state passing, provider and tool abstractions, graph and agent runtimes, and cross-language packages for Python and TypeScript. The repository is inspired by LangChain- and LangGraph-style patterns, but the codebase is Rust-native and organized around Orchustr's own crate names and boundaries.
+Orchustr is a Rust-based AI agent orchestration framework organized as a multi-crate Cargo workspace. It implements explicit state passing, provider and tool abstractions, graph and agent runtimes, and cross-language packages for Python, TypeScript, and Dart. The repository is inspired by LangChain- and LangGraph-style patterns, but the codebase is Rust-native and organized around Orchustr's own crate names and boundaries.
 
 ## Why Rust
 
@@ -20,13 +20,14 @@ Rust gives the workspace strong ownership semantics for state flow, explicit con
 - **Rust**: full runtime surface across 17 crates.
 - **Python**: package `orchustr` with optional PyO3 helpers and pure-Python facades.
 - **TypeScript**: package `@orchustr/core` with a pure JS runtime facade and declaration file.
+- **Dart**: package `orchustr` with a pure Dart facade and optional `dart:ffi` bridge helpers.
 
 ## Complete Crate Map
 
 - `or-core`: shared state, retry, token budgets, and in-memory persistence/vector primitives.
 - `or-anchor`: chunking and in-memory retrieval pipeline.
 - `or-beacon`: prompt templating and validation.
-- `or-bridge`: native prompt/state helper bridge for Python and Node.
+- `or-bridge`: native prompt/state helper bridge for Python, Node, and Dart.
 - `or-checkpoint`: checkpoint pause/resume support.
 - `or-colony`: multi-agent coordination and aggregation.
 - `or-compass`: predicate-based routing.
@@ -46,21 +47,24 @@ Rust gives the workspace strong ownership semantics for state flow, explicit con
 - Rust: `cargo check --all-features`
 - Python: `cd bindings/python && maturin develop`
 - TypeScript: `cd bindings/typescript && npm ci && npm run typecheck && npm test`
+- Dart: `cd bindings/dart && dart pub get && dart analyze && dart run test/bindings_test.dart`
 
 ## Install the Bindings
 
 - Python local install: `pip install -e bindings/python` or `cd bindings/python && maturin develop`
 - TypeScript local install: `npm install ./bindings/typescript`
+- Dart local use: `cd bindings/dart && dart pub get`
 
 ## Compatibility
 
 - Minimum Rust version: `1.87.0` from `rust-toolchain.toml`
 - Python package metadata: `>=3.10`; CI validates `3.14.4`
 - TypeScript dev tooling: `typescript@6.0.2`; CI validates on Node `20`
+- Dart package metadata: `>=3.0.0 <4.0.0`; CI validates on the latest stable Dart SDK
 
 ## Bindings Overview
 
-See [Bindings Overview](./bindings/overview.md), [Python README](./bindings/python/README.md), and [TypeScript README](./bindings/typescript/README.md).
+See [Bindings Overview](./bindings/overview.md), [Python README](./bindings/python/README.md), [TypeScript README](./bindings/typescript/README.md), and [Dart README](./bindings/dart/README.md).
 
 ## Documentation Index
 
@@ -108,6 +112,7 @@ See [Bindings Overview](./bindings/overview.md), [Python README](./bindings/pyth
 - [bindings overview](./bindings/overview.md)
 - Python: [README](./bindings/python/README.md), [installation](./bindings/python/installation.md), [api-reference](./bindings/python/api-reference.md), [examples](./bindings/python/examples.md), [internals](./bindings/python/internals.md)
 - TypeScript: [README](./bindings/typescript/README.md), [installation](./bindings/typescript/installation.md), [api-reference](./bindings/typescript/api-reference.md), [examples](./bindings/typescript/examples.md), [internals](./bindings/typescript/internals.md)
+- Dart: [README](./bindings/dart/README.md), [installation](./bindings/dart/installation.md), [api-reference](./bindings/dart/api-reference.md), [examples](./bindings/dart/examples.md), [internals](./bindings/dart/internals.md)
 
 ### Guides
 

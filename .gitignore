@@ -3,5 +3,8 @@
 /node_modules
 /bindings/python/.pytest_cache
 /bindings/python/pytest-cache-files-*
+/bindings/dart/.dart_tool
+/bindings/dart/native
+/bindings/dart/pubspec.lock
 Cargo.lock
 .DS_Store

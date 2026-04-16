@@ -12,6 +12,10 @@ The Python package makes the framework easier to script from data and AI workflo
 
 The TypeScript package targets Node-oriented consumers and mirrors the same high-level concepts as the Python package. Right now it ships a pure JS facade with type declarations, which keeps adoption simple but leaves native acceleration for later.
 
+## Why Dart Exists
+
+The Dart package targets Flutter and Dart VM users who want the same high-level Orchustr concepts without leaving the Dart ecosystem. It follows the same hybrid pattern as Python: pure language ergonomics first, with optional native acceleration where the Rust bridge already owns the behavior.
+
 ## `or-bridge` as the Universal Adapter
 
 `or-bridge` is the only Rust crate that directly depends on both PyO3 and NAPI feature paths. It is therefore the intended long-term native adapter layer even though only a narrow helper API is exposed today.
@@ -21,6 +25,7 @@ The TypeScript package targets Node-oriented consumers and mirrors the same high
 - **Rust crates**: lowest overhead and full access to workspace internals.
 - **Python package**: some operations can use the native bridge, but much of the package is currently pure Python logic.
 - **TypeScript package**: currently behaves like a pure JS wrapper layer, so native-bridge performance benefits are not yet realized.
+- **Dart package**: graph, tool, MCP, and conduit behavior currently run in Dart, while prompt rendering and state normalization can use the native bridge when present.
 
 ## Adding Another Binding
 
@@ -30,8 +35,9 @@ The TypeScript package targets Node-oriented consumers and mirrors the same high
 
 ## Versioning Strategy
 
-The current repository aligns Rust crates, the Python package, and the TypeScript package at `0.1.0`. No independent cross-language release cadence or publish automation exists in the repository yet.
+The current repository aligns Rust crates, the Python package, the TypeScript package, and the Dart package at `0.1.0`. No independent cross-language release cadence or publish automation exists in the repository yet.
 
 ⚠️ Known Gaps & Limitations
 - The TypeScript package does not currently use `or-bridge` at runtime.
 - The Python package metadata allows `>=3.10`, while CI currently validates the package on Python `3.14.4`.
+- The Dart package currently assumes Dart VM or native Flutter-style environments rather than web-only deployments.
