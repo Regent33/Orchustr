@@ -53,7 +53,7 @@ let outcome = SentinelOrchestrator::default().run_agent(&agent, state, config).a
 
 ## Choosing a Provider
 
-See the full [LLM Providers Guide](./llm-providers.md) for all 22 supported providers, including cloud aggregators and local inference.
+See the full [LLM Providers Guide](./llm-providers.md) for all 19 supported providers, including cloud aggregators and local inference.
 
 | Use Case | Recommended |
 |---|---|

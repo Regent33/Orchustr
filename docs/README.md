@@ -119,6 +119,7 @@ See [Bindings Overview](./bindings/overview.md), [Python README](./bindings/pyth
 - [building-your-first-agent](./guides/building-your-first-agent.md)
 - [building-your-first-agent-python](./guides/building-your-first-agent-python.md)
 - [building-your-first-agent-ts](./guides/building-your-first-agent-ts.md)
+- [building-your-first-agent-dart](./guides/building-your-first-agent-dart.md)
 - [building-rag-pipelines](./guides/building-rag-pipelines.md)
 - [multi-agent-systems](./guides/multi-agent-systems.md)
 - [memory-and-context](./guides/memory-and-context.md)
