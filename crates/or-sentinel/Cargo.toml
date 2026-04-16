@@ -1,0 +1,24 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-sentinel"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+or-conduit = { path = "../or-conduit" }
+or-core = { path = "../or-core" }
+or-forge = { path = "../or-forge" }
+or-loom = { path = "../or-loom" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+mockall.workspace = true
+or-mcp = { path = "../or-mcp" }
+schemars.workspace = true
+tokio.workspace = true

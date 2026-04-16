@@ -1,0 +1,14 @@
+{
+  "name": "@orchustr/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node tests/bindings.test.js"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2"
+  }
+}

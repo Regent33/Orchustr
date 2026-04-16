@@ -1,0 +1,20 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-conduit"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+futures.workspace = true
+or-core = { path = "../or-core" }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+mockall.workspace = true

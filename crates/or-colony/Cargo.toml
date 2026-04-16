@@ -1,0 +1,18 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-colony"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+or-core = { path = "../or-core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+mockall.workspace = true
+tokio.workspace = true

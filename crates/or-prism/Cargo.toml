@@ -1,0 +1,21 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-prism"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+opentelemetry.workspace = true
+opentelemetry-otlp.workspace = true
+opentelemetry_sdk.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-opentelemetry.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]

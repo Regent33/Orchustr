@@ -1,0 +1,29 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-bridge"
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+python = ["dep:pyo3"]
+node = ["dep:napi", "dep:napi-derive"]
+
+[dependencies]
+or-beacon = { path = "../or-beacon" }
+or-core = { path = "../or-core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+pyo3 = { version = "0.23.4", features = ["abi3-py310", "extension-module", "macros"], optional = true }
+napi = { version = "3.0.0", default-features = false, features = ["async", "serde-json", "tokio_rt"], optional = true }
+napi-derive = { version = "3.0.0", optional = true }
+
+[dev-dependencies]
+tokio.workspace = true

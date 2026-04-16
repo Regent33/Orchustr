@@ -1,0 +1,46 @@
+[workspace]
+members = [
+    "crates/or-core",
+    "crates/or-conduit",
+    "crates/or-beacon",
+    "crates/or-pipeline",
+    "crates/or-sieve",
+    "crates/or-compass",
+    "crates/or-relay",
+    "crates/or-checkpoint",
+    "crates/or-loom",
+    "crates/or-mcp",
+    "crates/or-recall",
+    "crates/or-anchor",
+    "crates/or-forge",
+    "crates/or-sentinel",
+    "crates/or-colony",
+    "crates/or-prism",
+    "crates/or-bridge",
+    "tests/integration",
+]
+resolver = "3"
+
+[workspace.package]
+authors = ["Rainer Lacanlale -REL"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.87.0"
+version = "0.1.0"
+
+[workspace.dependencies]
+futures = "0.3.31"
+mockall = "0.14.0"
+rand = "0.10.1"
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
+schemars = "0.8.22"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.18"
+tokio = { version = "1.48.0", features = ["io-util", "macros", "process", "rt-multi-thread", "sync", "time"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt", "json"] }
+opentelemetry = "0.31.0"
+opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { version = "0.31.1", features = ["http-proto", "reqwest-client", "trace"] }
+tracing-opentelemetry = "0.32.1"

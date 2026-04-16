@@ -1,0 +1,17 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-relay"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+futures.workspace = true
+or-core = { path = "../or-core" }
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

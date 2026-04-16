@@ -1,0 +1,16 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-pipeline"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+or-core = { path = "../or-core" }
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
+
+[project]
+name = "orchustr"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[tool.maturin]
+manifest-path = "../../crates/or-bridge/Cargo.toml"
+python-source = "."
+module-name = "orchustr._orchustr"
+features = ["python"]

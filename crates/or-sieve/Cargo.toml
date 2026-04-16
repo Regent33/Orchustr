@@ -1,0 +1,18 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "or-sieve"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+mockall.workspace = true
+tokio.workspace = true
