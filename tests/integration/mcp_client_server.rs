@@ -58,7 +58,7 @@ async fn nexus_client_and_server_round_trip_tools_and_tasks() {
         server_transport,
         ServerCard {
             name: "orchustr".into(),
-            version: "0.1.0".into(),
+            version: "0.1.1".into(),
             protocol_version: "2025-11-25".into(),
         },
     );

@@ -1,6 +1,6 @@
 # or-prism
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: opentelemetry, opentelemetry-otlp, opentelemetry_sdk, reqwest, serde, thiserror, tokio, tracing, tracing-opentelemetry, tracing-subscriber
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: opentelemetry, opentelemetry-otlp, opentelemetry_sdk, reqwest, serde, thiserror, tokio, tracing, tracing-opentelemetry, tracing-subscriber
 
 Observability bootstrap crate that installs a tracing subscriber with OTLP export, JSON logs, and environment-driven filtering.
 

@@ -1,6 +1,6 @@
 # or-beacon
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tracing
 
 Prompt templating crate with variable extraction, render-time validation, and control-character sanitization.
 

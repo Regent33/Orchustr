@@ -1,6 +1,6 @@
 # or-recall
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tokio, tracing, sqlx (feature)
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tokio, tracing, sqlx (feature)
 
 Memory store crate for short-term, long-term, and episodic recall with in-memory and optional SQLite-backed implementations.
 

@@ -1,6 +1,6 @@
 # or-loom
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: serde, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: serde, thiserror, tracing
 
 Directed execution graph runtime with explicit entry and exit nodes, branch-aware node results, and pause semantics for checkpoint integration.
 

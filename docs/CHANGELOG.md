@@ -32,7 +32,7 @@ All notable changes to Orchustr should be documented in this file.
 - **Correctness**: Route names are now trimmed at insertion time in `or-compass`, preventing whitespace-based validation mismatches.
 - **Correctness**: `or-sentinel` support module now uses `LoomError::NodeExecution` instead of undefined error variants.
 
-## [0.1.0]
+## [0.1.1]
 
 ### Added
 

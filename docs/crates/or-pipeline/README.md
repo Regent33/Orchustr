@@ -1,6 +1,6 @@
 # or-pipeline
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: serde, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: serde, thiserror, tracing
 
 Sequential pipeline builder and runtime for state-transforming nodes that merge their output patches into state.
 

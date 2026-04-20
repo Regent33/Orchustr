@@ -62,7 +62,7 @@ async fn server_lists_tools_calls_tools_and_returns_tasks() {
         transport,
         ServerCard {
             name: "orchustr".to_owned(),
-            version: "0.1.0".to_owned(),
+            version: "0.1.1".to_owned(),
             protocol_version: "2025-11-25".to_owned(),
         },
     );

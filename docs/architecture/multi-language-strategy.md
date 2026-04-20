@@ -35,7 +35,7 @@ The Dart package targets Flutter and Dart VM users who want the same high-level 
 
 ## Versioning Strategy
 
-The current repository aligns Rust crates, the Python package, the TypeScript package, and the Dart package at `0.1.0`. No independent cross-language release cadence or publish automation exists in the repository yet.
+The current repository aligns Rust crates, the Python package, the TypeScript package, and the Dart package at `0.1.1`. No independent cross-language release cadence or publish automation exists in the repository yet.
 
 ⚠️ Known Gaps & Limitations
 - The TypeScript package does not currently use `or-bridge` at runtime.

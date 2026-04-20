@@ -4,9 +4,9 @@ No automated release workflow is defined in the repository today. Based on the c
 
 ## What Exists
 
-- Version numbers are aligned through `workspace.package.version = "0.1.0"` in the root Cargo manifest.
-- Python package metadata is versioned at `0.1.0` in `bindings/python/pyproject.toml`.
-- TypeScript package metadata is versioned at `0.1.0` in `bindings/typescript/package.json`.
+- Version numbers are aligned through `workspace.package.version = "0.1.1"` in the root Cargo manifest.
+- Python package metadata is versioned at `0.1.1` in `bindings/python/pyproject.toml`.
+- TypeScript package metadata is versioned at `0.1.1` in `bindings/typescript/package.json`.
 
 ## Practical Manual Release Checklist
 

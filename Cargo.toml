@@ -26,7 +26,7 @@ authors = ["Rainer Lacanlale -REL"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.87.0"
-version = "0.1.0"
+version = "0.1.1"
 
 [workspace.dependencies]
 futures = "0.3.31"

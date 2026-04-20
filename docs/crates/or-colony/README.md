@@ -1,6 +1,6 @@
 # or-colony
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tracing
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tracing
 
 Multi-agent coordination crate that sequences member responses, shares a transcript, and aggregates outputs into final colony state.
 

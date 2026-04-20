@@ -1,6 +1,6 @@
 # or-sentinel
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tokio, tracing
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tokio, tracing
 
 Agent runtime crate that implements an explicit think-act loop on top of graphs, provider completions, tool invocation, and typed dynamic state.
 

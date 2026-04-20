@@ -1,6 +1,6 @@
 # or-core
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: rand, serde, serde_json, thiserror, tokio, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: rand, serde, serde_json, thiserror, tokio, tracing
 
 Shared state contracts, retry and token budget types, and in-memory persistence/vector primitives that most other crates build on.
 

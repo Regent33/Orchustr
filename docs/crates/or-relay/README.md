@@ -1,6 +1,6 @@
 # or-relay
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: futures, serde, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: futures, serde, thiserror, tracing
 
 Parallel branch execution crate that runs named state transformations concurrently and merges their patches deterministically.
 

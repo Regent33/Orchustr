@@ -1,6 +1,6 @@
 # or-compass
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: serde, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: serde, thiserror, tracing
 
 Conditional routing crate that evaluates ordered predicates against state and selects a named route.
 

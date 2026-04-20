@@ -1,6 +1,6 @@
 # or-mcp
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: reqwest, schemars, serde, serde_json, thiserror, tokio, tracing
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: reqwest, schemars, serde, serde_json, thiserror, tokio, tracing
 
 Model Context Protocol crate implementing JSON-RPC message types, streamable HTTP and stdio transports, and transport-driven client/server orchestration.
 

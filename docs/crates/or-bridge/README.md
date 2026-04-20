@@ -1,6 +1,6 @@
 # or-bridge
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tracing, pyo3 (feature), napi (feature)
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tracing, pyo3 (feature), napi (feature)
 
 Thin bridge crate that exposes a small Rust surface to Python and Node consumers for prompt rendering and state normalization.
 

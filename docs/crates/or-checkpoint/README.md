@@ -1,6 +1,6 @@
 # or-checkpoint
 
-**Status**: 🟢 Complete | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tracing
 
 Checkpointing crate that serializes state at named gates and restores it through an abstract persistence backend.
 

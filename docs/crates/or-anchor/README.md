@@ -1,6 +1,6 @@
 # or-anchor
 
-**Status**: 🟡 Partial | **Version**: `0.1.0` | **Deps**: serde, serde_json, thiserror, tracing
+**Status**: 🟡 Partial | **Version**: `0.1.1` | **Deps**: serde, serde_json, thiserror, tracing
 
 Retrieval-oriented crate that chunks documents, creates simple hashed embeddings, and retrieves relevant chunks from an in-memory vector store.
 
