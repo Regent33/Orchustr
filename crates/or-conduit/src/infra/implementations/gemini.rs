@@ -80,16 +80,15 @@ impl ConduitProvider for GeminiConduit {
         messages: Vec<CompletionMessage>,
     ) -> Result<CompletionResponse, ConduitError> {
         let payload = gemini_payload(&messages)?;
-        let path = format!(
-            "/v1beta/models/{}:generateContent?key={}",
-            self.model, self.api_key
-        );
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        let url = format!("{}{}", self.base_url, path);
+        let url = format!(
+            "{}/v1beta/models/{}:generateContent?key={}",
+            self.base_url, self.model, self.api_key
+        );
         let response = self
             .http_client
-            .post(&url)
+            .post(url)
             .headers(headers)
             .timeout(self.timeout)
             .json(&payload)

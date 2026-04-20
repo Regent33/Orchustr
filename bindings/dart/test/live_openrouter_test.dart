@@ -6,7 +6,7 @@
 /// 3. Tool-call agent loop (JSON-based tool use via ForgeRegistry)
 /// 4. MCP round-trip (mock MCP server → ForgeRegistry import)
 ///
-/// Uses google/gemma-4-31b-it:free.
+/// Uses liquid/lfm-2.5-1.2b-instruct:free.
 import "dart:async";
 import "dart:convert";
 import "dart:io";

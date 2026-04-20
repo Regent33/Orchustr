@@ -83,7 +83,7 @@ impl ConduitProvider for ReplicateConduit {
         let url = format!("{}/v1/models/{}/predictions", self.base_url, self.model);
         let response = self
             .http_client
-            .post(&url)
+            .post(url)
             .headers(headers.clone())
             .timeout(self.timeout)
             .json(&payload)
@@ -110,7 +110,7 @@ impl ConduitProvider for ReplicateConduit {
             tokio::time::sleep(self.poll_interval).await;
             let poll_resp = self
                 .http_client
-                .get(&poll_url)
+                .get(poll_url)
                 .headers(headers.clone())
                 .timeout(Duration::from_secs(30))
                 .send()

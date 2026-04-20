@@ -122,6 +122,15 @@ final class AnthropicConduit extends _HttpConduit {
 }
 
 String _extractText(JsonObject body) {
+  if (body["choices"] case final List<Object?> choices when choices.isNotEmpty) {
+    if (choices.first case final JsonObject first) {
+      if (first["message"] case final JsonObject message) {
+        if (message["content"] case final String text) {
+          return text;
+        }
+      }
+    }
+  }
   if (body["output"] case final List<Object?> output) {
     return output
         .whereType<JsonObject>()
@@ -140,6 +149,70 @@ String _extractText(JsonObject body) {
         .join();
   }
   return "";
+}
+
+const _openAiCompatEndpoints = <String, String>{
+  "openai": "https://api.openai.com/v1/chat/completions",
+  "openrouter": "https://openrouter.ai/api/v1/chat/completions",
+  "together": "https://api.together.xyz/v1/chat/completions",
+  "groq": "https://api.groq.com/openai/v1/chat/completions",
+  "fireworks": "https://api.fireworks.ai/inference/v1/chat/completions",
+  "deepseek": "https://api.deepseek.com/v1/chat/completions",
+  "mistral": "https://api.mistral.ai/v1/chat/completions",
+  "xai": "https://api.x.ai/v1/chat/completions",
+  "nvidia": "https://integrate.api.nvidia.com/v1/chat/completions",
+  "ollama": "http://localhost:11434/v1/chat/completions",
+};
+
+/// Generic OpenAI-compatible conduit for providers that speak the Chat Completions API.
+/// Use the named factory constructors ([openrouter], [groq], [together], [fireworks],
+/// [deepseek], [mistral], [xai], [nvidia], [ollama]) or pass a custom endpoint directly.
+final class OpenAiCompatConduit extends _HttpConduit {
+  OpenAiCompatConduit(String apiKey, String model, Uri endpoint)
+      : super(
+          apiKey,
+          model,
+          endpoint,
+          <String, String>{"Authorization": "Bearer $apiKey"},
+        );
+
+  factory OpenAiCompatConduit.openrouter(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["openrouter"]!));
+
+  factory OpenAiCompatConduit.groq(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["groq"]!));
+
+  factory OpenAiCompatConduit.together(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["together"]!));
+
+  factory OpenAiCompatConduit.fireworks(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["fireworks"]!));
+
+  factory OpenAiCompatConduit.deepseek(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["deepseek"]!));
+
+  factory OpenAiCompatConduit.mistral(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["mistral"]!));
+
+  factory OpenAiCompatConduit.xai(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["xai"]!));
+
+  factory OpenAiCompatConduit.nvidia(String apiKey, String model) =>
+      OpenAiCompatConduit(apiKey, model, Uri.parse(_openAiCompatEndpoints["nvidia"]!));
+
+  factory OpenAiCompatConduit.ollama(String model, {Uri? endpoint}) =>
+      OpenAiCompatConduit("", model, endpoint ?? Uri.parse(_openAiCompatEndpoints["ollama"]!));
+
+  @override
+  Future<CompletionResponse> completeMessages(List<JsonObject> messages) {
+    return postJson(
+      <String, Object?>{
+        "model": model,
+        "messages": messages,
+        "max_tokens": 1024,
+      },
+    );
+  }
 }
 
 String _requiredEnv(String key) {

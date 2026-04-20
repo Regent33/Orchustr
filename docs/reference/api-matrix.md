@@ -20,7 +20,7 @@ Manages the shared memory maps, retry policies, token limits, and DB checkpoints
 ---
 
 ## 2. LLM Providers (`or-conduit`)
-The abstraction layer meant to route Prompts and chat completion instructions to 22+ AI providers.
+The abstraction layer meant to route Prompts and chat completion instructions to 19 AI providers.
 
 | Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
 |:---|:---|:---|:---:|:---:|:---:|:---:|
@@ -73,8 +73,8 @@ If you don't want to build a graph from scratch, these pre-built templates do th
 
 | Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
 |:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`ReActAgent`** | `new(conduit, tools)` | A pre-compiled graph that automatically gives an LLM a Prompt, lets it call tools from a Registry, and loops back to itself until it solves the user's objective. | 🟢 | 🔴 | 🔴 | 🔴 |
-| **`RouterAgent`** | `route(intent)` | A pre-compiled pipeline that uses a fast LLM to look at a user's prompt and "routes" it to a specific sub-agent (e.g. routing math questions to the Calculator Agent). | 🟢 | 🔴 | 🔴 | 🔴 |
+| **`SentinelAgent`** | `new(planner, registry)`, `run(state)` | A pre-compiled ReAct-style graph that gives an LLM a Prompt, lets it call tools from a Registry, and loops back to itself until it solves the user's objective. | 🟢 | 🔴 | 🔴 | 🔴 |
+| **`PlanExecuteAgent`** | `new(planner, registry)`, `run(state)` | A pre-compiled plan-and-execute pipeline: uses a fast LLM to decompose the user's goal into steps, then executes each step with a `SentinelAgent` worker. | 🟢 | 🔴 | 🔴 | 🔴 |
 
 ---
 

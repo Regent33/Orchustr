@@ -17,7 +17,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 After installation, verify it works:
 ```bash
-rustc --version   # should print: rustc 1.87.0 (or newer)
+rustc --version   # should print: rustc 1.80.0 or newer
 cargo --version
 ```
 
@@ -37,7 +37,7 @@ Only install what you need for your target language:
 
 ## Step 3: Clone the Orchustr Repository
 
-Because Orchustr is not yet fully published to all package registries, you need to download the repository to your machine first:
+> **Note:** `or-core` and `or-prism` are already published on [crates.io](https://crates.io). For Rust-only projects you can depend on them directly by version (see Step 4 below). For Python, TypeScript, and Dart you still need the repository cloned locally for the native bindings.
 
 ```bash
 git clone https://github.com/Cether144/Orchustr.git
@@ -51,12 +51,21 @@ cd Orchustr
 Once cloned, you link it into your existing project using a path reference. Replace `/absolute/path/to/Orchustr` with the real path on your machine (e.g. `C:/dev/Orchustr` on Windows).
 
 ### Rust 🦀
-Add to your project's `Cargo.toml`. Cargo will compile and link it automatically:
+
+**Option A — crates.io (recommended if you only need `or-core` / `or-prism`):**
+```toml
+[dependencies]
+or-core  = "0.1.1"
+or-prism = "0.1.1"
+```
+
+**Option B — local path (required for all other crates, or if you cloned the repo):**
 ```toml
 [dependencies]
 or-core     = { path = "/absolute/path/to/Orchustr/crates/or-core" }
 or-sentinel = { path = "/absolute/path/to/Orchustr/crates/or-sentinel" }
 ```
+
 Then run:
 ```bash
 cargo build

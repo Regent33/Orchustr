@@ -88,7 +88,7 @@ impl ConduitProvider for BedrockConduit {
         let url = format!("{}/model/{}/invoke", self.base_url, self.model_id);
         let response = self
             .http_client
-            .post(&url)
+            .post(url)
             .headers(headers)
             .timeout(self.timeout)
             .json(&payload)

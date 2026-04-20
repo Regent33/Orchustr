@@ -6,7 +6,7 @@ All notable changes to Orchustr should be documented in this file.
 
 ### Added
 
-- **22 LLM Provider Support** (`or-conduit`):
+- **19 LLM Provider Support** (`or-conduit`):
   - Direct providers: OpenAI, Anthropic, Gemini, Cohere, AI21, Hugging Face, Replicate, DeepSeek, Mistral, xAI, Nvidia, Ollama.
   - Aggregators/routers: OpenRouter, Together AI, Groq, Fireworks AI, AWS Bedrock, Azure OpenAI, Google Vertex AI.
   - `OpenAiCompatConduit` generic struct with named factory constructors for 10 OpenAI-compatible providers.

@@ -121,7 +121,7 @@ async fn react_agent_loop_with_tool_use() {
     let result = graph.execute(initial).await.expect("agent loop should complete");
 
     // Verify the agent completed the loop
-    assert!(result.get("final_answer").is_some(), "agent should produce a final answer");
+    assert!(result.contains_key("final_answer"), "agent should produce a final answer");
     assert_eq!(
         result.get("iteration").and_then(Value::as_u64),
         Some(2),
@@ -181,13 +181,13 @@ async fn pipeline_agent_enriches_state_through_chain() {
     let result = pipeline.execute(initial).await.expect("pipeline should complete");
 
     // Bug 3: all intermediate state keys must survive
-    assert!(result.get("input").is_some(), "input key preserved");
+    assert!(result.contains_key("input"), "input key preserved");
     assert_eq!(
         result.get("intent").and_then(Value::as_str),
         Some("weather")
     );
-    assert!(result.get("context").is_some(), "context key preserved");
-    assert!(result.get("response").is_some(), "response key preserved");
+    assert!(result.contains_key("context"), "context key preserved");
+    assert!(result.contains_key("response"), "response key preserved");
     assert!(
         result
             .get("response")

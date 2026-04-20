@@ -95,7 +95,7 @@ impl ConduitProvider for VertexConduit {
         );
         let response = self
             .http_client
-            .post(&url)
+            .post(url)
             .headers(headers)
             .timeout(self.timeout)
             .json(&payload)

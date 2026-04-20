@@ -19,6 +19,7 @@
 - **Sentinel**: Agent runtime that composes conduit, forge, and loom into think-act loops.
 - **Sieve**: Data parsing constraint system designed to validate LLM outputs against strict JSON schemas before returning.
 
-⚠️ Known Gaps & Limitations
+## Known Gaps & Limitations
+
 - The glossary only covers terms defined directly in the codebase or used consistently across the repository.
 - No separate terminology registry was found outside the source tree.

@@ -1,4 +1,4 @@
-//! Live OpenRouter integration test using google/gemma-4-31b-it:free.
+//! Live OpenRouter integration test using liquid/lfm-2.5-1.2b-instruct:free.
 //!
 //! Tests:
 //! 1. Basic completion
@@ -9,9 +9,7 @@
 //! Requires OPENROUTER_API_KEY environment variable.
 
 use or_conduit::{CompletionMessage, ConduitProvider, MessageRole, OpenAiCompatConduit};
-use or_core::DynState;
 use or_forge::{ForgeRegistry, ForgeTool};
-use or_mcp::{NexusServer, NexusClient};
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 use serde_json::json;

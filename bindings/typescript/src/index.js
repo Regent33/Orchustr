@@ -138,10 +138,14 @@ export class NexusClient {
 // ── Response text extraction ────────────────────────────────────────
 
 /**
- * Extract text from either OpenAI Responses API (output) or
- * Anthropic Messages API (content) response bodies.
+ * Extract text from OpenAI Responses API (output), OpenAI Chat Completions
+ * API (choices), or Anthropic Messages API (content) response bodies.
  */
 function _extractText(body) {
+  if (Array.isArray(body.choices) && body.choices.length > 0) {
+    const content = body.choices[0]?.message?.content;
+    if (typeof content === "string") return content;
+  }
   if (body.output) {
     return body.output
       .flatMap((block) => block.content ?? [])
@@ -256,6 +260,74 @@ export class AnthropicConduit {
    * Non-streaming fallback — yields the full response as one chunk.
    * Override for true SSE streaming.
    */
+  async *streamText(prompt) {
+    const result = await this.completeText(prompt);
+    yield result.text;
+  }
+}
+
+const _OPENAI_COMPAT_ENDPOINTS = {
+  openai: "https://api.openai.com/v1/chat/completions",
+  openrouter: "https://openrouter.ai/api/v1/chat/completions",
+  together: "https://api.together.xyz/v1/chat/completions",
+  groq: "https://api.groq.com/openai/v1/chat/completions",
+  fireworks: "https://api.fireworks.ai/inference/v1/chat/completions",
+  deepseek: "https://api.deepseek.com/v1/chat/completions",
+  mistral: "https://api.mistral.ai/v1/chat/completions",
+  xai: "https://api.x.ai/v1/chat/completions",
+  nvidia: "https://integrate.api.nvidia.com/v1/chat/completions",
+  ollama: "http://localhost:11434/v1/chat/completions",
+};
+
+/**
+ * Generic OpenAI-compatible conduit for providers that speak the Chat Completions API.
+ * Use the static factory methods (openrouter, groq, together, fireworks, deepseek,
+ * mistral, xai, nvidia, ollama) or pass a custom endpoint directly.
+ */
+export class OpenAiCompatConduit {
+  constructor(apiKey, model, endpoint) {
+    this.apiKey = apiKey;
+    this.model = model;
+    this.endpoint = endpoint;
+  }
+
+  static openrouter(apiKey, model) { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.openrouter); }
+  static groq(apiKey, model)       { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.groq); }
+  static together(apiKey, model)   { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.together); }
+  static fireworks(apiKey, model)  { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.fireworks); }
+  static deepseek(apiKey, model)   { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.deepseek); }
+  static mistral(apiKey, model)    { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.mistral); }
+  static xai(apiKey, model)        { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.xai); }
+  static nvidia(apiKey, model)     { return new OpenAiCompatConduit(apiKey, model, _OPENAI_COMPAT_ENDPOINTS.nvidia); }
+  static ollama(model, endpoint)   { return new OpenAiCompatConduit("", model, endpoint ?? _OPENAI_COMPAT_ENDPOINTS.ollama); }
+
+  async completeText(prompt) {
+    return this.completeMessages([
+      { role: "user", content: [{ type: "text", text: prompt }] },
+    ]);
+  }
+
+  async completeMessages(messages) {
+    const response = await fetch(this.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        max_tokens: 1024,
+      }),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`OpenAI-compat API error: ${response.status} ${errorBody}`);
+    }
+    const body = await response.json();
+    return { text: _extractText(body) };
+  }
+
   async *streamText(prompt) {
     const result = await this.completeText(prompt);
     yield result.text;

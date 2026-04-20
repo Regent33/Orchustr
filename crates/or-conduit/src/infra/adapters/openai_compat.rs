@@ -106,12 +106,35 @@ fn openai_message(message: &CompletionMessage) -> Result<Value, ConduitError> {
 
 fn openai_chat_message(message: &CompletionMessage) -> Result<Value, ConduitError> {
     let role = message_role_str(&message.role)?;
-    let content = message
-        .content
-        .iter()
-        .map(openai_content)
-        .collect::<Result<Vec<_>, _>>()?;
+    let content = openai_chat_content(&message.content)?;
     Ok(json!({ "role": role, "content": content }))
+}
+
+/// Serializes content for the Chat Completions API (`/v1/chat/completions`).
+/// Uses a flat string for single-text messages (maximally compatible with all providers),
+/// and an array with correct type tags for multimodal messages.
+fn openai_chat_content(parts: &[ContentPart]) -> Result<Value, ConduitError> {
+    if let [ContentPart::Text { text }] = parts {
+        return Ok(Value::String(text.clone()));
+    }
+    parts.iter()
+        .map(openai_chat_part)
+        .collect::<Result<Vec<_>, _>>()
+        .map(Value::Array)
+}
+
+fn openai_chat_part(part: &ContentPart) -> Result<Value, ConduitError> {
+    match part {
+        ContentPart::Text { text } => Ok(json!({ "type": "text", "text": text })),
+        ContentPart::Image { url, detail } => Ok(json!({
+            "type": "image_url",
+            "image_url": { "url": url, "detail": openai_detail(detail) }
+        })),
+        ContentPart::Document { data, media_type } => Ok(json!({
+            "type": "text",
+            "text": format!("[document/{media_type}]\n{data}")
+        })),
+    }
 }
 
 fn message_role_str(role: &MessageRole) -> Result<&'static str, ConduitError> {

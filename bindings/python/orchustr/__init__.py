@@ -1,4 +1,4 @@
-from .conduit import AnthropicConduit, OpenAiConduit
+from .conduit import AnthropicConduit, OpenAiCompatConduit, OpenAiConduit
 from .forge import ForgeRegistry
 from .graph import GraphBuilder
 from .mcp import NexusClient
@@ -9,6 +9,7 @@ __all__ = [
     "ForgeRegistry",
     "GraphBuilder",
     "NexusClient",
+    "OpenAiCompatConduit",
     "OpenAiConduit",
     "PromptBuilder",
 ]
