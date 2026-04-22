@@ -1,3 +1,4 @@
+mod mcp_import_all;
 mod security;
 
 use or_forge::{ForgeError, ForgeRegistry, ForgeTool};

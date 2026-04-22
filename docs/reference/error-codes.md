@@ -1,38 +1,179 @@
 # Error Codes
 
-This page indexes the main crate-local error enums used across the workspace. Most are defined in `src/domain/errors.rs`; `SchemaError` is included explicitly because `or-schema` keeps its loader error type in `src/loader.rs`.
+This page assigns stable documentation codes to the public error variants used across the Orchustr workspace. The codes are additive documentation identifiers; they do not replace the existing Rust enums or error messages.
 
-## Error Types
+## Core Crates
 
-| Error type | Defined in | Variants | Retryable guidance |
-|---|---|---|---|
-| `AnchorError` | `crates/or-anchor/src/domain/errors.rs` | `VectorStore` | Depends on the backing store error. |
-| `BeaconError` | `crates/or-beacon/src/domain/errors.rs` | `MissingTemplate`, `InvalidTemplate`, `MissingVariable`, `InvalidContext` | Usually no; fix input or template first. |
-| `BridgeError` | `crates/or-bridge/src/domain/errors.rs` | `InvalidJson`, `InvalidState`, `Prompt` | Usually no; correct the bridge payload. |
-| `CheckpointError` | `crates/or-checkpoint/src/domain/errors.rs` | `Storage`, `Serialization`, `MissingCheckpoint` | `Storage` may be retryable depending on backend; `MissingCheckpoint` is not. |
-| `ColonyError` | `crates/or-colony/src/domain/errors.rs` | `EmptyColony`, `DuplicateMember`, `MissingTask`, `InvalidState`, `Serialization` | Mostly no; fix orchestration setup or state. |
-| `CompassError` | `crates/or-compass/src/domain/errors.rs` | `EmptyRouter`, `BlankRouteName`, `DuplicateRoute`, `MissingDefaultRoute`, `NoMatchingRoute` | No; fix router construction or routing coverage. |
-| `ConduitError` | `crates/or-conduit/src/domain/errors.rs` | `MissingEnvironmentVariable`, `InvalidRequest`, `Http`, `Api`, `BudgetExceeded`, `RateLimited`, `Serialization`, `NotImplemented`, `Timeout`, `AuthenticationFailed` | `Http`, `RateLimited`, and `Timeout` are the main retry candidates. |
-| `CoreError` | `crates/or-core/src/domain/errors.rs` | `InvalidRetryAttempt`, `BudgetExceeded`, `InvalidState` | Usually no; fix caller configuration or state. |
-| `ForgeError` | `crates/or-forge/src/domain/errors.rs` | `DuplicateTool`, `UnknownTool`, `InvalidArguments`, `Invocation` | `Invocation` may be retryable depending on tool behavior. |
-| `LensError` | `crates/or-lens/src/domain/errors.rs` | `Bind`, `Serve` | Usually no; fix the local port or HTTP runtime issue. |
-| `LoomError` | `crates/or-loom/src/domain/errors.rs` | `EmptyGraph`, `BlankNodeName`, `DuplicateNode`, `UnboundNode`, `MissingEntry`, `MissingExit`, `UnknownNode`, `EdgeReferencesUnknownNode`, `NoEdgeFromNode`, `AmbiguousNextNode`, `InvalidBranchTarget`, `UnknownHandler`, `UnknownCondition`, `NoConditionalMatch`, `Paused`, `StepLimitExceeded`, `NodeExecution` | `Paused` is a control-flow signal; most others require graph or handler fixes. |
-| `McpError` | `crates/or-mcp/src/domain/errors.rs` | `Protocol`, `Transport`, `Auth`, `ToolExecution`, `TaskExpired`, `Serialization` | `Transport` may be retryable; `Auth` and `Protocol` usually are not. |
-| `PipelineError` | `crates/or-pipeline/src/domain/errors.rs` | `EmptyPipeline`, `BlankNodeName`, `DuplicateNode`, `NodeExecution` | `NodeExecution` depends on the failing node. |
-| `PrismError` | `crates/or-prism/src/domain/errors.rs` | `InvalidEndpoint`, `Exporter`, `Lens`, `Subscriber` | `Exporter` may be transient; `InvalidEndpoint` usually is not. |
-| `RecallError` | `crates/or-recall/src/domain/errors.rs` | `Storage`, `Serialization` | `Storage` may be retryable depending on backend. |
-| `RelayError` | `crates/or-relay/src/domain/errors.rs` | `EmptyPlan`, `BlankBranchName`, `DuplicateBranch`, `BranchExecution` | `BranchExecution` depends on the failing branch. |
-| `SchemaError` | `crates/or-schema/src/loader.rs` | `Json`, `YamlFeatureDisabled`, `Yaml` | Usually no; fix the descriptor text or enable the `yaml` feature. |
-| `SentinelError` | `crates/or-sentinel/src/domain/errors.rs` | `MissingMessages`, `InvalidState`, `InvalidResponse`, `Serialization`, `Conduit`, `Forge`, `Loom`, `Core` | Retryability depends on the wrapped subsystem string. |
-| `SieveError` | `crates/or-sieve/src/domain/errors.rs` | `InvalidJson`, `SchemaViolation`, `Deserialization`, `EmptyText` | No; fix model output or parser expectations. |
+| Code | Variant |
+|---|---|
+| `ORC-ANCHOR-001` | `AnchorError::VectorStore` |
+| `ORC-BEACON-001` | `BeaconError::MissingTemplate` |
+| `ORC-BEACON-002` | `BeaconError::InvalidTemplate` |
+| `ORC-BEACON-003` | `BeaconError::MissingVariable` |
+| `ORC-BEACON-004` | `BeaconError::InvalidContext` |
+| `ORC-BRIDGE-001` | `BridgeError::InvalidInput` |
+| `ORC-BRIDGE-002` | `BridgeError::InvalidJson` |
+| `ORC-BRIDGE-003` | `BridgeError::UnsupportedCrate` |
+| `ORC-BRIDGE-004` | `BridgeError::UnsupportedOperation` |
+| `ORC-BRIDGE-005` | `BridgeError::Invocation` |
+| `ORC-BRIDGE-006` | `BridgeError::InvalidState` |
+| `ORC-BRIDGE-007` | `BridgeError::Prompt` |
+| `ORC-CHECKPOINT-001` | `CheckpointError::Storage` |
+| `ORC-CHECKPOINT-002` | `CheckpointError::Serialization` |
+| `ORC-CHECKPOINT-003` | `CheckpointError::MissingCheckpoint` |
+| `ORC-CLI-001` | `CliError::Io` |
+| `ORC-CLI-002` | `CliError::Schema` |
+| `ORC-CLI-003` | `CliError::Config` |
+| `ORC-CLI-004` | `CliError::Validation` |
+| `ORC-CLI-005` | `CliError::InvalidProject` |
+| `ORC-CLI-006` | `CliError::Lens` |
+| `ORC-COLONY-001` | `ColonyError::EmptyColony` |
+| `ORC-COLONY-002` | `ColonyError::DuplicateMember` |
+| `ORC-COLONY-003` | `ColonyError::MissingTask` |
+| `ORC-COLONY-004` | `ColonyError::InvalidState` |
+| `ORC-COLONY-005` | `ColonyError::Serialization` |
+| `ORC-COMPASS-001` | `CompassError::EmptyRouter` |
+| `ORC-COMPASS-002` | `CompassError::BlankRouteName` |
+| `ORC-COMPASS-003` | `CompassError::DuplicateRoute` |
+| `ORC-COMPASS-004` | `CompassError::MissingDefaultRoute` |
+| `ORC-COMPASS-005` | `CompassError::NoMatchingRoute` |
+| `ORC-CONDUIT-001` | `ConduitError::MissingEnvironmentVariable` |
+| `ORC-CONDUIT-002` | `ConduitError::InvalidRequest` |
+| `ORC-CONDUIT-003` | `ConduitError::Http` |
+| `ORC-CONDUIT-004` | `ConduitError::Api` |
+| `ORC-CONDUIT-005` | `ConduitError::BudgetExceeded` |
+| `ORC-CONDUIT-006` | `ConduitError::RateLimited` |
+| `ORC-CONDUIT-007` | `ConduitError::Serialization` |
+| `ORC-CONDUIT-008` | `ConduitError::NotImplemented` |
+| `ORC-CONDUIT-009` | `ConduitError::Timeout` |
+| `ORC-CONDUIT-010` | `ConduitError::AuthenticationFailed` |
+| `ORC-CORE-001` | `CoreError::InvalidRetryAttempt` |
+| `ORC-CORE-002` | `CoreError::BudgetExceeded` |
+| `ORC-CORE-003` | `CoreError::InvalidState` |
+| `ORC-FORGE-001` | `ForgeError::DuplicateTool` |
+| `ORC-FORGE-002` | `ForgeError::UnknownTool` |
+| `ORC-FORGE-003` | `ForgeError::InvalidArguments` |
+| `ORC-FORGE-004` | `ForgeError::Invocation` |
+| `ORC-LENS-001` | `LensError::Bind` |
+| `ORC-LENS-002` | `LensError::Serve` |
+| `ORC-LOOM-001` | `LoomError::EmptyGraph` |
+| `ORC-LOOM-002` | `LoomError::BlankNodeName` |
+| `ORC-LOOM-003` | `LoomError::DuplicateNode` |
+| `ORC-LOOM-004` | `LoomError::UnboundNode` |
+| `ORC-LOOM-005` | `LoomError::MissingEntry` |
+| `ORC-LOOM-006` | `LoomError::MissingExit` |
+| `ORC-LOOM-007` | `LoomError::UnknownNode` |
+| `ORC-LOOM-008` | `LoomError::EdgeReferencesUnknownNode` |
+| `ORC-LOOM-009` | `LoomError::NoEdgeFromNode` |
+| `ORC-LOOM-010` | `LoomError::AmbiguousNextNode` |
+| `ORC-LOOM-011` | `LoomError::InvalidBranchTarget` |
+| `ORC-LOOM-012` | `LoomError::UnknownHandler` |
+| `ORC-LOOM-013` | `LoomError::UnknownCondition` |
+| `ORC-LOOM-014` | `LoomError::NoConditionalMatch` |
+| `ORC-LOOM-015` | `LoomError::Paused` |
+| `ORC-LOOM-016` | `LoomError::StepLimitExceeded` |
+| `ORC-LOOM-017` | `LoomError::NodeExecution` |
+| `ORC-MCP-001` | `McpError::Protocol` |
+| `ORC-MCP-002` | `McpError::Transport` |
+| `ORC-MCP-003` | `McpError::Auth` |
+| `ORC-MCP-004` | `McpError::ToolExecution` |
+| `ORC-MCP-005` | `McpError::TaskExpired` |
+| `ORC-MCP-006` | `McpError::Serialization` |
+| `ORC-PIPELINE-001` | `PipelineError::EmptyPipeline` |
+| `ORC-PIPELINE-002` | `PipelineError::BlankNodeName` |
+| `ORC-PIPELINE-003` | `PipelineError::DuplicateNode` |
+| `ORC-PIPELINE-004` | `PipelineError::NodeExecution` |
+| `ORC-PRISM-001` | `PrismError::InvalidEndpoint` |
+| `ORC-PRISM-002` | `PrismError::Exporter` |
+| `ORC-PRISM-003` | `PrismError::Lens` |
+| `ORC-PRISM-004` | `PrismError::Subscriber` |
+| `ORC-RECALL-001` | `RecallError::Storage` |
+| `ORC-RECALL-002` | `RecallError::Serialization` |
+| `ORC-RELAY-001` | `RelayError::EmptyPlan` |
+| `ORC-RELAY-002` | `RelayError::BlankBranchName` |
+| `ORC-RELAY-003` | `RelayError::DuplicateBranch` |
+| `ORC-RELAY-004` | `RelayError::BranchExecution` |
+| `ORC-SCHEMA-001` | `SchemaError::Json` |
+| `ORC-SCHEMA-002` | `SchemaError::YamlFeatureDisabled` |
+| `ORC-SCHEMA-003` | `SchemaError::Yaml` |
+| `ORC-SENTINEL-001` | `SentinelError::MissingMessages` |
+| `ORC-SENTINEL-002` | `SentinelError::InvalidState` |
+| `ORC-SENTINEL-003` | `SentinelError::InvalidResponse` |
+| `ORC-SENTINEL-004` | `SentinelError::Serialization` |
+| `ORC-SENTINEL-005` | `SentinelError::Conduit` |
+| `ORC-SENTINEL-006` | `SentinelError::Forge` |
+| `ORC-SENTINEL-007` | `SentinelError::Loom` |
+| `ORC-SENTINEL-008` | `SentinelError::Core` |
+| `ORC-SIEVE-001` | `SieveError::InvalidJson` |
+| `ORC-SIEVE-002` | `SieveError::SchemaViolation` |
+| `ORC-SIEVE-003` | `SieveError::Deserialization` |
+| `ORC-SIEVE-004` | `SieveError::EmptyText` |
 
-## Propagation Notes
+## Tool Crates
 
-- Lower-level crate errors are often converted into strings in higher-level runtimes such as `or-sentinel`.
-- Provider and transport layers are the main places where transient failures can realistically benefit from retry logic.
-- `or-schema` intentionally stays decoupled from `or-loom`, so its loader errors are about text parsing and feature availability rather than runtime graph execution.
+| Code | Variant |
+|---|---|
+| `ORC-TOOLS-COMMS-001` | `CommsError::MissingCredential` |
+| `ORC-TOOLS-COMMS-002` | `CommsError::Transport` |
+| `ORC-TOOLS-COMMS-003` | `CommsError::Upstream` |
+| `ORC-TOOLS-COMMS-004` | `CommsError::InvalidInput` |
+| `ORC-TOOLS-COMMS-005` | `CommsError::UnsupportedChannel` |
+| `ORC-TOOLS-CORE-001` | `ToolError::NotFound` |
+| `ORC-TOOLS-CORE-002` | `ToolError::AlreadyRegistered` |
+| `ORC-TOOLS-CORE-003` | `ToolError::InvalidInput` |
+| `ORC-TOOLS-CORE-004` | `ToolError::Transport` |
+| `ORC-TOOLS-CORE-005` | `ToolError::Upstream` |
+| `ORC-TOOLS-CORE-006` | `ToolError::MissingCredential` |
+| `ORC-TOOLS-CORE-007` | `ToolError::Timeout` |
+| `ORC-TOOLS-CORE-008` | `ToolError::Unavailable` |
+| `ORC-TOOLS-CORE-009` | `ToolError::Serialization` |
+| `ORC-TOOLS-EXEC-001` | `ExecError::UnsupportedLanguage` |
+| `ORC-TOOLS-EXEC-002` | `ExecError::ExecutorNotFound` |
+| `ORC-TOOLS-EXEC-003` | `ExecError::MissingCredential` |
+| `ORC-TOOLS-EXEC-004` | `ExecError::Timeout` |
+| `ORC-TOOLS-EXEC-005` | `ExecError::Spawn` |
+| `ORC-TOOLS-EXEC-006` | `ExecError::Upstream` |
+| `ORC-TOOLS-EXEC-007` | `ExecError::Transport` |
+| `ORC-TOOLS-EXEC-008` | `ExecError::Io` |
+| `ORC-TOOLS-FILE-001` | `FileError::NotFound` |
+| `ORC-TOOLS-FILE-002` | `FileError::PermissionDenied` |
+| `ORC-TOOLS-FILE-003` | `FileError::Io` |
+| `ORC-TOOLS-FILE-004` | `FileError::Json` |
+| `ORC-TOOLS-FILE-005` | `FileError::MissingCredential` |
+| `ORC-TOOLS-FILE-006` | `FileError::Upstream` |
+| `ORC-TOOLS-FILE-007` | `FileError::Transport` |
+| `ORC-TOOLS-LOADERS-001` | `LoaderError::UnsupportedFormat` |
+| `ORC-TOOLS-LOADERS-002` | `LoaderError::Io` |
+| `ORC-TOOLS-LOADERS-003` | `LoaderError::Parse` |
+| `ORC-TOOLS-LOADERS-004` | `LoaderError::InvalidSource` |
+| `ORC-TOOLS-PRODUCTIVITY-001` | `ProductivityError::MissingCredential` |
+| `ORC-TOOLS-PRODUCTIVITY-002` | `ProductivityError::Transport` |
+| `ORC-TOOLS-PRODUCTIVITY-003` | `ProductivityError::Upstream` |
+| `ORC-TOOLS-PRODUCTIVITY-004` | `ProductivityError::InvalidInput` |
+| `ORC-TOOLS-PRODUCTIVITY-005` | `ProductivityError::NotFound` |
+| `ORC-TOOLS-SEARCH-001` | `SearchError::MissingApiKey` |
+| `ORC-TOOLS-SEARCH-002` | `SearchError::EmptyQuery` |
+| `ORC-TOOLS-SEARCH-003` | `SearchError::Upstream` |
+| `ORC-TOOLS-SEARCH-004` | `SearchError::Transport` |
+| `ORC-TOOLS-SEARCH-005` | `SearchError::Serialization` |
+| `ORC-TOOLS-SEARCH-006` | `SearchError::NoProviders` |
+| `ORC-TOOLS-VECTOR-001` | `VectorError::MissingCredential` |
+| `ORC-TOOLS-VECTOR-002` | `VectorError::InvalidInput` |
+| `ORC-TOOLS-VECTOR-003` | `VectorError::DimensionMismatch` |
+| `ORC-TOOLS-VECTOR-004` | `VectorError::CollectionNotFound` |
+| `ORC-TOOLS-VECTOR-005` | `VectorError::Upstream` |
+| `ORC-TOOLS-VECTOR-006` | `VectorError::Transport` |
+| `ORC-TOOLS-VECTOR-007` | `VectorError::Serialization` |
+| `ORC-TOOLS-WEB-001` | `WebError::MissingCredential` |
+| `ORC-TOOLS-WEB-002` | `WebError::InvalidUrl` |
+| `ORC-TOOLS-WEB-003` | `WebError::UnsafeScheme` |
+| `ORC-TOOLS-WEB-004` | `WebError::Upstream` |
+| `ORC-TOOLS-WEB-005` | `WebError::Transport` |
+| `ORC-TOOLS-WEB-006` | `WebError::HtmlParse` |
+| `ORC-TOOLS-WEB-007` | `WebError::Timeout` |
+| `ORC-TOOLS-WEB-008` | `WebError::MethodUnsupported` |
 
-## Known Gaps & Limitations
+## Notes
 
-- The repository still uses enum-based error variants rather than a stable numeric error-code system.
-- Retryability is guidance derived from the current code paths, not a hard guarantee encoded in the types.
+- These codes are stable documentation identifiers intended for runbooks, support notes, and changelog references.
+- The runtime still returns the existing Rust enum variants and human-readable messages; no API surface was renamed to introduce these codes.

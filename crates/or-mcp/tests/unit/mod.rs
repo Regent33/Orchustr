@@ -4,6 +4,8 @@ use or_mcp::{
 };
 
 mod client_server;
+mod known_servers;
+mod multi_client;
 
 #[test]
 fn encode_and_decode_single_message_round_trip() {

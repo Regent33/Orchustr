@@ -1,6 +1,8 @@
 pub mod application;
 pub mod domain;
 pub mod infra;
+pub mod known_servers;
+pub mod multi_client;
 
 pub use application::client::NexusClient;
 pub use application::orchestrators::JsonRpcOrchestrator;
@@ -14,3 +16,4 @@ pub use domain::entities::{
 pub use domain::errors::McpError;
 pub use infra::http_transport::StreamableHttpTransport;
 pub use infra::stdio_transport::StdioTransport;
+pub use multi_client::{DiscoveredMcpTool, McpServerConfig, McpServerTransport, MultiMcpClient, MultiMcpSession};

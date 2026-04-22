@@ -24,6 +24,16 @@ The current dashboard endpoints are:
 - `GET /api/traces` for recent trace summaries
 - `GET /api/traces/{id}` for an execution snapshot of a single trace
 
+## CLI Shortcut
+
+If a project has an `orchustr.yaml`, the CLI can validate the config and boot the local dashboard entry point:
+
+```bash
+cargo run -p or-cli -- trace path/to/project
+```
+
+This currently confirms the project config and dashboard port wiring, then starts and shuts down the local server once the trace bootstrap succeeds.
+
 ## Example
 
 ```rust

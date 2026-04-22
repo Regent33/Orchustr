@@ -4,15 +4,18 @@
 </div>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/CI-GitHub_Actions%20configured-blue" alt="CI configured" />
-  <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="License" />
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=Rust%20CI" alt="Rust CI" /></a>
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=Python%20Bindings" alt="Python Bindings CI" /></a>
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=TypeScript%20Bindings" alt="TypeScript Bindings CI" /></a>
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=Dart%20Bindings" alt="Dart Bindings CI" /></a>
+  <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-4b5563" alt="License" />
 </p>
 
 Orchustr is a Rust-based AI orchestration workspace organized around focused crates for state, graphs, agents, prompts, tools, observability, and multi-language bindings.
 
 ## Workspace Shape
 
-- Rust: 28 workspace crates plus the integration test suite
+- Rust: 29 workspace crates plus the integration test suite
 - Python: package `orchustr` with optional native bridge classes and Python-first workflow helpers
 - TypeScript: package `@orchustr/core` with ESM helpers, declaration files, and an optional native addon path
 - Dart: package `orchustr` with Dart workflow helpers and optional `dart:ffi` bridge access
@@ -34,6 +37,7 @@ Orchustr is a Rust-based AI orchestration workspace organized around focused cra
 - `or-pipeline`: sequential pipeline runtime
 - `or-prism`: observability bootstrap and OTLP export setup
 - `or-lens`: optional local execution dashboard and in-process trace collection
+- `or-cli`: project scaffolding, graph linting, and trace bootstrapping CLI
 - `or-recall`: memory stores
 - `or-relay`: parallel branch execution
 - `or-sentinel`: agent runtime and configurable loop topology support
@@ -106,6 +110,7 @@ Orchustr is a Rust-based AI orchestration workspace organized around focused cra
 - [or-pipeline README](./crates/or-pipeline/README.md), [api-reference](./crates/or-pipeline/api-reference.md), [internals](./crates/or-pipeline/internals.md)
 - [or-prism README](./crates/or-prism/README.md), [api-reference](./crates/or-prism/api-reference.md), [internals](./crates/or-prism/internals.md)
 - [or-lens README](./crates/or-lens/README.md), [api-reference](./crates/or-lens/api-reference.md), [internals](./crates/or-lens/internals.md)
+- [or-cli README](./crates/or-cli/README.md), [api-reference](./crates/or-cli/api-reference.md), [internals](./crates/or-cli/internals.md)
 - [or-recall README](./crates/or-recall/README.md), [api-reference](./crates/or-recall/api-reference.md), [internals](./crates/or-recall/internals.md)
 - [or-relay README](./crates/or-relay/README.md), [api-reference](./crates/or-relay/api-reference.md), [internals](./crates/or-relay/internals.md)
 - [or-sentinel README](./crates/or-sentinel/README.md), [api-reference](./crates/or-sentinel/api-reference.md), [internals](./crates/or-sentinel/internals.md)
@@ -156,5 +161,5 @@ Orchustr is a Rust-based AI orchestration workspace organized around focused cra
 
 ## Known Gaps & Limitations
 
-- The CI badge above indicates that GitHub Actions are configured; it is not a repository-specific pass/fail badge.
+- The badges above all reflect the shared repository workflow because Rust, Python, TypeScript, and Dart are currently validated by one `ci.yml`.
 - Binding parity and backend maturity still differ across crates and languages.

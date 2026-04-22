@@ -11,6 +11,9 @@ All notable changes to Orchustr should be documented in this file.
 - **Binding parity helpers** (`or-bridge`, Python, TypeScript): Added additive graph/state/result/conduit/workflow builder surfaces so Python and TypeScript can assemble offline Orchustr graphs with `DynState`, `NodeResult`, `GraphBuilder`, `PipelineBuilder`, `RelayBuilder`, and `ColonyBuilder` without requiring live provider keys.
 - **Serializable graph descriptors** (`or-schema`, `or-loom`): Added the new `or-schema` crate with JSON/YAML `GraphSpec` loading plus `or-loom::NodeRegistry` for resolving named handlers and conditional edges into live execution graphs.
 - **Local dashboard runtime** (`or-lens`, `or-prism`): Added the new `or-lens` crate with an embedded HTML dashboard, in-memory span collector, execution snapshots, and additive `or-prism::init_with_dashboard` support behind the `lens` feature.
+- **MCP ecosystem bridge** (`or-mcp`, `or-forge`): Added `MultiMcpClient`, `MultiMcpSession`, `McpServerConfig`, curated `known_servers::*` presets, `ForgeRegistry::import_all_from_mcp`, `ForgeRegistry::import_all_from_multi_mcp`, and `ImportSummary` for additive multi-server MCP discovery.
+- **CLI scaffolding crate** (`or-cli`): Added the new `orchustr` binary with `init`, `lint`, `run`, `trace`, `new node`, and `new topology` flows plus embedded Rust, Python, TypeScript, and Dart templates.
+- **Unified error-code registry and CI expansion** (`docs`, `.github`): Added stable `ORC-*` error code documentation, repository workflow badges, CLI graph linting in CI, explicit binding test steps, and an `or-lens` dashboard smoke step.
 - **19 LLM Provider Support** (`or-conduit`):
   - Direct providers: OpenAI, Anthropic, Gemini, Cohere, AI21, Hugging Face, Replicate, DeepSeek, Mistral, xAI, Nvidia, Ollama.
   - Aggregators/routers: OpenRouter, Together AI, Groq, Fireworks AI, AWS Bedrock, Azure OpenAI, Google Vertex AI.
@@ -31,6 +34,8 @@ All notable changes to Orchustr should be documented in this file.
 - **Crates.io Publishing**: Workspace path dependencies globally upgraded to strictly map versions/descriptions recursively for package publishing.
 - **Python Bindings**: Migrated inner conduits from blocking `urllib` to full async natively using `aiohttp`.
 - **TypeScript Bindings**: Replaced local-bridge fallback conduits with native asynchronous `fetch` calls.
+- **`or-lens` dashboard UI**: Refined the embedded HTML dashboard toward a denser grayscale presentation with a stronger execution map, timeline, and node inspector layout while keeping the API contract unchanged.
+- **Docs**: Synced the crate index, API matrix, observability guide, and per-crate docs to the additive Phase 5 and Phase 6 surfaces.
 
 ### Fixed
 

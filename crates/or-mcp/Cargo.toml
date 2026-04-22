@@ -8,6 +8,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+futures.workspace = true
 or-core = { path = "../or-core", version = "0.1.2" }
 reqwest.workspace = true
 schemars.workspace = true

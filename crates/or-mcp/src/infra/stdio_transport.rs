@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 
 type SharedLines = Arc<Mutex<Lines<BufReader<ChildStdout>>>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StdioTransport {
     _child: Arc<Mutex<Child>>,
     reader: SharedLines,

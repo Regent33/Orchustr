@@ -24,6 +24,8 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo deny check
       - run: cargo nextest run --all-features
+      - run: cargo run -p or-cli -- lint docs/examples/
+      - run: cargo test -p or-lens --features dashboard
       - run: cargo llvm-cov --all-features --lcov --output-path lcov.info
       - uses: codecov/codecov-action@v4
         with:
@@ -41,8 +43,8 @@ jobs:
         with:
           python-version: "3.14.4"
       - run: pip install maturin pytest
-      - run: cd bindings/python && maturin develop
-      - run: cd bindings/python && pytest tests/
+      - run: cd bindings/python && pip install -e .
+      - run: cd bindings/python && pytest tests/ -v
 
   bindings-typescript:
     runs-on: ubuntu-latest
@@ -51,7 +53,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: cd bindings/typescript && npm ci && npm run typecheck && npm test
+      - run: cd bindings/typescript && npm ci
+      - run: cd bindings/typescript && npm run typecheck
+      - run: cd bindings/typescript && npm test
 
   bindings-dart:
     runs-on: ubuntu-latest
@@ -65,4 +69,4 @@ jobs:
       - run: cd bindings/dart && dart format --output=none --set-exit-if-changed .
       - run: cd bindings/dart && dart analyze
       - run: cd bindings/dart && dart run tool/build_native.dart
-      - run: cd bindings/dart && dart run test/bindings_test.dart
+      - run: cd bindings/dart && dart test

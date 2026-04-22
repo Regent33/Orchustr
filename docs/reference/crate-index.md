@@ -10,13 +10,14 @@
 | `or-colony` | Multi-agent coordination and aggregation. | or-core | ColonyOrchestrator, ColonyAgentTrait, ColonyResult | Complete |
 | `or-compass` | Predicate routing. | or-core | CompassRouterBuilder, CompassRouter, RouteSelection | Complete |
 | `or-conduit` | LLM provider abstraction and adapters (19 providers). | or-core | ConduitProvider, OpenAiCompatConduit, AnthropicConduit, GeminiConduit, CohereConduit, AI21Conduit, HuggingFaceConduit, ReplicateConduit, AzureConduit, BedrockConduit, VertexConduit | Complete |
-| `or-forge` | Async tool registry and MCP imports. | or-mcp | ForgeRegistry, ForgeTool | Complete |
+| `or-forge` | Async tool registry and MCP imports, including bulk MCP discovery adapters. | or-mcp | ForgeRegistry, ForgeTool, ImportSummary | Complete |
 | `or-loom` | Directed graph execution engine with inspection and optional schema compilation support. | or-core, or-schema(feature=`serde`) | GraphBuilder, ExecutionGraph, NodeResult, GraphInspection, NodeRegistry(feature=`serde`) | Complete |
 | `or-schema` | Serializable graph descriptors and JSON/YAML loading helpers. | `(none)` | GraphSpec, NodeSpec, EdgeSpec, SchemaError | Complete |
-| `or-mcp` | MCP client, server, and transports. | or-core | NexusClient, NexusServer, StreamableHttpTransport | Partial |
+| `or-mcp` | MCP client, server, transports, and additive multi-server discovery helpers. | or-core | NexusClient, NexusServer, StreamableHttpTransport, MultiMcpClient, McpServerConfig, known_servers | Partial |
 | `or-pipeline` | Sequential state pipeline runtime. | or-core | PipelineBuilder, Pipeline | Complete |
 | `or-prism` | Observability bootstrap and optional local dashboard bridge. | or-lens(feature=`lens`) | install_global_subscriber, PrismConfig, init_with_dashboard(feature=`lens`) | Partial |
 | `or-lens` | Optional local execution dashboard and in-process trace collection. | `(none)` | LensHandle, LensLayer, SpanCollector, ExecutionSnapshot | Partial |
+| `or-cli` | Project scaffolding, graph linting, local trace bootstrapping, and node/topology stubs. | or-lens, or-schema | init_project, lint_path, run_project, trace_project, scaffold_node, scaffold_topology | Partial |
 | `or-recall` | Short/long/episodic memory stores. | or-core | RecallStore, InMemoryRecallStore, SqliteRecallStore(feature) | Complete |
 | `or-relay` | Parallel branch execution with deterministic merge. | or-core | RelayBuilder, RelayExecutor, RelayPlan | Complete |
 | `or-sentinel` | Agent runtime with legacy ReAct plus additive custom loop topologies. | or-conduit, or-core, or-forge, or-loom | SentinelAgent, SentinelAgentBuilder, LoopTopology, ReActTopology, PlanExecuteTopology, ReflectionTopology, StepOutcome | Complete |

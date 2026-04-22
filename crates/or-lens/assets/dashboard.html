@@ -6,137 +6,964 @@
   <title>Orchustr Lens</title>
   <style>
     :root {
-      --bg: #f5efe5;
-      --panel: #fffaf2;
-      --ink: #1f2a2e;
-      --accent: #0b6e4f;
-      --warn: #d9a404;
-      --err: #c23b22;
-      --line: #d8cdbd;
+      --bg: #020202;
+      --bg-alt: #09090b;
+      --bg-sheen: rgba(161, 161, 170, 0.08);
+      --panel: rgba(10, 10, 12, 0.92);
+      --panel-strong: rgba(18, 18, 20, 0.96);
+      --panel-soft: rgba(24, 24, 27, 0.78);
+      --surface: rgba(10, 10, 12, 0.97);
+      --surface-hover: rgba(16, 16, 19, 0.99);
+      --code: #050505;
+      --ink: #f5f5f5;
+      --muted: #a1a1aa;
+      --muted-strong: #d4d4d8;
+      --accent: #a1a1aa;
+      --accent-strong: #e4e4e7;
+      --accent-soft: rgba(161, 161, 170, 0.16);
+      --warn: #71717a;
+      --warn-soft: rgba(113, 113, 122, 0.16);
+      --err: #e4e4e7;
+      --err-soft: rgba(228, 228, 231, 0.16);
+      --line: rgba(161, 161, 170, 0.16);
+      --line-strong: rgba(161, 161, 170, 0.28);
+      --track: rgba(39, 39, 42, 0.92);
+      --shadow: 0 28px 60px rgba(2, 6, 23, 0.46);
+      --focus: 0 0 0 3px rgba(212, 212, 216, 0.16);
+      --blur: blur(18px);
     }
-    body { margin: 0; font: 14px/1.4 "Segoe UI", sans-serif; background: linear-gradient(180deg, var(--bg), #efe7da); color: var(--ink); }
-    header { padding: 20px 24px 8px; }
-    main { display: grid; gap: 16px; grid-template-columns: 280px 1fr 320px; padding: 0 24px 24px; }
-    section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(31,42,46,0.08); }
-    h1, h2 { margin: 0 0 12px; }
-    ul { list-style: none; padding: 0; margin: 0; }
-    li { border-top: 1px solid var(--line); padding: 10px 0; cursor: pointer; }
-    li:first-child { border-top: 0; }
-    .trace-meta { color: #5b696d; font-size: 12px; }
-    .node { fill: #d7eadf; stroke: #7aa891; stroke-width: 1.5; }
-    .node.warn { fill: #f8ebbf; stroke: #d9a404; }
-    .node.err { fill: #f6d6ce; stroke: #c23b22; }
-    .label { font-size: 12px; fill: var(--ink); }
-    .timeline-row { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px; margin: 8px 0; }
-    .timeline-bar { height: 14px; border-radius: 999px; background: #e5ddd0; overflow: hidden; }
-    .timeline-fill { height: 100%; background: var(--accent); }
-    pre { white-space: pre-wrap; word-break: break-word; margin: 0; }
-    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font: 14px/1.45 "Segoe UI Variable Text", "Aptos", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, var(--bg-sheen), transparent 24%),
+        radial-gradient(circle at 86% 12%, rgba(161, 161, 170, 0.06), transparent 18%),
+        radial-gradient(circle at 50% 120%, rgba(228, 228, 231, 0.03), transparent 26%),
+        linear-gradient(180deg, var(--bg), var(--bg-alt));
+    }
+    h1, h2, h3, p { margin: 0; }
+    button { font: inherit; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      padding: 28px 28px 14px;
+    }
+    h1 {
+      font-size: 34px;
+      letter-spacing: -0.05em;
+      font-weight: 700;
+    }
+    h2 {
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+    h3 {
+      letter-spacing: -0.02em;
+    }
+    .subtle { color: var(--muted); }
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(10, 10, 12, 0.8);
+      color: var(--muted-strong);
+      backdrop-filter: var(--blur);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.86); opacity: 0.7; }
+    }
+
+    main {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(260px, 320px);
+      padding: 0 28px 28px;
+      min-height: calc(100vh - 124px);
+      align-items: start;
+    }
+    .stack {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+      grid-template-rows: minmax(130px, auto) auto minmax(230px, auto);
+    }
+    section {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(18, 18, 20, 0.96), rgba(8, 8, 10, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: var(--blur);
+    }
+    section::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(228, 228, 231, 0.16), transparent);
+      pointer-events: none;
+    }
+    .section-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .legend span,
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(24, 24, 27, 0.78);
+      color: var(--muted-strong);
+      font-size: 12px;
+    }
+    .chip.completed {
+      background: var(--accent-soft);
+      border-color: rgba(212, 212, 216, 0.22);
+      color: #e4e4e7;
+    }
+    .chip.progress {
+      background: var(--warn-soft);
+      border-color: rgba(161, 161, 170, 0.2);
+      color: #d4d4d8;
+    }
+    .chip.errored {
+      background: var(--err-soft);
+      border-color: rgba(228, 228, 231, 0.24);
+      color: #f4f4f5;
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .trace-list {
+      display: grid;
+      gap: 10px;
+      max-height: calc(100vh - 180px);
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .trace-item {
+      width: 100%;
+      padding: 14px;
+      text-align: left;
+      color: inherit;
+      cursor: pointer;
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, var(--surface), rgba(6, 6, 7, 0.99));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+    .trace-item:hover,
+    .trace-item.active {
+      transform: translateY(-2px);
+      border-color: rgba(203, 213, 225, 0.34);
+      background: linear-gradient(180deg, var(--surface-hover), rgba(8, 8, 10, 0.99));
+      box-shadow: 0 16px 30px rgba(2, 6, 23, 0.38), 0 0 0 1px rgba(212, 212, 216, 0.08);
+    }
+    .trace-item:focus-visible,
+    .timeline-row:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+    .trace-item strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #fafafa;
+      font-size: 14px;
+      word-break: break-word;
+    }
+    .trace-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .trace-meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      min-height: 104px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(20, 20, 24, 0.96), rgba(9, 9, 11, 0.99));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    .metric-label {
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .metric-value {
+      color: #fafafa;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .metric-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .map-shell {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at top center, rgba(161, 161, 170, 0.05), transparent 36%),
+        linear-gradient(180deg, rgba(3, 3, 4, 0.98), rgba(10, 10, 12, 0.98));
+      min-height: 300px;
+    }
+    #graph {
+      display: block;
+      width: 100%;
+      min-height: 300px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(18, 18, 20, 0.96), rgba(8, 8, 10, 0.96));
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+    .timeline-row:hover,
+    .timeline-row.active {
+      transform: translateY(-2px);
+      border-color: rgba(203, 213, 225, 0.3);
+      box-shadow: 0 12px 24px rgba(2, 6, 23, 0.28);
+    }
+    .timeline-label strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #fafafa;
+    }
+    .timeline-label-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .timeline-track {
+      position: relative;
+      height: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(161, 161, 170, 0.12);
+      border-radius: 999px;
+      background: var(--track);
+    }
+    .timeline-span {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      min-width: 8px;
+      border-radius: 999px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    .inspector-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .detail-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(18, 18, 20, 0.96), rgba(8, 8, 10, 0.96));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    .detail-meta {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .detail-row span:first-child {
+      color: var(--muted);
+    }
+    .key-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .key-pill {
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(24, 24, 27, 0.88);
+      color: #e4e4e7;
+      font-size: 12px;
+    }
+    pre {
+      margin: 0;
+      max-height: 360px;
+      overflow: auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--code);
+      color: #e5e5e5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 180px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      background: rgba(10, 10, 12, 0.62);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(161, 161, 170, 0.24);
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 10, 12, 0.08);
+    }
+
+    @media (max-width: 1180px) {
+      main { grid-template-columns: 1fr; }
+      .trace-list { max-height: none; }
+      .stack { grid-template-rows: none; }
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .timeline-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      header { flex-direction: column; align-items: start; }
+      .overview-grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>Orchustr Lens</h1>
-    <p>Local execution traces, refreshed every 2 seconds.</p>
+    <div>
+      <h1>Orchustr Lens</h1>
+      <p class="subtle">Execution traces refreshed every 2 seconds. Click any node to inspect what changed.</p>
+    </div>
+    <div class="live-pill">
+      <span class="live-dot"></span>
+      <span id="refresh-status">Waiting for first refresh...</span>
+    </div>
   </header>
+
   <main>
     <section>
-      <h2>Recent Traces</h2>
-      <ul id="trace-list"></ul>
+      <div class="section-top">
+        <div>
+          <h2>Recent Traces</h2>
+          <p class="subtle">Most recent runs, newest first.</p>
+        </div>
+      </div>
+      <div id="trace-list" class="trace-list"></div>
     </section>
+
+    <div class="stack">
+      <section>
+        <div class="section-top">
+          <div>
+            <h2>Trace Overview</h2>
+            <p id="trace-title" class="subtle">Select a trace to inspect its execution flow.</p>
+          </div>
+          <div class="legend">
+            <span class="chip completed"><span class="dot"></span>Completed</span>
+            <span class="chip progress"><span class="dot"></span>In progress</span>
+            <span class="chip errored"><span class="dot"></span>Errored</span>
+          </div>
+        </div>
+        <div id="overview" class="overview-grid"></div>
+      </section>
+
+      <section>
+        <div class="section-top">
+          <div>
+            <h2>Execution Map</h2>
+            <p class="subtle">Ordered by start time. Vertical separation reflects parent-child depth when available.</p>
+          </div>
+        </div>
+        <div class="map-shell">
+          <svg id="graph" viewBox="0 0 960 260" preserveAspectRatio="xMinYMin meet"></svg>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-top">
+          <div>
+            <h2>Timeline</h2>
+            <p class="subtle">Bars show both relative start offset and duration inside the selected trace window.</p>
+          </div>
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </section>
+    </div>
+
     <section>
-      <h2>Execution Map</h2>
-      <svg id="graph" width="100%" height="260" viewBox="0 0 720 260"></svg>
-      <h2 style="margin-top: 12px;">Timeline</h2>
-      <div id="timeline"></div>
-    </section>
-    <section>
-      <h2>State Delta</h2>
-      <pre id="delta">Click a node to inspect its state delta.</pre>
+      <div class="section-top">
+        <div>
+          <h2>Node Inspector</h2>
+          <p class="subtle">Focus on a node to see timing, lineage, and the exact state delta.</p>
+        </div>
+      </div>
+      <div id="details" class="inspector-grid">
+        <div class="empty">Select a trace and click a node to inspect its details.</div>
+      </div>
     </section>
   </main>
+
   <script>
     const traceList = document.getElementById("trace-list");
+    const overview = document.getElementById("overview");
+    const traceTitle = document.getElementById("trace-title");
     const graph = document.getElementById("graph");
     const timeline = document.getElementById("timeline");
-    const delta = document.getElementById("delta");
-    let selectedTraceId = null;
+    const details = document.getElementById("details");
+    const refreshStatus = document.getElementById("refresh-status");
+    const theme = {
+      completed: "#a1a1aa",
+      progress: "#71717a",
+      errored: "#e4e4e7",
+      graphLine: "#3f3f46",
+      graphCard: "#070707",
+      graphCardActive: "#141414",
+      graphBorder: "#3f3f46",
+      graphText: "#f5f5f5",
+      graphMuted: "#a1a1aa",
+    };
 
-    async function loadTraces() {
-      const traces = await fetch("/api/traces").then((response) => response.json());
-      renderTraces(traces);
-      if (!selectedTraceId && traces.length > 0) {
-        selectedTraceId = traces[0].trace_id;
+    let selectedTraceId = null;
+    let selectedNodeId = null;
+    let currentSnapshot = null;
+
+    function formatDateTime(ms) {
+      if (!Number.isFinite(ms)) return "n/a";
+      return new Date(ms).toLocaleString();
+    }
+
+    function formatDuration(ms) {
+      if (!Number.isFinite(ms)) return "n/a";
+      if (ms < 1000) return `${ms} ms`;
+      if (ms < 60000) return `${(ms / 1000).toFixed(2)} s`;
+      return `${(ms / 60000).toFixed(2)} min`;
+    }
+
+    function shortenId(value) {
+      return value && value.length > 20 ? `${value.slice(0, 8)}...${value.slice(-8)}` : value;
+    }
+
+    function statusTone(status) {
+      if (status === "Errored") return "errored";
+      if (status === "InProgress") return "progress";
+      return "completed";
+    }
+
+    function statusColor(status) {
+      if (status === "Errored") return theme.errored;
+      if (status === "InProgress") return theme.progress;
+      return theme.completed;
+    }
+
+    function changedKeys(node) {
+      if (!node || !node.state_delta || typeof node.state_delta !== "object" || Array.isArray(node.state_delta)) {
+        return [];
       }
-      if (selectedTraceId) {
-        await loadTrace(selectedTraceId);
+      return Object.keys(node.state_delta);
+    }
+
+    function computeTraceMeta(nodes) {
+      if (!nodes.length) {
+        return {
+          startedAt: null,
+          finishedAt: null,
+          totalDuration: 0,
+          completed: 0,
+          inProgress: 0,
+          errored: 0,
+        };
       }
+
+      let startedAt = Number.POSITIVE_INFINITY;
+      let finishedAt = 0;
+      let completed = 0;
+      let inProgress = 0;
+      let errored = 0;
+
+      nodes.forEach((node) => {
+        startedAt = Math.min(startedAt, node.started_at_ms);
+        finishedAt = Math.max(finishedAt, node.started_at_ms + (node.duration_ms || 0));
+        if (node.status === "Completed") completed += 1;
+        else if (node.status === "InProgress") inProgress += 1;
+        else if (node.status === "Errored") errored += 1;
+      });
+
+      return {
+        startedAt,
+        finishedAt,
+        totalDuration: Math.max(finishedAt - startedAt, 0),
+        completed,
+        inProgress,
+        errored,
+      };
+    }
+
+    function depthFor(nodes) {
+      const byId = new Map(nodes.map((node) => [node.span_id, node]));
+      const cache = new Map();
+
+      function visit(node) {
+        if (!node || !node.parent_span_id || !byId.has(node.parent_span_id)) return 0;
+        if (cache.has(node.span_id)) return cache.get(node.span_id);
+        const depth = visit(byId.get(node.parent_span_id)) + 1;
+        cache.set(node.span_id, depth);
+        return depth;
+      }
+
+      nodes.forEach(visit);
+      return cache;
+    }
+
+    function setRefreshStatus(label) {
+      refreshStatus.textContent = `${label} - ${new Date().toLocaleTimeString()}`;
+    }
+
+    function makeEmpty(message) {
+      const shell = document.createElement("div");
+      shell.className = "empty";
+      shell.textContent = message;
+      return shell;
     }
 
     function renderTraces(traces) {
-      traceList.innerHTML = "";
+      traceList.replaceChildren();
+      if (!traces.length) {
+        traceList.appendChild(makeEmpty("No traces have been collected yet."));
+        return;
+      }
+
       traces.forEach((trace) => {
-        const item = document.createElement("li");
-        item.innerHTML = `<strong>${trace.trace_id}</strong><div class="trace-meta">${trace.span_count} spans</div>`;
-        item.onclick = () => { selectedTraceId = trace.trace_id; loadTrace(trace.trace_id); };
-        traceList.appendChild(item);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `trace-item ${trace.trace_id === selectedTraceId ? "active" : ""}`;
+        button.onclick = () => {
+          selectedTraceId = trace.trace_id;
+          selectedNodeId = null;
+          loadTrace(trace.trace_id);
+        };
+
+        const title = document.createElement("strong");
+        title.textContent = shortenId(trace.trace_id);
+        button.appendChild(title);
+
+        const info = document.createElement("div");
+        info.className = "trace-meta";
+        info.textContent = `Latest activity ${formatDateTime(trace.latest_started_at_ms)}`;
+        button.appendChild(info);
+
+        const metaRow = document.createElement("div");
+        metaRow.className = "trace-meta-row";
+
+        const left = document.createElement("div");
+        left.className = "trace-meta";
+        left.textContent = `${trace.span_count} spans`;
+        metaRow.appendChild(left);
+
+        const right = document.createElement("div");
+        right.className = "trace-meta";
+        right.textContent = trace.trace_id === selectedTraceId ? "Selected" : "Inspect";
+        metaRow.appendChild(right);
+
+        button.appendChild(metaRow);
+        traceList.appendChild(button);
       });
     }
 
-    async function loadTrace(traceId) {
-      const snapshot = await fetch(`/api/traces/${traceId}`).then((response) => response.json());
-      renderGraph(snapshot.nodes);
-      renderTimeline(snapshot.nodes);
+    function renderOverview(snapshot) {
+      overview.replaceChildren();
+      if (!snapshot || !snapshot.nodes.length) {
+        traceTitle.textContent = "No node data available for the selected trace.";
+        overview.appendChild(makeEmpty("This trace does not contain any node snapshots."));
+        return;
+      }
+
+      const meta = computeTraceMeta(snapshot.nodes);
+      traceTitle.textContent = `Trace ${shortenId(snapshot.trace_id)} - started ${formatDateTime(meta.startedAt)}`;
+
+      const cards = [
+        { label: "Trace ID", value: shortenId(snapshot.trace_id), note: snapshot.trace_id },
+        { label: "Total Nodes", value: String(snapshot.nodes.length), note: `${meta.completed} completed, ${meta.inProgress} running, ${meta.errored} errored` },
+        { label: "Trace Window", value: formatDuration(meta.totalDuration), note: `From ${formatDateTime(meta.startedAt)}` },
+        { label: "Latest Finish", value: formatDateTime(meta.finishedAt), note: meta.inProgress ? "Some nodes are still in progress." : "All recorded nodes have finished." },
+      ];
+
+      cards.forEach((card) => {
+        const panel = document.createElement("div");
+        panel.className = "metric";
+
+        const label = document.createElement("div");
+        label.className = "metric-label";
+        label.textContent = card.label;
+        panel.appendChild(label);
+
+        const value = document.createElement("div");
+        value.className = "metric-value";
+        value.textContent = card.value;
+        panel.appendChild(value);
+
+        const note = document.createElement("div");
+        note.className = "metric-note";
+        note.textContent = card.note;
+        panel.appendChild(note);
+
+        overview.appendChild(panel);
+      });
     }
 
     function renderGraph(nodes) {
-      graph.innerHTML = "";
-      const width = 140;
-      nodes.forEach((node, index) => {
-        const x = 20 + index * 160;
-        const y = 70;
-        if (index > 0) {
-          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-          line.setAttribute("x1", String(x - 20));
-          line.setAttribute("y1", "100");
-          line.setAttribute("x2", String(x));
-          line.setAttribute("y2", "100");
-          line.setAttribute("stroke", "#9a8f80");
-          line.setAttribute("stroke-width", "2");
-          graph.appendChild(line);
-        }
-        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        rect.setAttribute("x", String(x));
-        rect.setAttribute("y", String(y));
-        rect.setAttribute("width", String(width));
-        rect.setAttribute("height", "60");
-        rect.setAttribute("rx", "16");
-        rect.setAttribute("class", `node ${node.status === "Errored" ? "err" : node.status === "InProgress" ? "warn" : ""}`);
-        rect.onclick = () => { delta.textContent = JSON.stringify(node.state_delta, null, 2); };
-        graph.appendChild(rect);
+      graph.replaceChildren();
+      if (!nodes.length) {
+        return;
+      }
 
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", String(x + 14));
-        text.setAttribute("y", "104");
-        text.setAttribute("class", "label");
-        text.textContent = node.name;
-        graph.appendChild(text);
+      const depths = depthFor(nodes);
+      const maxDepth = Math.max(...Array.from(depths.values()), 0);
+      const width = Math.max(960, 180 + (nodes.length * 170));
+      const height = 180 + (maxDepth * 96);
+      graph.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+      const positions = new Map();
+      nodes.forEach((node, index) => {
+        positions.set(node.span_id, {
+          x: 40 + (index * 170),
+          y: 42 + ((depths.get(node.span_id) || 0) * 96),
+        });
+      });
+
+      nodes.forEach((node) => {
+        const from = positions.get(node.span_id);
+        if (!node.parent_span_id || !positions.has(node.parent_span_id)) return;
+        const parent = positions.get(node.parent_span_id);
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const startX = parent.x + 138;
+        const startY = parent.y + 36;
+        const endX = from.x;
+        const endY = from.y + 36;
+        const midX = Math.max(startX + 28, (startX + endX) / 2);
+        line.setAttribute("d", `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`);
+        line.setAttribute("fill", "none");
+        line.setAttribute("stroke", theme.graphLine);
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("stroke-linecap", "round");
+        graph.appendChild(line);
+      });
+
+      nodes.forEach((node, index) => {
+        const { x, y } = positions.get(node.span_id);
+        const selected = node.span_id === selectedNodeId;
+        const color = statusColor(node.status);
+
+        const card = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        card.setAttribute("x", String(x));
+        card.setAttribute("y", String(y));
+        card.setAttribute("width", "138");
+        card.setAttribute("height", "72");
+        card.setAttribute("rx", "18");
+        card.setAttribute("fill", selected ? theme.graphCardActive : theme.graphCard);
+        card.setAttribute("stroke", selected ? color : theme.graphBorder);
+        card.setAttribute("stroke-width", selected ? "2.5" : "1.5");
+        card.style.cursor = "pointer";
+        card.onclick = () => selectNode(node.span_id);
+        graph.appendChild(card);
+
+        const order = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        order.setAttribute("x", String(x + 12));
+        order.setAttribute("y", String(y + 18));
+        order.setAttribute("fill", theme.graphMuted);
+        order.setAttribute("font-size", "11");
+        order.textContent = `#${index + 1}`;
+        graph.appendChild(order);
+
+        const name = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        name.setAttribute("x", String(x + 12));
+        name.setAttribute("y", String(y + 36));
+        name.setAttribute("fill", theme.graphText);
+        name.setAttribute("font-size", "13");
+        name.setAttribute("font-weight", "700");
+        name.textContent = node.name.length > 16 ? `${node.name.slice(0, 15)}...` : node.name;
+        graph.appendChild(name);
+
+        const duration = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        duration.setAttribute("x", String(x + 12));
+        duration.setAttribute("y", String(y + 57));
+        duration.setAttribute("fill", color);
+        duration.setAttribute("font-size", "11");
+        duration.textContent = `${node.status} - ${formatDuration(node.duration_ms)}`;
+        graph.appendChild(duration);
       });
     }
 
-    function renderTimeline(nodes) {
-      timeline.innerHTML = "";
-      const maxDuration = Math.max(...nodes.map((node) => node.duration_ms || 1), 1);
-      nodes.forEach((node) => {
+    function renderTimeline(snapshot) {
+      timeline.replaceChildren();
+      if (!snapshot || !snapshot.nodes.length) {
+        timeline.appendChild(makeEmpty("No timing data available."));
+        return;
+      }
+
+      const meta = computeTraceMeta(snapshot.nodes);
+      const totalWindow = Math.max(meta.totalDuration, 1);
+
+      snapshot.nodes.forEach((node) => {
         const row = document.createElement("div");
-        row.className = "timeline-row";
-        row.innerHTML = `
-          <div><strong>${node.name}</strong><div class="trace-meta">${node.duration_ms} ms</div></div>
-          <div class="timeline-bar"><div class="timeline-fill" style="width:${Math.max((node.duration_ms / maxDuration) * 100, 6)}%"></div></div>
-        `;
-        row.onclick = () => { delta.textContent = JSON.stringify(node.state_delta, null, 2); };
+        row.className = `timeline-row ${node.span_id === selectedNodeId ? "active" : ""}`;
+        row.onclick = () => selectNode(node.span_id);
+
+        const label = document.createElement("div");
+        label.className = "timeline-label";
+
+        const title = document.createElement("strong");
+        title.textContent = node.name;
+        label.appendChild(title);
+
+        const metaRow = document.createElement("div");
+        metaRow.className = "timeline-label-meta";
+        const offset = Math.max(node.started_at_ms - meta.startedAt, 0);
+        const changes = changedKeys(node).length;
+        ["Starts +" + formatDuration(offset), formatDuration(node.duration_ms), `${changes} changed keys`, node.status].forEach((item) => {
+          const span = document.createElement("span");
+          span.textContent = item;
+          metaRow.appendChild(span);
+        });
+        label.appendChild(metaRow);
+
+        const track = document.createElement("div");
+        track.className = "timeline-track";
+
+        const span = document.createElement("div");
+        span.className = "timeline-span";
+        span.style.background = statusColor(node.status);
+        span.style.left = `${(offset / totalWindow) * 100}%`;
+        span.style.width = `${Math.max((Math.max(node.duration_ms, 1) / totalWindow) * 100, 1.2)}%`;
+        track.appendChild(span);
+
+        row.appendChild(label);
+        row.appendChild(track);
         timeline.appendChild(row);
       });
+    }
+
+    function renderDetails(snapshot, node) {
+      details.replaceChildren();
+      if (!snapshot || !snapshot.nodes.length) {
+        details.appendChild(makeEmpty("Select a trace to inspect node details."));
+        return;
+      }
+      if (!node) {
+        details.appendChild(makeEmpty("Click any node in the execution map or timeline."));
+        return;
+      }
+
+      const summary = document.createElement("div");
+      summary.className = "detail-card";
+
+      const heading = document.createElement("h3");
+      heading.textContent = node.name;
+      summary.appendChild(heading);
+
+      const chips = document.createElement("div");
+      chips.className = "key-list";
+      const status = document.createElement("span");
+      status.className = `chip ${statusTone(node.status)}`;
+      status.textContent = node.status;
+      chips.appendChild(status);
+      summary.appendChild(chips);
+
+      const meta = document.createElement("div");
+      meta.className = "detail-meta";
+      [
+        ["Span ID", shortenId(node.span_id)],
+        ["Parent", node.parent_span_id ? shortenId(node.parent_span_id) : "root"],
+        ["Started", formatDateTime(node.started_at_ms)],
+        ["Duration", formatDuration(node.duration_ms)],
+        ["Changed Keys", String(changedKeys(node).length)],
+      ].forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        const left = document.createElement("span");
+        left.textContent = label;
+        const right = document.createElement("span");
+        right.textContent = value;
+        row.appendChild(left);
+        row.appendChild(right);
+        meta.appendChild(row);
+      });
+      summary.appendChild(meta);
+
+      const keysCard = document.createElement("div");
+      keysCard.className = "detail-card";
+      const keyTitle = document.createElement("h3");
+      keyTitle.textContent = "Changed Keys";
+      keysCard.appendChild(keyTitle);
+      const keys = changedKeys(node);
+      if (!keys.length) {
+        const none = document.createElement("p");
+        none.className = "subtle";
+        none.textContent = "No structured state delta was captured for this node.";
+        keysCard.appendChild(none);
+      } else {
+        const list = document.createElement("div");
+        list.className = "key-list";
+        keys.forEach((key) => {
+          const pill = document.createElement("span");
+          pill.className = "key-pill";
+          pill.textContent = key;
+          list.appendChild(pill);
+        });
+        keysCard.appendChild(list);
+      }
+
+      const deltaCard = document.createElement("div");
+      deltaCard.className = "detail-card";
+      const deltaTitle = document.createElement("h3");
+      deltaTitle.textContent = "State Delta";
+      deltaCard.appendChild(deltaTitle);
+      const pre = document.createElement("pre");
+      pre.textContent = JSON.stringify(node.state_delta, null, 2);
+      deltaCard.appendChild(pre);
+
+      details.appendChild(summary);
+      details.appendChild(keysCard);
+      details.appendChild(deltaCard);
+    }
+
+    function selectNode(spanId) {
+      selectedNodeId = spanId;
+      if (!currentSnapshot) return;
+      const node = currentSnapshot.nodes.find((item) => item.span_id === spanId) || null;
+      renderGraph(currentSnapshot.nodes);
+      renderTimeline(currentSnapshot);
+      renderDetails(currentSnapshot, node);
+    }
+
+    async function loadTrace(traceId) {
+      const response = await fetch(`/api/traces/${traceId}`);
+      if (!response.ok) throw new Error(`Trace ${traceId} could not be loaded.`);
+      const snapshot = await response.json();
+      currentSnapshot = snapshot;
+      if (!selectedNodeId || !snapshot.nodes.some((node) => node.span_id === selectedNodeId)) {
+        selectedNodeId = snapshot.nodes[0] ? snapshot.nodes[0].span_id : null;
+      }
+      renderOverview(snapshot);
+      renderGraph(snapshot.nodes);
+      renderTimeline(snapshot);
+      renderDetails(snapshot, snapshot.nodes.find((node) => node.span_id === selectedNodeId) || null);
+    }
+
+    async function loadTraces() {
+      try {
+        const response = await fetch("/api/traces");
+        if (!response.ok) throw new Error("Trace list request failed.");
+        const traces = await response.json();
+        renderTraces(traces);
+
+        if (!selectedTraceId && traces.length) {
+          selectedTraceId = traces[0].trace_id;
+        }
+
+        if (selectedTraceId) {
+          await loadTrace(selectedTraceId);
+        } else {
+          overview.replaceChildren(makeEmpty("No traces collected yet."));
+          timeline.replaceChildren(makeEmpty("No timing data available."));
+          details.replaceChildren(makeEmpty("No node details available yet."));
+          graph.replaceChildren();
+          traceTitle.textContent = "Select a trace to inspect its execution flow.";
+        }
+
+        setRefreshStatus("Live");
+      } catch (error) {
+        setRefreshStatus("Refresh failed");
+        details.replaceChildren(makeEmpty(error.message));
+      }
     }
 
     loadTraces();

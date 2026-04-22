@@ -1,176 +1,43 @@
 # or-mcp API Reference
 
-This page documents the main public surface re-exported by `or-mcp/src/lib.rs` and the key entry points behind those re-exports. 
-### `NexusClient`
-| Property | Value |
-|---|---|
-| **Kind** | struct |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/application/client.rs |
-| **Status** | 🟡 |
+This page documents the main public surface re-exported by `crates/or-mcp/src/lib.rs`.
 
-**Description**: Transport-parameterized MCP client with HTTP and stdio constructors.
+## Core Runtime
 
-**Signature**
+- `NexusClient<T: McpTransport>`: transport-parameterized MCP client with HTTP and stdio constructors.
+- `NexusServer<T: McpTransport>`: transport-driven MCP server runtime for tool registration and request handling.
+- `NexusClientTrait`: transport-agnostic client contract.
+- `NexusServerTrait`: transport-agnostic server contract.
+- `McpTransport`: abstract send/receive transport used by the client and server runtimes.
+- `StreamableHttpTransport`: reqwest-backed transport for MCP over streamable HTTP, including optional bearer-token support through `with_bearer_token(...)`.
+- `StdioTransport`: subprocess-backed stdio transport for local MCP hosts.
+- `JsonRpcOrchestrator`: wrapper around JSON-RPC encoding and decoding helpers.
+
+## Additive Multi-Server Surface
+
+- `McpServerTransport`: typed configuration enum for HTTP or stdio MCP servers.
+- `McpServerConfig`: connection settings consumed by `MultiMcpClient`.
+- `DiscoveredMcpTool`: resolved MCP tool plus server metadata and collision-safe registered name.
+- `MultiMcpClient`: additive multi-server builder.
+- `MultiMcpSession`: merged session returned by `MultiMcpClient::connect_all`.
+
+Key methods:
+
 ```rust
-pub struct NexusClient<T: McpTransport> { ... }
+pub fn new() -> Self
+pub fn add_server(self, config: McpServerConfig) -> Self
+pub async fn connect_all(self) -> Result<MultiMcpSession, McpError>
+pub fn tools(&self) -> &[DiscoveredMcpTool]
+pub async fn invoke(&self, registered_name: &str, args: serde_json::Value) -> Result<serde_json::Value, McpError>
 ```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
 
-### `NexusServer`
-| Property | Value |
-|---|---|
-| **Kind** | struct |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/application/server.rs |
-| **Status** | 🟡 |
+## Presets and Entities
 
-**Description**: Transport-driven MCP server runtime for tool registration and request handling.
+- `known_servers::known::*`: curated MCP server presets for filesystem, Brave Search, GitHub, Slack, and Postgres.
+- `McpTool`, `McpTask`, `ServerCard`: primary MCP domain entities exposed by the crate.
+- `McpError`: protocol, transport, auth, task, and tool-execution error type.
 
-**Signature**
-```rust
-pub struct NexusServer<T: McpTransport> { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
+## Known Gaps & Limitations
 
-### `NexusClientTrait`
-| Property | Value |
-|---|---|
-| **Kind** | trait |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/domain/contracts.rs |
-| **Status** | 🟡 |
-
-**Description**: Transport-agnostic client contract for sending requests and invoking tools.
-
-**Signature**
-```rust
-pub trait NexusClientTrait: Send + Sync + 'static
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `NexusServerTrait`
-| Property | Value |
-|---|---|
-| **Kind** | trait |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/domain/contracts.rs |
-| **Status** | 🟡 |
-
-**Description**: Transport-agnostic server contract for registering tools and serving.
-
-**Signature**
-```rust
-pub trait NexusServerTrait: Send + Sync + 'static
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `McpTransport`
-| Property | Value |
-|---|---|
-| **Kind** | trait |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/domain/contracts.rs |
-| **Status** | 🟡 |
-
-**Description**: Abstract send/receive transport used by client and server runtimes.
-
-**Signature**
-```rust
-pub trait McpTransport: Send + Sync + 'static
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `StreamableHttpTransport`
-| Property | Value |
-|---|---|
-| **Kind** | struct |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/infra/http_transport.rs |
-| **Status** | 🟡 |
-
-**Description**: Reqwest-backed transport for MCP over streamable HTTP.
-
-**Signature**
-```rust
-pub struct StreamableHttpTransport { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `StdioTransport`
-| Property | Value |
-|---|---|
-| **Kind** | struct |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/infra/stdio_transport.rs |
-| **Status** | 🟡 |
-
-**Description**: Subprocess-backed stdio transport for local MCP hosts.
-
-**Signature**
-```rust
-pub struct StdioTransport { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `JsonRpcOrchestrator`
-| Property | Value |
-|---|---|
-| **Kind** | struct |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/application/orchestrators.rs |
-| **Status** | 🟡 |
-
-**Description**: Small wrapper around JSON-RPC encoding and decoding helpers.
-
-**Signature**
-```rust
-pub struct JsonRpcOrchestrator;
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `McpTool / McpTask / ServerCard`
-| Property | Value |
-|---|---|
-| **Kind** | structs |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/domain/entities.rs |
-| **Status** | 🟡 |
-
-**Description**: Primary MCP domain entities exposed by the crate.
-
-**Signature**
-```rust
-pub struct McpTool { ... }; pub struct McpTask { ... }; pub struct ServerCard { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-### `McpError`
-| Property | Value |
-|---|---|
-| **Kind** | enum |
-| **Visibility** | pub |
-| **File** | crates/or-mcp/src/domain/errors.rs |
-| **Status** | 🟡 |
-
-**Description**: Error type for protocol, transport, auth, task, and tool-execution failures.
-
-**Signature**
-```rust
-pub enum McpError { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
-⚠️ Known Gaps & Limitations
 - The server runtime is transport-driven and does not yet expose its own standalone HTTP listener.
-- OAuth token issuance or full auth flows are not implemented inside this crate.
+- `or-mcp` intentionally stops at merged discovery and invocation; adapting merged tools into `ForgeRegistry` happens in `or-forge`.

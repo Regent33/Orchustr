@@ -1,6 +1,6 @@
 # API Reference Matrix
 
-This matrix focuses on the user-facing surfaces that changed or became newly important across Phases 1-4. It is intentionally narrower than a full workspace dump so it can stay accurate.
+This matrix focuses on the user-facing surfaces that changed or became newly important across Phases 1-6. It is intentionally narrower than a full workspace dump so it can stay accurate.
 
 ## Availability Legend
 
@@ -39,8 +39,19 @@ This matrix focuses on the user-facing surfaces that changed or became newly imp
 | `init_with_dashboard` | Native (`or-prism`, feature=`lens`) | Not exposed | Not exposed | Starts the local `or-lens` dashboard and installs a trace mirroring layer. |
 | `or-lens` dashboard | Native (`or-lens`, feature=`dashboard`) | Not exposed | Not exposed | Current implementation is an in-process Axum dashboard backed by `LensLayer` and `SpanCollector`. |
 
+## MCP and CLI Surfaces
+
+| Surface | Rust | Python | TypeScript | Notes |
+|---|---|---|---|---|
+| `ForgeRegistry::import_all_from_mcp` | Native (`or-forge`) | Not exposed | Not exposed | Imports every tool exposed by one HTTP MCP server and returns `ImportSummary`. |
+| `ForgeRegistry::import_all_from_multi_mcp` | Native (`or-forge`) | Not exposed | Not exposed | Bridges `or-mcp::MultiMcpClient` into `ForgeRegistry` without creating a crate cycle. |
+| `MultiMcpClient` / `MultiMcpSession` | Native (`or-mcp`) | Not exposed | Not exposed | Connects to multiple MCP servers concurrently and prefixes duplicate tool names by server name. |
+| `known_servers::*` | Native (`or-mcp`) | Not exposed | Not exposed | Curated typed presets for filesystem, Brave Search, GitHub, Slack, and Postgres MCP servers. |
+| `orchustr` CLI | Native binary (`or-cli`) | Not exposed | Not exposed | Supports `init`, `lint`, `run`, `trace`, `new node`, and `new topology`. |
+
 ## Notes
 
 - Python and TypeScript now have stronger offline graph-authoring parity than before, but they still do not mirror every Rust type one-for-one.
 - `or-schema` and `NodeRegistry` are intentionally Rust-first right now so graph descriptors can compile against registered Rust handlers safely.
 - The current local dashboard path is in-process rather than a standalone OTLP receiver service.
+- `or-cli::run_project` currently validates and hands parsed config to a runner implementation; the default runner is intentionally a no-op scaffold hook.

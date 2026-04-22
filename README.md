@@ -15,11 +15,15 @@
 </div>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Rust-1.87+-blue?style=flat-square&logo=rust" alt="Rust Version" />
-  <img src="https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python" alt="Python Supported" />
-  <img src="https://img.shields.io/badge/TypeScript-Node_20+-blue?style=flat-square&logo=typescript" alt="TS Supported" />
-  <img src="https://img.shields.io/badge/Dart-3.0+-blue?style=flat-square&logo=dart" alt="Dart Supported" />
-  <img src="https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-green?style=flat-square" alt="License" />
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=Rust%20CI" alt="Rust CI" /></a>
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=Python%20Bindings" alt="Python Bindings CI" /></a>
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=TypeScript%20Bindings" alt="TypeScript Bindings CI" /></a>
+  <a href="https://github.com/Cether144/Orchustr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Cether144/Orchustr/ci.yml?branch=main&label=Dart%20Bindings" alt="Dart Bindings CI" /></a>
+  <img src="https://img.shields.io/badge/Rust-1.87+-5a5a5a?style=flat-square&logo=rust" alt="Rust Version" />
+  <img src="https://img.shields.io/badge/Python-3.10+-5a5a5a?style=flat-square&logo=python" alt="Python Supported" />
+  <img src="https://img.shields.io/badge/TypeScript-Node_20+-5a5a5a?style=flat-square&logo=typescript" alt="TS Supported" />
+  <img src="https://img.shields.io/badge/Dart-3.0+-5a5a5a?style=flat-square&logo=dart" alt="Dart Supported" />
+  <img src="https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-4b5563?style=flat-square" alt="License" />
 </p>
 
 ## What is Orchustr?
@@ -31,14 +35,18 @@ The current workspace includes:
 - Pluggable Sentinel loops through `LoopTopology` and `SentinelAgentBuilder`, while preserving the legacy `SentinelAgent::new(...)` path unchanged.
 - Serializable graph definitions through `or-schema::GraphSpec` plus `or-loom::NodeRegistry` for compiling named handlers into live graphs.
 - A local execution dashboard through `or-lens` and `or-prism`'s optional `lens` feature for in-process trace inspection.
+- MCP auto-discovery through `or-forge::ImportSummary`, `ForgeRegistry::import_all_from_mcp`, and `or-mcp::MultiMcpClient`.
+- A new `orchustr` CLI for project scaffolding, graph linting, local trace bootstrapping, and node/topology stubs.
 - Cross-language bindings for Python, TypeScript, and Dart, with Python and TypeScript now exposing additive `DynState`, `NodeResult`, and graph builder helpers.
 
 ## Why Teams Reach for It
 
 - Predictable state flow: graph and agent boundaries are explicit instead of implicit.
 - Async by default: Tokio-backed runtimes handle tool calls, branching, and orchestration efficiently.
+- MCP-native integration strategy: multiple MCP servers can be merged without introducing a crate cycle.
 - Binding-friendly: Python and TypeScript can author graphs and workflows without needing to mirror every Rust type directly.
 - Local visibility: observability is not limited to third-party telemetry backends anymore.
+- Faster starts: `orchustr init` and `orchustr lint` reduce the amount of repo knowledge needed to boot a new agent.
 
 ## Quick Links
 
@@ -46,6 +54,7 @@ The current workspace includes:
 - [Quickstart Guide](docs/QUICKSTART.md)
 - [Architectural Overview](docs/ARCHITECTURE.md)
 - [Crate Reference Map](docs/reference/crate-index.md)
+- [CLI Surface](docs/crates/or-cli/README.md)
 - [LangChain / LangGraph Comparison](docs/langchain-comparison.md)
 - [Example GraphSpec YAML](docs/examples/simple-react-agent.yaml)
 
