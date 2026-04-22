@@ -11,3 +11,4 @@
 /bindings/typescript/native
 Cargo.lock
 .DS_Store
+.claude/

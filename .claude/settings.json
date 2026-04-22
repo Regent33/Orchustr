@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(or-tools\")",
-      "Bash(grep -v \"^warning: `or-tools\")",
-      "Bash(findstr /R \"^warning: ^error:\")"
-    ]
-  }
-}
