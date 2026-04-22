@@ -1,9 +1,26 @@
+from ._runtime import (
+    PyColonyBuilder,
+    PyConduitProvider,
+    PyDynState,
+    PyExecutionGraph,
+    PyForgeRegistry,
+    PyGraphBuilder,
+    PyNodeResult,
+    PyPipeline,
+    PyPipelineBuilder,
+    PyPromptBuilder,
+    PyPromptTemplate,
+    PyRelayBuilder,
+    PyRelayPlan,
+)
 from .bridge import CrateBinding, RustCrateBridge
-from .conduit import AnthropicConduit, OpenAiCompatConduit, OpenAiConduit
+from .conduit import AnthropicConduit, ConduitProvider, OpenAiCompatConduit, OpenAiConduit
 from .forge import ForgeRegistry
 from .graph import GraphBuilder
 from .mcp import NexusClient
 from .prompt import PromptBuilder
+from .result import NodeResult
+from .state import DynState
 from .tools import (
     CommsTools,
     ExecTools,
@@ -17,6 +34,7 @@ from .tools import (
 from .workflows import (
     CheckpointGate,
     CheckpointRecord,
+    ColonyBuilder,
     ColonyMember,
     ColonyMessage,
     ColonyOrchestrator,
@@ -45,20 +63,24 @@ __all__ = [
     "AnthropicConduit",
     "CheckpointGate",
     "CheckpointRecord",
+    "ColonyBuilder",
     "ColonyMember",
     "ColonyMessage",
     "ColonyOrchestrator",
     "ColonyResult",
     "CommsTools",
     "CompassRouterBuilder",
+    "ConduitProvider",
     "CoreOrchestrator",
     "CrateBinding",
+    "DynState",
     "ExecTools",
     "FileTools",
     "ForgeRegistry",
     "GraphBuilder",
     "LoaderTools",
     "NexusClient",
+    "NodeResult",
     "OpenAiCompatConduit",
     "OpenAiConduit",
     "PipelineBuilder",
@@ -66,6 +88,19 @@ __all__ = [
     "PrismConfig",
     "PromptBuilder",
     "ProductivityTools",
+    "PyColonyBuilder",
+    "PyConduitProvider",
+    "PyDynState",
+    "PyExecutionGraph",
+    "PyForgeRegistry",
+    "PyGraphBuilder",
+    "PyNodeResult",
+    "PyPipeline",
+    "PyPipelineBuilder",
+    "PyPromptBuilder",
+    "PyPromptTemplate",
+    "PyRelayBuilder",
+    "PyRelayPlan",
     "RecallEntry",
     "RecallOrchestrator",
     "RecallStore",

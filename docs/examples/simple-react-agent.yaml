@@ -1,0 +1,25 @@
+name: simple-react-agent
+version: "0.1.0"
+entry: think
+exits:
+  - done
+nodes:
+  - id: think
+    handler: "my_agent::nodes::think_node"
+    metadata: {}
+  - id: act
+    handler: "my_agent::nodes::act_node"
+    metadata: {}
+  - id: done
+    handler: "my_agent::nodes::done_node"
+    metadata: {}
+edges:
+  - from: think
+    to: act
+    condition: null
+  - from: act
+    to: done
+    condition: null
+  - from: act
+    to: think
+    condition: "my_agent::conditions::needs_more_info"

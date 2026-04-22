@@ -24,4 +24,4 @@ mod dart;
 #[cfg(feature = "node")]
 mod node;
 #[cfg(feature = "python")]
-mod python;
+pub mod python;

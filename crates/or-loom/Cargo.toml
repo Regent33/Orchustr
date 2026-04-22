@@ -7,8 +7,14 @@ name = "or-loom"
 rust-version.workspace = true
 version.workspace = true
 
+[features]
+default = []
+serde = ["dep:or-schema"]
+yaml = ["serde", "or-schema/yaml"]
+
 [dependencies]
 or-core = { path = "../or-core", version = "0.1.2" }
+or-schema = { path = "../or-schema", version = "0.1.2", optional = true }
 serde.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

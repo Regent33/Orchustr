@@ -4,6 +4,59 @@ function sanitize(value) {
     .join("");
 }
 
+function isPromiseLike(value) {
+  return value !== null && typeof value === "object" && typeof value.then === "function";
+}
+
+async function maybeAwait(value) {
+  return isPromiseLike(value) ? await value : value;
+}
+
+export class DynState {
+  constructor(initial = {}) {
+    Object.assign(this, initial);
+  }
+
+  toObject() {
+    return { ...this };
+  }
+}
+
+export class NodeResult {
+  constructor(state, kind, next = null, checkpointId = null) {
+    this.state = state instanceof DynState ? new DynState(state) : new DynState(state ?? {});
+    this.kind = kind;
+    this.next = next;
+    this.checkpointId = checkpointId;
+  }
+
+  static advance(state) {
+    return new NodeResult(state, "advance");
+  }
+
+  static exit(state) {
+    return new NodeResult(state, "exit");
+  }
+
+  static branch(state, next) {
+    return new NodeResult(state, "branch", next);
+  }
+
+  static pause(checkpointId, state) {
+    return new NodeResult(state, "pause", null, checkpointId);
+  }
+}
+
+function coerceState(state) {
+  return state instanceof DynState ? new DynState(state) : new DynState(state ?? {});
+}
+
+function coerceNodeResult(result, current, exit) {
+  if (result instanceof NodeResult) return result;
+  const state = coerceState(result);
+  return current === exit ? NodeResult.exit(state) : NodeResult.advance(state);
+}
+
 export class PromptBuilder {
   constructor() {
     this._template = null;
@@ -43,9 +96,17 @@ export class GraphBuilder {
     return this;
   }
 
+  add_node(name, handler) {
+    return this.addNode(name, handler);
+  }
+
   addEdge(source, target) {
     this.edges.set(source, [...(this.edges.get(source) ?? []), target]);
     return this;
+  }
+
+  add_edge(source, target) {
+    return this.addEdge(source, target);
   }
 
   setEntry(name) {
@@ -53,9 +114,17 @@ export class GraphBuilder {
     return this;
   }
 
+  set_entry(name) {
+    return this.setEntry(name);
+  }
+
   setExit(name) {
     this.exit = name;
     return this;
+  }
+
+  set_exit(name) {
+    return this.setExit(name);
   }
 
   build() {
@@ -66,11 +135,27 @@ export class GraphBuilder {
     if (!entry || !exit) throw new Error("graph requires entry and exit nodes");
     return {
       async execute(initialState) {
+        return this.invoke(initialState);
+      },
+      async invoke(initialState) {
         let current = entry;
-        let state = { ...initialState };
+        let state = coerceState(initialState);
         for (let index = 0; index < 1024; index += 1) {
-          state = { ...(await nodes.get(current)({ ...state })) };
-          if (current === exit) return state;
+          const handler = nodes.get(current);
+          if (!handler) throw new Error(`unknown node: ${current}`);
+          const raw = await maybeAwait(handler(coerceState(state)));
+          const result = coerceNodeResult(raw, current, exit);
+          state = coerceState(result.state);
+          if (result.kind === "exit") return state;
+          if (result.kind === "advance" && current === exit) return state;
+          if (result.kind === "pause") {
+            throw new Error(`graph paused at checkpoint ${result.checkpointId ?? "<unknown>"}`);
+          }
+          if (result.kind === "branch") {
+            if (!result.next) throw new Error(`node ${current} returned branch without a next node`);
+            current = result.next;
+            continue;
+          }
           const targets = edges.get(current) ?? [];
           if (targets.length !== 1) throw new Error(`node ${current} requires one edge`);
           current = targets[0];
@@ -78,6 +163,21 @@ export class GraphBuilder {
         throw new Error("graph exceeded execution limit");
       },
     };
+  }
+}
+
+export class ConduitProvider {
+  async completeText(_prompt) {
+    throw new Error("completeText must be implemented by a conduit provider");
+  }
+
+  async completeMessages(_messages) {
+    throw new Error("completeMessages must be implemented by a conduit provider");
+  }
+
+  async *streamText(prompt) {
+    const response = await this.completeText(prompt);
+    yield response.text;
   }
 }
 
@@ -164,12 +264,13 @@ function _extractText(body) {
 
 // ── Real LLM conduit implementations (Bugs 9-10 fix) ───────────────
 
-export class OpenAiConduit {
+export class OpenAiConduit extends ConduitProvider {
   static fromEnv() {
     return new OpenAiConduit(process.env.OPENAI_API_KEY, process.env.OPENAI_MODEL);
   }
 
   constructor(apiKey, model) {
+    super();
     this.apiKey = apiKey;
     this.model = model;
     // Uses the OpenAI Responses API (not Chat Completions).
@@ -214,7 +315,7 @@ export class OpenAiConduit {
   }
 }
 
-export class AnthropicConduit {
+export class AnthropicConduit extends ConduitProvider {
   static fromEnv() {
     return new AnthropicConduit(
       process.env.ANTHROPIC_API_KEY,
@@ -223,6 +324,7 @@ export class AnthropicConduit {
   }
 
   constructor(apiKey, model) {
+    super();
     this.apiKey = apiKey;
     this.model = model;
     this.endpoint = "https://api.anthropic.com/v1/messages";
@@ -284,8 +386,9 @@ const _OPENAI_COMPAT_ENDPOINTS = {
  * Use the static factory methods (openrouter, groq, together, fireworks, deepseek,
  * mistral, xai, nvidia, ollama) or pass a custom endpoint directly.
  */
-export class OpenAiCompatConduit {
+export class OpenAiCompatConduit extends ConduitProvider {
   constructor(apiKey, model, endpoint) {
+    super();
     this.apiKey = apiKey;
     this.model = model;
     this.endpoint = endpoint;
@@ -347,6 +450,7 @@ export {
 } from "./tools.js";
 export {
   CheckpointGate,
+  ColonyBuilder,
   ColonyOrchestrator,
   CompassRouterBuilder,
   CoreOrchestrator,

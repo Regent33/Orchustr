@@ -1,0 +1,17 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+name = "or-schema"
+rust-version.workspace = true
+version.workspace = true
+
+[features]
+default = []
+yaml = ["dep:serde_yaml"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml = { version = "0.9.34", optional = true }

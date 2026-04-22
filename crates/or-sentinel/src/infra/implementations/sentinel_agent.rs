@@ -1,17 +1,15 @@
 use crate::domain::contracts::SentinelAgentTrait;
 use crate::domain::entities::{SentinelConfig, StepOutcome};
 use crate::domain::errors::SentinelError;
-use crate::infra::adapters::parsing::{ModelDecision, approx_prompt_tokens, parse_decision};
 use crate::infra::adapters::state::{
-    append_tool_observation, clear_internal_state, config_from_state, last_tool_call,
-    messages_from_state, pending_tool_call, prepare_step_state, set_final_answer,
-    set_last_tool_call, set_pending_tool_call, take_final_answer,
+    clear_internal_state, last_tool_call, prepare_step_state, take_final_answer,
 };
-use crate::infra::implementations::support::{invoke_with_retry, node_error};
+use crate::topologies::{ReActTopology, bind_react};
+use crate::topology::LoopTopology;
 use or_conduit::ConduitProvider;
-use or_core::{CoreOrchestrator, DynState, RetryPolicy, TokenBudget};
+use or_core::{DynState, RetryPolicy, TokenBudget};
 use or_forge::ForgeRegistry;
-use or_loom::{ExecutionGraph, GraphBuilder, NodeResult};
+use or_loom::{ExecutionGraph, GraphInspection};
 
 #[derive(Clone)]
 pub struct SentinelAgent<P> {
@@ -25,83 +23,36 @@ where
     P: ConduitProvider + Clone + Send + Sync + 'static,
 {
     pub fn new(provider: P, registry: ForgeRegistry) -> Result<Self, SentinelError> {
-        let graph = GraphBuilder::new()
-            .add_node("think", {
-                let provider = provider.clone();
-                move |state: DynState| {
-                    let provider = provider.clone();
-                    async move {
-                        let messages = messages_from_state(&state)
-                            .map_err(|error| node_error("think", error))?;
-                        let config = config_from_state(&state)
-                            .map_err(|error| node_error("think", error))?;
-                        CoreOrchestrator::new()
-                            .enforce_completion_budget(
-                                &config.step_budget,
-                                approx_prompt_tokens(&messages),
-                            )
-                            .map_err(|error| {
-                                node_error("think", SentinelError::Core(error.to_string()))
-                            })?;
-                        let response =
-                            provider
-                                .complete_messages(messages)
-                                .await
-                                .map_err(|error| {
-                                    node_error("think", SentinelError::Conduit(error.to_string()))
-                                })?;
-                        let mut next = state.clone();
-                        match parse_decision(&response.text)
-                            .map_err(|error| node_error("think", error))?
-                        {
-                            ModelDecision::ToolCall { tool_name, args } => {
-                                set_pending_tool_call(&mut next, tool_name, args);
-                                NodeResult::branch(next, "act")
-                            }
-                            ModelDecision::FinalAnswer { answer } => {
-                                set_final_answer(&mut next, answer);
-                                NodeResult::branch(next, "exit")
-                            }
-                        }
-                    }
-                }
-            })
-            .add_node("act", {
-                let registry = registry.clone();
-                move |state: DynState| {
-                    let registry = registry.clone();
-                    async move {
-                        let config =
-                            config_from_state(&state).map_err(|error| node_error("act", error))?;
-                        let (tool_name, args) =
-                            pending_tool_call(&state).map_err(|error| node_error("act", error))?;
-                        let tool_result =
-                            invoke_with_retry(&registry, &tool_name, args.clone(), &config)
-                                .await
-                                .map_err(|error| node_error("act", error))?;
-                        let mut next = state.clone();
-                        append_tool_observation(&mut next, &tool_result)
-                            .map_err(|error| node_error("act", error))?;
-                        set_last_tool_call(&mut next, tool_name, args);
-                        NodeResult::branch(next, "exit")
-                    }
-                }
-            })
-            .add_node("exit", |state: DynState| async move {
-                NodeResult::advance(state)
-            })
-            .add_edge("think", "act")
-            .add_edge("think", "exit")
-            .add_edge("act", "exit")
-            .set_entry("think")
-            .set_exit("exit")
-            .build()
-            .map_err(|error| SentinelError::Loom(error.to_string()))?;
-        Ok(Self {
+        let graph = bind_react(
+            ReActTopology::default().build(),
+            provider.clone(),
+            registry.clone(),
+        )
+        .build()
+        .map_err(|error| SentinelError::Loom(error.to_string()))?;
+        Ok(Self::from_graph(graph, provider, registry))
+    }
+
+    pub(crate) fn from_graph(
+        graph: ExecutionGraph<DynState>,
+        provider: P,
+        registry: ForgeRegistry,
+    ) -> Self {
+        Self {
             graph,
             _provider: provider,
             _registry: registry,
-        })
+        }
+    }
+
+    /// Returns a structural snapshot of the internal `or-loom` graph.
+    ///
+    /// This additive helper lives in `or-sentinel` so callers can compare the
+    /// legacy constructor and builder-backed topologies without reaching into
+    /// private graph internals.
+    #[must_use]
+    pub fn graph_inspection(&self) -> GraphInspection {
+        self.graph.inspect()
     }
 
     pub(crate) async fn step_once(

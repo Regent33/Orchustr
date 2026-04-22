@@ -1,5 +1,7 @@
 import {
+  DynState,
   GraphBuilder,
+  NodeResult,
   PipelineBuilder,
   PromptBuilder,
   RustCrateBridge,
@@ -9,18 +11,21 @@ const template = new PromptBuilder().template("Hello {{name}}").build();
 const rendered: string = template.render({ name: "Ralph" });
 
 const graph = new GraphBuilder<Record<string, string>>()
-  .addNode("start", async (state) => ({ ...state, text: rendered }))
-  .addNode("finish", async (state) => ({ ...state, done: state.text.toUpperCase() }))
-  .addEdge("start", "finish")
-  .setEntry("start")
-  .setExit("finish")
+  .add_node("start", async (state) => NodeResult.advance({ ...state, text: rendered }))
+  .add_node("finish", async (state) => {
+    const current = state as Record<string, string>;
+    return NodeResult.exit({ ...current, done: current.text.toUpperCase() });
+  })
+  .add_edge("start", "finish")
+  .set_entry("start")
+  .set_exit("finish")
   .build();
 
-void graph.execute({});
+void graph.invoke(new DynState({}));
 
 const pipeline = new PipelineBuilder<Record<string, string>>()
-  .addNode("one", async (state) => ({ ...state, a: "1" }))
+  .add_node("one", async (state) => ({ ...state, a: "1" }))
   .build();
 
-void pipeline.execute({});
+void pipeline.invoke({});
 void RustCrateBridge.catalog();

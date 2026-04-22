@@ -5,19 +5,21 @@
 | `or-core` | Shared contracts, retry, token budgets, in-memory persistence/vector store. | `(none)` | DynState, OrchState, CoreOrchestrator, RetryPolicy | Complete |
 | `or-anchor` | Chunking and in-memory retrieval pipeline. | or-core | AnchorPipeline, AnchorChunk, RetrievedChunk | Complete |
 | `or-beacon` | Prompt templating and validation. | or-core | PromptBuilder, PromptTemplate, PromptOrchestrator | Complete |
-| `or-bridge` | Native binding gateway for Python, Node, and Dart, including prompt/state helpers and crate-level JSON invocation. | or-beacon, or-conduit, or-core, or-prism, or-sieve, or-tools-* | render_prompt_json, normalize_state_json, workspace_catalog_json, invoke_crate_json, BridgeError, orchustr_bridge_version (C-ABI) | Partial |
+| `or-bridge` | Native binding gateway for Python, Node, and Dart, including JSON bridge entry points and feature-gated Python helper classes. | or-beacon, or-conduit, or-core, or-loom, or-prism, or-sieve, or-tools-* | render_prompt_json, normalize_state_json, workspace_catalog_json, invoke_crate_json, BridgeError, python(feature) | Partial |
 | `or-checkpoint` | Pause/resume state serialization. | or-core | CheckpointGate, CheckpointRecord | Complete |
 | `or-colony` | Multi-agent coordination and aggregation. | or-core | ColonyOrchestrator, ColonyAgentTrait, ColonyResult | Complete |
 | `or-compass` | Predicate routing. | or-core | CompassRouterBuilder, CompassRouter, RouteSelection | Complete |
 | `or-conduit` | LLM provider abstraction and adapters (19 providers). | or-core | ConduitProvider, OpenAiCompatConduit, AnthropicConduit, GeminiConduit, CohereConduit, AI21Conduit, HuggingFaceConduit, ReplicateConduit, AzureConduit, BedrockConduit, VertexConduit | Complete |
 | `or-forge` | Async tool registry and MCP imports. | or-mcp | ForgeRegistry, ForgeTool | Complete |
-| `or-loom` | Directed graph execution engine. | or-core | GraphBuilder, ExecutionGraph, NodeResult | Complete |
+| `or-loom` | Directed graph execution engine with inspection and optional schema compilation support. | or-core, or-schema(feature=`serde`) | GraphBuilder, ExecutionGraph, NodeResult, GraphInspection, NodeRegistry(feature=`serde`) | Complete |
+| `or-schema` | Serializable graph descriptors and JSON/YAML loading helpers. | `(none)` | GraphSpec, NodeSpec, EdgeSpec, SchemaError | Complete |
 | `or-mcp` | MCP client, server, and transports. | or-core | NexusClient, NexusServer, StreamableHttpTransport | Partial |
 | `or-pipeline` | Sequential state pipeline runtime. | or-core | PipelineBuilder, Pipeline | Complete |
-| `or-prism` | Observability bootstrap and OTLP export install. | `(none)` | install_global_subscriber, PrismConfig | Partial |
+| `or-prism` | Observability bootstrap and optional local dashboard bridge. | or-lens(feature=`lens`) | install_global_subscriber, PrismConfig, init_with_dashboard(feature=`lens`) | Partial |
+| `or-lens` | Optional local execution dashboard and in-process trace collection. | `(none)` | LensHandle, LensLayer, SpanCollector, ExecutionSnapshot | Partial |
 | `or-recall` | Short/long/episodic memory stores. | or-core | RecallStore, InMemoryRecallStore, SqliteRecallStore(feature) | Complete |
 | `or-relay` | Parallel branch execution with deterministic merge. | or-core | RelayBuilder, RelayExecutor, RelayPlan | Complete |
-| `or-sentinel` | Agent runtime and plan/execute loop. | or-conduit, or-core, or-forge, or-loom | SentinelAgent, PlanExecuteAgent, StepOutcome | Complete |
+| `or-sentinel` | Agent runtime with legacy ReAct plus additive custom loop topologies. | or-conduit, or-core, or-forge, or-loom | SentinelAgent, SentinelAgentBuilder, LoopTopology, ReActTopology, PlanExecuteTopology, ReflectionTopology, StepOutcome | Complete |
 | `or-sieve` | Structured-output and plain-text parsing. | `(none)` | JsonParser, TextParser, JsonSchemaOutput | Complete |
 | `or-tools-core` | Shared tool traits, registry, dispatcher, metadata, and tool errors. | `(none)` | Tool, ToolRegistry, ToolDispatcher, ToolMeta, ToolError | Implemented |
 | `or-tools-search` | Feature-gated search providers and fallback orchestration. | or-tools-core | SearchProvider, SearchQuery, SearchResponse, SearchOrchestrator | Implemented |

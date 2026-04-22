@@ -1,90 +1,102 @@
 # or-loom API Reference
 
-This page documents the main public surface re-exported by `or-loom/src/lib.rs` and the key entry points behind those re-exports. 
+This page documents the main public surface re-exported by `or-loom/src/lib.rs`.
+
 ### `NodeResult`
+
 | Property | Value |
 |---|---|
 | **Kind** | enum |
 | **Visibility** | pub |
 | **File** | crates/or-loom/src/domain/entities.rs |
-| **Status** | 🟢 |
+| **Status** | Complete |
 
 **Description**: Represents how a node advances execution: advance, branch, or pause.
 
-**Signature**
-```rust
-pub enum NodeResult<T> { Advance(T), Branch { state: T, next: String }, Pause { checkpoint_id: String, state: T } }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
 ### `GraphBuilder`
+
 | Property | Value |
 |---|---|
 | **Kind** | struct |
 | **Visibility** | pub |
 | **File** | crates/or-loom/src/infra/implementations.rs |
-| **Status** | 🟢 |
+| **Status** | Complete |
 
-**Description**: Builder for graph nodes, edges, entry, and exit configuration.
-
-**Signature**
-```rust
-pub struct GraphBuilder<T: OrchState> { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
+**Description**: Builder for graph nodes, edges, entry, and exit configuration, including multi-exit support.
 
 ### `ExecutionGraph`
+
 | Property | Value |
 |---|---|
 | **Kind** | struct |
 | **Visibility** | pub |
 | **File** | crates/or-loom/src/infra/implementations.rs |
-| **Status** | 🟢 |
+| **Status** | Complete |
 
 **Description**: Executable state graph produced by `GraphBuilder::build`.
 
-**Signature**
+### `GraphInspection`
+
+| Property | Value |
+|---|---|
+| **Kind** | struct |
+| **Visibility** | pub |
+| **File** | crates/or-loom/src/inspection.rs |
+| **Status** | Complete |
+
+**Description**: Structural description of a built execution graph used for topology comparison and tests.
+
+### `GraphEdgeInspection`
+
+| Property | Value |
+|---|---|
+| **Kind** | struct |
+| **Visibility** | pub |
+| **File** | crates/or-loom/src/inspection.rs |
+| **Status** | Complete |
+
+**Description**: Edge-level inspection record within a `GraphInspection`.
+
+### `NodeRegistry`
+
+| Property | Value |
+|---|---|
+| **Kind** | struct |
+| **Visibility** | pub |
+| **File** | crates/or-loom/src/registry.rs |
+| **Status** | Complete |
+
+**Description**: Feature-gated registry that resolves named node handlers and conditional predicates from `or-schema::GraphSpec` descriptors.
+
+**Availability**
 ```rust
-pub struct ExecutionGraph<T: OrchState> { ... }
+#[cfg(feature = "serde")]
+pub use registry::NodeRegistry;
 ```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
 
 ### `LoomOrchestrator`
+
 | Property | Value |
 |---|---|
 | **Kind** | struct |
 | **Visibility** | pub |
 | **File** | crates/or-loom/src/application/orchestrators.rs |
-| **Status** | 🟢 |
+| **Status** | Complete |
 
 **Description**: Application helper for executing graphs with tracing.
 
-**Signature**
-```rust
-pub struct LoomOrchestrator;
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
 ### `LoomError`
+
 | Property | Value |
 |---|---|
 | **Kind** | enum |
 | **Visibility** | pub |
 | **File** | crates/or-loom/src/domain/errors.rs |
-| **Status** | 🟢 |
+| **Status** | Complete |
 
-**Description**: Error type for graph validation, execution, and pause/branch issues.
+**Description**: Error type for graph validation, execution, and schema-resolution issues.
 
-**Signature**
-```rust
-pub enum LoomError { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
+## Known Gaps & Limitations
 
-⚠️ Known Gaps & Limitations
-- Node futures are intentionally not required to be `Send`, which keeps sequential execution flexible but limits some multi-thread assumptions.
+- `NodeRegistry` is feature-gated behind `serde`.
+- The public API is Rust-first; binding layers expose compatible helpers rather than every graph type directly.

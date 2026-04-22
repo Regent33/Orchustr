@@ -3,21 +3,54 @@ export class PromptBuilder {
   build(): { render(context: Record<string, unknown>): string };
 }
 
+export class DynState {
+  constructor(initial?: Record<string, unknown>);
+  toObject(): Record<string, unknown>;
+}
+
+export class NodeResult<T extends Record<string, unknown> = Record<string, unknown>> {
+  constructor(
+    state: T | DynState,
+    kind: string,
+    next?: string | null,
+    checkpointId?: string | null,
+  );
+  state: DynState;
+  kind: string;
+  next: string | null;
+  checkpointId: string | null;
+  static advance<T extends Record<string, unknown>>(state: T | DynState): NodeResult<T>;
+  static exit<T extends Record<string, unknown>>(state: T | DynState): NodeResult<T>;
+  static branch<T extends Record<string, unknown>>(state: T | DynState, next: string): NodeResult<T>;
+  static pause<T extends Record<string, unknown>>(checkpointId: string, state: T | DynState): NodeResult<T>;
+}
+
 export class GraphBuilder<T extends Record<string, unknown>> {
-  /**
-   * Note: The generic type `T` provides compile-time safety in TypeScript but
-   * is not enforced at runtime in JavaScript.  Node handler return types are
-   * not validated — runtime mismatches will surface as plain JS errors.
-   */
-  addNode(name: string, handler: (state: T) => Promise<T> | T): GraphBuilder<T>;
+  addNode(
+    name: string,
+    handler: (state: T | DynState) => Promise<T | NodeResult<T>> | T | NodeResult<T>,
+  ): GraphBuilder<T>;
+  add_node(
+    name: string,
+    handler: (state: T | DynState) => Promise<T | NodeResult<T>> | T | NodeResult<T>,
+  ): GraphBuilder<T>;
   addEdge(source: string, target: string): GraphBuilder<T>;
+  add_edge(source: string, target: string): GraphBuilder<T>;
   setEntry(name: string): GraphBuilder<T>;
+  set_entry(name: string): GraphBuilder<T>;
   setExit(name: string): GraphBuilder<T>;
-  build(): { execute(state: T): Promise<T> };
+  set_exit(name: string): GraphBuilder<T>;
+  build(): {
+    execute(state: T | DynState): Promise<DynState>;
+    invoke(state: T | DynState): Promise<DynState>;
+  };
 }
 
 export class ForgeRegistry {
-  register(name: string, handler: (args: Record<string, unknown>) => Promise<unknown> | unknown): void;
+  register(
+    name: string,
+    handler: (args: Record<string, unknown>) => Promise<unknown> | unknown,
+  ): void;
   importFromMcp(client: NexusClient): Promise<number>;
   invoke(name: string, args: Record<string, unknown>): Promise<unknown>;
 }
@@ -29,18 +62,31 @@ export class NexusClient {
   invokeTool(name: string, args: Record<string, unknown>): Promise<any>;
 }
 
-export class OpenAiConduit {
-  static fromEnv(): OpenAiConduit;
+export class ConduitProvider {
   completeText(prompt: string): Promise<{ text: string }>;
   completeMessages(messages: Array<Record<string, unknown>>): Promise<{ text: string }>;
   streamText(prompt: string): AsyncIterable<string>;
 }
 
-export class AnthropicConduit {
+export class OpenAiConduit extends ConduitProvider {
+  static fromEnv(): OpenAiConduit;
+}
+
+export class AnthropicConduit extends ConduitProvider {
   static fromEnv(): AnthropicConduit;
-  completeText(prompt: string): Promise<{ text: string }>;
-  completeMessages(messages: Array<Record<string, unknown>>): Promise<{ text: string }>;
-  streamText(prompt: string): AsyncIterable<string>;
+}
+
+export class OpenAiCompatConduit extends ConduitProvider {
+  constructor(apiKey: string, model: string, endpoint: string);
+  static openrouter(apiKey: string, model: string): OpenAiCompatConduit;
+  static groq(apiKey: string, model: string): OpenAiCompatConduit;
+  static together(apiKey: string, model: string): OpenAiCompatConduit;
+  static fireworks(apiKey: string, model: string): OpenAiCompatConduit;
+  static deepseek(apiKey: string, model: string): OpenAiCompatConduit;
+  static mistral(apiKey: string, model: string): OpenAiCompatConduit;
+  static xai(apiKey: string, model: string): OpenAiCompatConduit;
+  static nvidia(apiKey: string, model: string): OpenAiCompatConduit;
+  static ollama(model: string, endpoint?: string): OpenAiCompatConduit;
 }
 
 export interface CrateBinding {
@@ -53,23 +99,55 @@ export interface CrateBinding {
 export class RustCrateBridge {
   static available(): boolean;
   static catalog(): CrateBinding[];
-  static invoke(crateName: string, operation: string, payload?: Record<string, unknown>): any;
+  static invoke(
+    crateName: string,
+    operation: string,
+    payload?: Record<string, unknown>,
+  ): any;
 }
 
 export class SearchTools {
-  static search(provider: string, query: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
+  static search(
+    provider: string,
+    query: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
 }
 
 export class WebTools {
-  static fetch(provider: string, request: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static scrape(provider: string, url: string, config?: Record<string, unknown>): Promise<any> | any;
+  static fetch(
+    provider: string,
+    request: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static scrape(
+    provider: string,
+    url: string,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
 }
 
 export class VectorTools {
-  static ensureCollection(provider: string, data: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static upsert(provider: string, data: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static delete(provider: string, data: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static query(provider: string, data: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
+  static ensureCollection(
+    provider: string,
+    data: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static upsert(
+    provider: string,
+    data: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static delete(
+    provider: string,
+    data: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static query(
+    provider: string,
+    data: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
 }
 
 export class LoaderTools {
@@ -85,11 +163,32 @@ export class ExecTools {
 }
 
 export class FileTools {
-  static read(path: string, provider?: string, config?: Record<string, unknown>): Promise<any> | any;
-  static write(path: string, content: string, provider?: string, config?: Record<string, unknown>): Promise<any> | any;
-  static list(path: string, provider?: string, config?: Record<string, unknown>): Promise<any> | any;
-  static delete(path: string, provider?: string, config?: Record<string, unknown>): Promise<any> | any;
-  static fetch(provider: string, query: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
+  static read(
+    path: string,
+    provider?: string,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static write(
+    path: string,
+    content: string,
+    provider?: string,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static list(
+    path: string,
+    provider?: string,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static delete(
+    path: string,
+    provider?: string,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static fetch(
+    provider: string,
+    query: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
 }
 
 export class CommsTools {
@@ -103,16 +202,57 @@ export class CommsTools {
 }
 
 export class ProductivityTools {
-  static listEmails(provider: string, query?: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static sendEmail(provider: string, item: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static listEvents(provider: string, query?: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static createEvent(provider: string, item: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static listIssues(provider: string, query?: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static createIssue(provider: string, item: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static searchPages(provider: string, query?: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static createPage(provider: string, item: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
-  static postMessage(provider: string, channel: string, text: string, config?: Record<string, unknown>): Promise<any> | any;
-  static searchMessages(provider: string, query?: Record<string, unknown>, config?: Record<string, unknown>): Promise<any> | any;
+  static listEmails(
+    provider: string,
+    query?: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static sendEmail(
+    provider: string,
+    item: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static listEvents(
+    provider: string,
+    query?: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static createEvent(
+    provider: string,
+    item: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static listIssues(
+    provider: string,
+    query?: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static createIssue(
+    provider: string,
+    item: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static searchPages(
+    provider: string,
+    query?: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static createPage(
+    provider: string,
+    item: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static postMessage(
+    provider: string,
+    channel: string,
+    text: string,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
+  static searchMessages(
+    provider: string,
+    query?: Record<string, unknown>,
+    config?: Record<string, unknown>,
+  ): Promise<any> | any;
 }
 
 export class TokenBudget {
@@ -121,7 +261,12 @@ export class TokenBudget {
 }
 
 export class RetryPolicy {
-  constructor(maxAttempts: number, baseDelayMs: number, maxDelayMs: number, jitter?: boolean);
+  constructor(
+    maxAttempts: number,
+    baseDelayMs: number,
+    maxDelayMs: number,
+    jitter?: boolean,
+  );
 }
 
 export class CoreOrchestrator {
@@ -144,8 +289,14 @@ export class TextParser {
 }
 
 export class CheckpointGate {
-  pause(checkpointId: string, resumeFrom: string, state: Record<string, unknown>): Promise<void>;
-  resume(checkpointId: string): Promise<{ checkpointId: string; resumeFrom: string; state: Record<string, unknown> }>;
+  pause(
+    checkpointId: string,
+    resumeFrom: string,
+    state: Record<string, unknown>,
+  ): Promise<void>;
+  resume(
+    checkpointId: string,
+  ): Promise<{ checkpointId: string; resumeFrom: string; state: Record<string, unknown> }>;
 }
 
 export class RecallEntry {
@@ -172,16 +323,21 @@ export class CompassRouterBuilder<T extends Record<string, unknown>> {
 
 export class PipelineBuilder<T extends Record<string, unknown>> {
   addNode(name: string, handler: (state: T) => Promise<T> | T): PipelineBuilder<T>;
-  build(): { execute(state: T): Promise<T> };
+  add_node(name: string, handler: (state: T) => Promise<T> | T): PipelineBuilder<T>;
+  build(): { execute(state: T): Promise<T>; invoke(state: T): Promise<T> };
 }
 
 export class RelayBuilder<T extends Record<string, unknown>> {
   addBranch(name: string, handler: (state: T) => Promise<T> | T): RelayBuilder<T>;
+  add_branch(name: string, handler: (state: T) => Promise<T> | T): RelayBuilder<T>;
   build(): { branches: Array<[string, (state: T) => Promise<T> | T]> };
 }
 
 export class RelayExecutor<T extends Record<string, unknown>> {
-  execute(plan: { branches: Array<[string, (state: T) => Promise<T> | T]> }, initialState: T): Promise<T>;
+  execute(
+    plan: { branches: Array<[string, (state: T) => Promise<T> | T]> },
+    initialState: T,
+  ): Promise<T>;
 }
 
 export class ColonyOrchestrator<T extends Record<string, unknown>> {
@@ -194,7 +350,31 @@ export class ColonyOrchestrator<T extends Record<string, unknown>> {
       member: { name: string; role: string },
     ) => Promise<unknown> | unknown,
   ): ColonyOrchestrator<T>;
-  coordinate(initialState: T): Promise<{ summary: string; state: T; transcript: Array<{ from: string; to: string; content: string }> }>;
+  coordinate(
+    initialState: T,
+  ): Promise<{ summary: string; state: T; transcript: Array<{ from: string; to: string; content: string }> }>;
+}
+
+export class ColonyBuilder<T extends Record<string, unknown>> {
+  addMember(
+    name: string,
+    role: string,
+    agent: (
+      state: T,
+      transcript: Array<{ from: string; to: string; content: string }>,
+      member: { name: string; role: string },
+    ) => Promise<unknown> | unknown,
+  ): ColonyBuilder<T>;
+  add_member(
+    name: string,
+    role: string,
+    agent: (
+      state: T,
+      transcript: Array<{ from: string; to: string; content: string }>,
+      member: { name: string; role: string },
+    ) => Promise<unknown> | unknown,
+  ): ColonyBuilder<T>;
+  build(): ColonyOrchestrator<T>;
 }
 
 export class SentinelConfig {
@@ -207,7 +387,9 @@ export class StepOutcome<T extends Record<string, unknown>> {
 
 export class SentinelOrchestrator<T extends Record<string, unknown>> {
   runAgent(
-    agent: (state: T, config: SentinelConfig) => Promise<T | StepOutcome<T> | unknown> | T | StepOutcome<T> | unknown,
+    agent:
+      | ((state: T, config: SentinelConfig) => Promise<T | StepOutcome<T> | unknown>)
+      | ((state: T, config: SentinelConfig) => T | StepOutcome<T> | unknown),
     initialState: T,
     config: SentinelConfig,
   ): Promise<StepOutcome<T>>;

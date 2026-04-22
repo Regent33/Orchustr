@@ -4,21 +4,30 @@
 
 | Name | Kind | Source | Notes |
 |---|---|---|---|
+| `DynState` | class | `src/index.js` | Mutable graph state helper for JS and TS graph authoring. |
+| `NodeResult` | class | `src/index.js` | Encodes `advance`, `exit`, `branch`, and `pause` outcomes. |
+| `GraphBuilder` | class | `src/index.js` | Builds async execution graphs with explicit entry and exit nodes. |
 | `PromptBuilder` | class | `src/index.js` | Validates and renders `{{variable}}` templates. |
-| `GraphBuilder` | class | `src/index.js` | Builds and executes a simple state graph. |
+| `ConduitProvider` | class | `src/index.js` | Base class for conduit implementations. |
 | `ForgeRegistry` | class | `src/index.js` | Registers async tools and imports MCP tools. |
 | `NexusClient` | class | `src/index.js` | HTTP MCP helper using `fetch`. |
-| `OpenAiConduit` | class | `src/index.js` | JavaScript provider helper. |
-| `AnthropicConduit` | class | `src/index.js` | JavaScript provider helper. |
+| `PipelineBuilder`, `RelayBuilder`, `ColonyBuilder`, `SentinelOrchestrator`, and related workflow helpers | classes/functions | `src/workflows.js` | Binding-local helpers for callback-heavy workspace crates. |
 | `RustCrateBridge` | class | `src/bridge.js` | Lists binding-visible crates and invokes Rust-backed operations. |
-| `SearchTools` / `WebTools` / `VectorTools` / `LoaderTools` / `ExecTools` / `FileTools` / `CommsTools` / `ProductivityTools` | classes | `src/tools.js` | Friendly wrappers over the Rust `or-tools-*` crates. |
-| `CoreOrchestrator`, `CheckpointGate`, `PipelineBuilder`, `RecallStore`, `RelayExecutor`, `SentinelOrchestrator`, and related workflow helpers | classes/functions | `src/workflows.js` | Binding-local helpers for callback-heavy workspace crates. |
 
 ## Type Surface
 
-`index.d.ts` declares the package surface and is used by `tests/typecheck.ts` during `npm run typecheck`.
+`index.d.ts` declares the package surface and includes typings for:
 
-⚠️ Known Gaps & Limitations
+- `DynState`
+- `NodeResult`
+- `GraphBuilder`
+- `ConduitProvider`
+- `PipelineBuilder`
+- `RelayBuilder`
+- `ColonyBuilder`
+- `installGlobalSubscriber`
 
-- The declaration file describes the binding package, not a raw dump of every Rust item.
-- Native crate calls require building the optional addon first.
+## Known Gaps & Limitations
+
+- The declaration file describes the TypeScript package, not a raw dump of every Rust item.
+- Native crate calls still require building the optional addon first.

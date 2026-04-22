@@ -164,6 +164,10 @@ export class PipelineBuilder {
     return this;
   }
 
+  add_node(name, handler) {
+    return this.addNode(name, handler);
+  }
+
   build() {
     if (this.nodes.length === 0) {
       throw new Error("pipeline requires at least one node");
@@ -177,6 +181,9 @@ export class PipelineBuilder {
         }
         return state;
       },
+      async invoke(initialState) {
+        return this.execute(initialState);
+      },
     };
   }
 }
@@ -189,6 +196,10 @@ export class RelayBuilder {
   addBranch(name, handler) {
     this.branches.push([name, handler]);
     return this;
+  }
+
+  add_branch(name, handler) {
+    return this.addBranch(name, handler);
   }
 
   build() {
@@ -244,6 +255,25 @@ export class ColonyOrchestrator {
       state,
       transcript,
     };
+  }
+}
+
+export class ColonyBuilder {
+  constructor() {
+    this.orchestrator = new ColonyOrchestrator();
+  }
+
+  addMember(name, role, agent) {
+    this.orchestrator.addMember(name, role, agent);
+    return this;
+  }
+
+  add_member(name, role, agent) {
+    return this.addMember(name, role, agent);
+  }
+
+  build() {
+    return this.orchestrator;
   }
 }
 
