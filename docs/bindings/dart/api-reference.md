@@ -51,7 +51,34 @@
 
 - `configureNativeBridge({String? libraryPath}) -> void`
 - `nativeBridgeAvailable -> bool`
+- `RustCrateBridge.available -> bool`
+- `RustCrateBridge.catalog() -> List<CrateBinding>`
+- `RustCrateBridge.invoke(String crateName, String operation, JsonObject payload) -> Object?`
+
+## Tool Helpers
+
+- `SearchTools`
+- `WebTools`
+- `VectorTools`
+- `LoaderTools`
+- `ExecTools`
+- `FileTools`
+- `CommsTools`
+- `ProductivityTools`
+
+## Workflow Helpers
+
+- `TokenBudget`
+- `RetryPolicy`
+- `CoreOrchestrator`
+- `CheckpointGate`
+- `RecallStore`
+- `RelayExecutor`
+- `SentinelOrchestrator`
+- `TextParser`
+- `installGlobalSubscriber(String otlpEndpoint) -> void`
 
 ⚠️ Known Gaps & Limitations
-- The Dart API mirrors the current Python and TypeScript package shape, not the full Rust crate graph.
+
+- The Dart API mirrors the crate graph at a binding level, not as a raw export of every Rust item.
 - Structured model types are still mostly JSON-like maps in the binding layer.

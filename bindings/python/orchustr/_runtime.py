@@ -14,3 +14,15 @@ def normalize_state_native(state_json: str) -> str | None:
     if native_bridge is None:
         return None
     return native_bridge.normalize_state_json(state_json)
+
+
+def workspace_catalog_native() -> str | None:
+    if native_bridge is None:
+        return None
+    return native_bridge.workspace_catalog_json()
+
+
+def invoke_crate_native(crate_name: str, operation: str, payload_json: str) -> str | None:
+    if native_bridge is None:
+        return None
+    return native_bridge.invoke_crate_json(crate_name, operation, payload_json)

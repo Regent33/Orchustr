@@ -6,7 +6,7 @@ No. The repository is clearly inspired by those ecosystems, but the codebase def
 
 ## Which language surface is the most complete today?
 
-Rust. The Python and TypeScript packages mirror selected concepts but do not expose the full Rust crate graph directly.
+Rust is still the most direct surface because it owns the original runtime types and implementations. Python, TypeScript, and Dart now cover the full workspace at the crate level, but they do so through a hybrid model rather than a raw 1:1 export of every Rust item.
 
 ## Is MCP fully production-ready here?
 
@@ -14,7 +14,7 @@ Rust. The Python and TypeScript packages mirror selected concepts but do not exp
 
 ## Are the bindings native?
 
-Partly. Python can use a native PyO3 helper module, but most package behavior is still Python code. The TypeScript package is currently a pure JS facade.
+Partly. All three bindings now have a native bridge path through `or-bridge`, but each package still keeps some workflow behavior in the host language where closures, async control flow, and callback-heavy APIs are easier to express.
 
 ## Does the framework ship persistent memory or vector databases by default?
 
@@ -25,5 +25,6 @@ No. The default path is in-memory. SQLite is feature-gated in `or-recall`, and `
 No benchmark harness or benchmark report was found in the repository.
 
 ⚠️ Known Gaps & Limitations
+
 - This FAQ is based on the current source tree and can go stale if the package surfaces expand.
 - No dedicated FAQ source file existed before this generated docs set.

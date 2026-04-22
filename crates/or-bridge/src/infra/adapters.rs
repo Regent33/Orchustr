@@ -1,5 +1,7 @@
 use crate::domain::errors::BridgeError;
 use or_core::DynState;
+use serde::Serialize;
+use serde_json::Value;
 
 pub(crate) fn dyn_state_from_json(raw: &str) -> Result<DynState, BridgeError> {
     let value: serde_json::Value =
@@ -13,4 +15,12 @@ pub(crate) fn dyn_state_from_json(raw: &str) -> Result<DynState, BridgeError> {
 
 pub(crate) fn dyn_state_to_json(state: &DynState) -> Result<String, BridgeError> {
     serde_json::to_string(state).map_err(|error| BridgeError::InvalidJson(error.to_string()))
+}
+
+pub(crate) fn value_from_json(raw: &str) -> Result<Value, BridgeError> {
+    serde_json::from_str(raw).map_err(|error| BridgeError::InvalidJson(error.to_string()))
+}
+
+pub(crate) fn value_to_json<T: Serialize>(value: &T) -> Result<String, BridgeError> {
+    serde_json::to_string(value).map_err(|error| BridgeError::InvalidJson(error.to_string()))
 }

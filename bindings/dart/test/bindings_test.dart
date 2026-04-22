@@ -39,6 +39,23 @@ Future<void> main() async {
     _expect(result["done"] == "HELLO", "graph execute");
   });
 
+  await _run("core orchestrator enforces budget", () {
+    CoreOrchestrator()
+        .enforceCompletionBudget(const TokenBudget(100, 20), 70);
+  });
+
+  await _run("pipeline builder executes sequential nodes", () async {
+    final pipeline = PipelineBuilder()
+        .addNode("one", (state) async => <String, Object?>{...state, "a": 1})
+        .addNode("two", (state) => <String, Object?>{
+              ...state,
+              "b": (state["a"] as int) + 1,
+            })
+        .build();
+    final result = await pipeline.execute(<String, Object?>{});
+    _expect(result["b"] == 2, "pipeline execute");
+  });
+
   await _run("forge registry imports MCP tools", () async {
     final server = await _startServer();
     try {
@@ -77,6 +94,11 @@ Future<void> main() async {
     }
     final normalized = bridge.normalizeStateJson("{\"count\":1}");
     _expect(normalized.contains("\"count\":1"), "native normalize");
+  });
+
+  await _run("crate bridge catalog is optional", () {
+    final catalog = RustCrateBridge.catalog();
+    _expect(catalog is List<CrateBinding>, "bridge catalog");
   });
 
   if (exitCode != 0) {

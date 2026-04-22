@@ -29,6 +29,20 @@ typedef _NormalizeNative = Pointer<Int8> Function(
     Pointer<Int8>, Pointer<Pointer<Int8>>);
 typedef _NormalizeDart = Pointer<Int8> Function(
     Pointer<Int8>, Pointer<Pointer<Int8>>);
+typedef _CatalogNative = Pointer<Int8> Function(Pointer<Pointer<Int8>>);
+typedef _CatalogDart = Pointer<Int8> Function(Pointer<Pointer<Int8>>);
+typedef _InvokeNative = Pointer<Int8> Function(
+  Pointer<Int8>,
+  Pointer<Int8>,
+  Pointer<Int8>,
+  Pointer<Pointer<Int8>>,
+);
+typedef _InvokeDart = Pointer<Int8> Function(
+  Pointer<Int8>,
+  Pointer<Int8>,
+  Pointer<Int8>,
+  Pointer<Pointer<Int8>>,
+);
 typedef _BridgeFreeNative = Void Function(Pointer<Int8>);
 typedef _BridgeFreeDart = void Function(Pointer<Int8>);
 typedef _MallocNative = Pointer<Void> Function(IntPtr);
@@ -61,6 +75,12 @@ final class OrchustrNativeBridge {
         _normalize = library.lookupFunction<_NormalizeNative, _NormalizeDart>(
           "orchustr_normalize_state_json",
         ),
+        _catalog = library.lookupFunction<_CatalogNative, _CatalogDart>(
+          "orchustr_workspace_catalog_json",
+        ),
+        _invoke = library.lookupFunction<_InvokeNative, _InvokeDart>(
+          "orchustr_invoke_crate_json",
+        ),
         _freeBridgeString =
             library.lookupFunction<_BridgeFreeNative, _BridgeFreeDart>(
           "orchustr_bridge_free_string",
@@ -69,6 +89,8 @@ final class OrchustrNativeBridge {
   final _RustStringFn _version;
   final _RenderDart _render;
   final _NormalizeDart _normalize;
+  final _CatalogDart _catalog;
+  final _InvokeDart _invoke;
   final _BridgeFreeDart _freeBridgeString;
 
   static OrchustrNativeBridge? get instance {
@@ -129,6 +151,54 @@ final class OrchustrNativeBridge {
       );
     } finally {
       _free(rawStatePtr.cast<Void>());
+      _free(errorSlot.cast<Void>());
+    }
+  }
+
+  String workspaceCatalogJson() {
+    final errorSlot = _malloc(sizeOf<IntPtr>()).cast<Pointer<Int8>>();
+    try {
+      errorSlot.value = Pointer<Int8>.fromAddress(0);
+      final result = _catalog(errorSlot);
+      if (result.address != 0) {
+        return _takeBridgeString(result);
+      }
+      final errorPointer = errorSlot.value;
+      throw StateError(
+        errorPointer.address == 0
+            ? "native bridge catalog failed"
+            : _takeBridgeString(errorPointer),
+      );
+    } finally {
+      _free(errorSlot.cast<Void>());
+    }
+  }
+
+  String invokeCrateJson(
+    String crateName,
+    String operation,
+    String payloadJson,
+  ) {
+    final crateNamePtr = _allocateCString(crateName);
+    final operationPtr = _allocateCString(operation);
+    final payloadPtr = _allocateCString(payloadJson);
+    final errorSlot = _malloc(sizeOf<IntPtr>()).cast<Pointer<Int8>>();
+    try {
+      errorSlot.value = Pointer<Int8>.fromAddress(0);
+      final result = _invoke(crateNamePtr, operationPtr, payloadPtr, errorSlot);
+      if (result.address != 0) {
+        return _takeBridgeString(result);
+      }
+      final errorPointer = errorSlot.value;
+      throw StateError(
+        errorPointer.address == 0
+            ? "native bridge invoke failed"
+            : _takeBridgeString(errorPointer),
+      );
+    } finally {
+      _free(crateNamePtr.cast<Void>());
+      _free(operationPtr.cast<Void>());
+      _free(payloadPtr.cast<Void>());
       _free(errorSlot.cast<Void>());
     }
   }

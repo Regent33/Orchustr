@@ -29,14 +29,20 @@ sequenceDiagram
 sequenceDiagram
   participant Py as Python caller
   participant Ts as TypeScript caller
+  participant Dart as Dart caller
   participant Bridge as or-bridge
   participant Beacon as or-beacon
-  Py->>Bridge: render_prompt_json(template, context_json)
+  participant Tools as Rust-backed crates
+  Py->>Bridge: invoke_crate_json(...) or render_prompt_json(...)
   Bridge->>Beacon: PromptBuilder::build + render
   Beacon-->>Bridge: rendered prompt
-  Bridge-->>Py: normalized string
-  Ts->>Ts: use pure JS facade today
-  Note over Ts: Current package does not load NAPI directly
+  Bridge-->>Py: JSON or rendered string
+  Ts->>Bridge: optional native invoke via RustCrateBridge
+  Dart->>Bridge: optional FFI invoke via RustCrateBridge
+  Bridge->>Tools: dispatch supported crate operation
+  Tools-->>Bridge: JSON result
+  Bridge-->>Ts: JSON
+  Bridge-->>Dart: JSON
 ```
 
 ## Data Shapes
@@ -46,5 +52,6 @@ sequenceDiagram
 - **Tool calls**: `or-forge` and `or-mcp` exchange JSON values plus JSON Schema-backed metadata.
 
 ⚠️ Known Gaps & Limitations
+
 - Native event streaming is not implemented for provider adapters; `stream_text` falls back to locally chunked final text.
-- The TypeScript binding flow shown here reflects the current pure JS package rather than the intended NAPI-native path.
+- Some binding flows deliberately stay in the host language rather than going through FFI when the API is callback-heavy or long-lived.

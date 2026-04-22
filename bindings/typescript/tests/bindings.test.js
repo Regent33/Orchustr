@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 
-import { GraphBuilder, PromptBuilder } from "../src/index.js";
+import {
+  CoreOrchestrator,
+  GraphBuilder,
+  PipelineBuilder,
+  PromptBuilder,
+  RustCrateBridge,
+  TokenBudget,
+} from "../src/index.js";
 
 function testPromptBuilderRendersVariables() {
   const template = new PromptBuilder().template("Hello {{name}}").build();
@@ -24,6 +31,27 @@ async function testGraphBuilderExecutesAsyncHandlers() {
   assert.equal(result.done, "HELLO");
 }
 
+function testCoreOrchestratorEnforcesBudget() {
+  new CoreOrchestrator().enforceCompletionBudget(new TokenBudget(100, 20), 70);
+}
+
+async function testPipelineBuilderExecutesSequentialNodes() {
+  const pipeline = new PipelineBuilder()
+    .addNode("one", async (state) => ({ ...state, a: 1 }))
+    .addNode("two", async (state) => ({ ...state, b: state.a + 1 }))
+    .build();
+  const result = await pipeline.execute({});
+  assert.equal(result.b, 2);
+}
+
+function testRustCrateBridgeCatalogIsOptional() {
+  const catalog = RustCrateBridge.catalog();
+  assert.ok(Array.isArray(catalog));
+}
+
 await testGraphBuilderExecutesAsyncHandlers();
+await testPipelineBuilderExecutesSequentialNodes();
 testPromptBuilderRendersVariables();
 testPromptBuilderSanitizesControlCharacters();
+testCoreOrchestratorEnforcesBudget();
+testRustCrateBridgeCatalogIsOptional();

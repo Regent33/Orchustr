@@ -1,6 +1,6 @@
 # Quickstart
 
-> **⚠️ CRITICAL — READ FIRST:** The Orchustr bindings for Python, TypeScript, and Dart all compile native Rust code internally. You **MUST** install the Rust compiler (`rustc` + `cargo`) on your machine **before** running any `pip install`, `npm install`, or `dart pub get` commands. If Rust is not installed, all installations will fail.
+> **⚠️ READ FIRST:** Rust is required for the Python binding install and for any local native bridge builds in TypeScript or Dart. The TypeScript and Dart packages can still be installed as language-only packages first, but native crate access depends on local Rust builds.
 
 ---
 
@@ -9,15 +9,15 @@
 Install Rust using the official installer. This works on Windows, macOS, and Linux:
 
 ```bash
-# All platforms — installs rustc, cargo, rustup
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 **Windows alternative:** Download and run [https://rustup.rs](https://rustup.rs) directly in your browser.
 
 After installation, verify it works:
+
 ```bash
-rustc --version   # should print: rustc 1.80.0 or newer
+rustc --version
 cargo --version
 ```
 
@@ -29,7 +29,7 @@ Only install what you need for your target language:
 
 | Language | Tool to install |
 |---|---|
-| **Python** | Python 3.8+ and `pip` |
+| **Python** | Python 3.10+ and `pip` |
 | **TypeScript** | [Node.js 20+](https://nodejs.org) and `npm` |
 | **Dart / Flutter** | [Dart SDK 3.0+](https://dart.dev/get-dart) or Flutter SDK |
 
@@ -37,7 +37,7 @@ Only install what you need for your target language:
 
 ## Step 3: Clone the Orchustr Repository
 
-> **Note:** `or-core` and `or-prism` are already published on [crates.io](https://crates.io). For Rust-only projects you can depend on them directly by version (see Step 4 below). For Python, TypeScript, and Dart you still need the repository cloned locally for the native bindings.
+> **Note:** `or-core` and `or-prism` are already published on [crates.io](https://crates.io). For Rust-only projects you can depend on them directly by version. For Python, TypeScript, and Dart, cloning the repository remains the easiest path for local native builds and current binding development.
 
 ```bash
 git clone https://github.com/Cether144/Orchustr.git
@@ -48,18 +48,20 @@ cd Orchustr
 
 ## Step 4: Add Orchustr To Your Own Project
 
-Once cloned, you link it into your existing project using a path reference. Replace `/absolute/path/to/Orchustr` with the real path on your machine (e.g. `C:/dev/Orchustr` on Windows).
+Once cloned, you link it into your existing project using a path reference. Replace `/absolute/path/to/Orchustr` with the real path on your machine.
 
-### Rust 🦀
+### Rust
 
-**Option A — crates.io (recommended if you only need `or-core` / `or-prism`):**
+**Option A - crates.io**
+
 ```toml
 [dependencies]
 or-core  = "0.1.2"
 or-prism = "0.1.2"
 ```
 
-**Option B — local path (required for all other crates, or if you cloned the repo):**
+**Option B - local path**
+
 ```toml
 [dependencies]
 or-core     = { path = "/absolute/path/to/Orchustr/crates/or-core" }
@@ -67,49 +69,60 @@ or-sentinel = { path = "/absolute/path/to/Orchustr/crates/or-sentinel" }
 ```
 
 Then run:
+
 ```bash
 cargo build
 ```
 
-### TypeScript / Node.js 🟨
-Point `npm` at the local bindings folder. This copies the JavaScript API bridge into your `node_modules`:
+### TypeScript / Node.js
+
+Point `npm` at the local bindings folder:
+
 ```bash
-# Inside your own project directory
 npm install "/absolute/path/to/Orchustr/bindings/typescript"
 ```
-> ⚠️ This only links the JavaScript layer. The native Rust code is **not** compiled automatically on `npm install`. Full native performance is not yet wired through `napi-build`.
 
-### Python 🐍
-`pip` will invoke `maturin` automatically, which will call `cargo` to compile the Rust extension:
+If you want native crate access through `RustCrateBridge` and the `*Tools` wrappers, build the optional addon:
+
 ```bash
-# Inside your own project directory (activate venv first if applicable)
+cd /absolute/path/to/Orchustr/bindings/typescript
+npm ci
+npm run build:native
+```
+
+### Python
+
+`pip` will invoke `maturin`, which will call `cargo` to compile the Rust extension:
+
+```bash
 pip install "/absolute/path/to/Orchustr/bindings/python"
 ```
+
 If you get a `cargo not found` error here, go back to Step 1.
 
-### Dart / Flutter 🎯
+### Dart / Flutter
+
 Add a path dependency to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   orchustr:
     path: /absolute/path/to/Orchustr/bindings/dart
 ```
-Then run these **two commands in order** — both are required:
-```bash
-# Step 1: Fetch the Dart package
-dart pub get
 
-# Step 2: Compile the native Rust FFI library (pub get does NOT do this automatically)
+Then run these commands if you want the optional native bridge:
+
+```bash
+dart pub get
 cd /absolute/path/to/Orchustr/bindings/dart
 dart run tool/build_native.dart
 ```
-> ⚠️ If you skip `build_native.dart`, the Dart code will crash at runtime with a `DynamicLibrary` missing error.
+
+If you skip `build_native.dart`, the Dart package still works for the Dart-local helpers, but `RustCrateBridge` and the Rust-backed `*Tools` helpers will not be available.
 
 ---
 
 ## For Contributors: Build and Test the Full Workspace
-
-If you are developing Orchustr itself (not just using it), here is how you run the internal test suites:
 
 ```bash
 # Rust
@@ -120,7 +133,7 @@ cargo test --all-features
 cd bindings/python && maturin develop && pytest tests/
 
 # TypeScript
-cd bindings/typescript && npm ci && npm run typecheck && npm test
+cd bindings/typescript && npm ci && npm run build:native && npm run typecheck && npm test
 
 # Dart
 cd bindings/dart && dart pub get && dart run tool/build_native.dart && dart run test/bindings_test.dart
@@ -156,6 +169,6 @@ async fn example() -> anyhow::Result<()> {
 
 ## ⚠️ Known Gaps & Limitations
 
-- Some advanced features described in docs, such as full native binding parity, are not yet complete in code.
+- Binding coverage now exists across the workspace, but not as a raw 1:1 export of every Rust type or trait.
 - Local Windows execution may still be affected by Application Control policy on some machines.
-- The TypeScript binding does not yet auto-compile native Rust on `npm install`.
+- The TypeScript binding still does not auto-compile native Rust on `npm install`.

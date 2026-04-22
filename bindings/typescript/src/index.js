@@ -333,3 +333,36 @@ export class OpenAiCompatConduit {
     yield result.text;
   }
 }
+
+export { RustCrateBridge } from "./bridge.js";
+export {
+  CommsTools,
+  ExecTools,
+  FileTools,
+  LoaderTools,
+  ProductivityTools,
+  SearchTools,
+  VectorTools,
+  WebTools,
+} from "./tools.js";
+export {
+  CheckpointGate,
+  ColonyOrchestrator,
+  CompassRouterBuilder,
+  CoreOrchestrator,
+  PipelineBuilder,
+  PlainText,
+  PrismConfig,
+  RecallEntry,
+  RecallOrchestrator,
+  RecallStore,
+  RelayBuilder,
+  RelayExecutor,
+  RetryPolicy,
+  SentinelConfig,
+  SentinelOrchestrator,
+  StepOutcome,
+  TextParser,
+  TokenBudget,
+  installGlobalSubscriber,
+} from "./workflows.js";

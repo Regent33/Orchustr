@@ -10,15 +10,20 @@
 ## Package Shape
 
 - `package.json` declares an ESM package.
+- `src/native.js` performs optional addon loading.
+- `scripts/build-native.js` builds `or-bridge` with the `node` feature and copies the artifact into `bindings/typescript/native/`.
 - `npm run typecheck` validates the declaration surface against `tests/typecheck.ts`.
 - `npm test` runs `tests/bindings.test.js` directly under Node.
 
 ## Relationship to `or-bridge`
 
 - `or-bridge` exposes Node-targeted functions through NAPI.
-- The current TypeScript package does not import or load that addon.
-- As a result, the package behaves like a lightweight JS facade today rather than a true native bridge.
+- `src/native.js` loads the addon when a built artifact is available.
+- `src/bridge.js` wraps the native catalog and crate invocation surface in `RustCrateBridge`.
+- `src/tools.js` layers friendly wrappers for the Rust `or-tools-*` crates on top of that bridge.
+- `src/workflows.js` keeps callback-heavy runtime helpers in JavaScript.
 
 ⚠️ Known Gaps & Limitations
-- There is no NAPI packaging or runtime loading code in `bindings/typescript`.
+
+- Native addon loading is optional and still local-build oriented.
 - No browser-specific bundle configuration exists in the repository.

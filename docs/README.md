@@ -18,16 +18,16 @@ Rust gives the workspace strong ownership semantics for state flow, explicit con
 ## Multi-Language Support
 
 - **Rust**: full runtime surface across 26 crates.
-- **Python**: package `orchustr` with optional PyO3 helpers and pure-Python facades.
-- **TypeScript**: package `@orchustr/core` with a pure JS runtime facade and declaration file.
-- **Dart**: package `orchustr` with a pure Dart facade and optional `dart:ffi` bridge helpers.
+- **Python**: package `orchustr` with PyO3-backed crate access plus Python workflow helpers.
+- **TypeScript**: package `@orchustr/core` with ESM helpers, declaration files, and an optional Node native addon path.
+- **Dart**: package `orchustr` with Dart workflow helpers and optional `dart:ffi` bridge access.
 
 ## Complete Crate Map
 
 - `or-core`: shared state, retry, token budgets, and in-memory persistence/vector primitives.
 - `or-anchor`: chunking and in-memory retrieval pipeline.
 - `or-beacon`: prompt templating and validation.
-- `or-bridge`: native prompt/state helper bridge for Python, Node, and Dart.
+- `or-bridge`: native binding gateway for Python, Node, and Dart.
 - `or-checkpoint`: checkpoint pause/resume support.
 - `or-colony`: multi-agent coordination and aggregation.
 - `or-compass`: predicate-based routing.
@@ -55,8 +55,8 @@ Rust gives the workspace strong ownership semantics for state flow, explicit con
 
 - Rust: `cargo check --all-features`
 - Python: `cd bindings/python && maturin develop`
-- TypeScript: `cd bindings/typescript && npm ci && npm run typecheck && npm test`
-- Dart: `cd bindings/dart && dart pub get && dart analyze && dart run test/bindings_test.dart`
+- TypeScript: `cd bindings/typescript && npm ci && npm run build:native && npm run typecheck && npm test`
+- Dart: `cd bindings/dart && dart pub get && dart run tool/build_native.dart && dart analyze && dart run test/bindings_test.dart`
 
 ## Install the Bindings
 

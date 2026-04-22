@@ -26,5 +26,19 @@ const result = await graph.execute({});
 console.log(result.summary);
 ```
 
+## Call a Rust Tool Crate
+
+```ts
+import { SearchTools } from "@orchustr/core";
+
+const search = new SearchTools();
+const results = search.search("tavily", {
+  query: { query: "Rust agent frameworks" },
+});
+
+console.log(results.results?.length ?? 0);
+```
+
 ⚠️ Known Gaps & Limitations
-- These examples use the current JS package surface and do not invoke the Rust NAPI bridge.
+
+- Native crate examples require a built addon from `npm run build:native`.

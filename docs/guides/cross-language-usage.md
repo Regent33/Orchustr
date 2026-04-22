@@ -11,17 +11,18 @@
 ## Current Capability Differences
 
 - **Rust**: richest and most direct access to the runtime crates.
-- **Python**: mixed native/pure-Python package with graph, prompt, provider, forge, and MCP facades.
-- **Dart/Flutter**: direct native layer access backed by FFI mapping to standard SDK interfaces.
-- **TypeScript**: pure JS facade with declarations and tests, but no native bridge loading yet.
+- **Python**: mixed PyO3/Python package with Rust-backed tool access and Python workflow helpers.
+- **Dart/Flutter**: Dart-first package with optional FFI-backed crate access plus Dart workflow helpers.
+- **TypeScript**: JS-first package with optional native bridge loading for Rust-backed crate access.
 
 ## When to Choose Which
 
 - Choose **Rust** for the full runtime surface and best control over state, graph, provider, and transport layers.
-- Choose **Python** when scripting convenience matters more than direct access to every Rust crate.
-- Choose **Dart/Flutter** for compiling cross-platform AI mobile applications running native engine performance.
-- Choose **TypeScript** when you want a lightweight Node-facing package and current JS ergonomics are enough.
+- Choose **Python** when scripting convenience matters and you still want access to the Rust tool crates.
+- Choose **Dart/Flutter** when you want Dart-native ergonomics with optional FFI-backed crate access.
+- Choose **TypeScript** when you want a Node-facing package that can stay lightweight by default and opt into native bridge calls locally.
 
 ⚠️ Known Gaps & Limitations
-- Cross-language feature parity is incomplete today.
+
+- Cross-language feature parity exists at the crate level, but the exact API shape still differs by language.
 - Package semantics are intentionally similar, but runtime implementation depth differs significantly by language.

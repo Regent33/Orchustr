@@ -1,6 +1,13 @@
 import asyncio
 
-from orchustr import GraphBuilder, PromptBuilder
+from orchustr import (
+    CoreOrchestrator,
+    GraphBuilder,
+    PipelineBuilder,
+    PromptBuilder,
+    RustCrateBridge,
+    TokenBudget,
+)
 
 
 def test_prompt_builder_renders_variables():
@@ -33,3 +40,28 @@ def test_graph_builder_executes_async_nodes():
         return await graph.execute({})
 
     assert asyncio.run(run())["done"] == "HELLO"
+
+
+def test_core_orchestrator_enforces_budget():
+    CoreOrchestrator().enforce_completion_budget(
+        TokenBudget(max_context_tokens=100, max_completion_tokens=20),
+        70,
+    )
+
+
+def test_pipeline_builder_executes_sequential_nodes():
+    async def run():
+        pipeline = (
+            PipelineBuilder()
+            .add_node("one", lambda state: {**state, "a": 1})
+            .add_node("two", lambda state: {**state, "b": state["a"] + 1})
+            .build()
+        )
+        return await pipeline.execute({})
+
+    assert asyncio.run(run())["b"] == 2
+
+
+def test_rust_crate_bridge_catalog_is_optional():
+    catalog = RustCrateBridge.catalog()
+    assert isinstance(catalog, list)

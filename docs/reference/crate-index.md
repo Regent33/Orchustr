@@ -5,7 +5,7 @@
 | `or-core` | Shared contracts, retry, token budgets, in-memory persistence/vector store. | `(none)` | DynState, OrchState, CoreOrchestrator, RetryPolicy | Complete |
 | `or-anchor` | Chunking and in-memory retrieval pipeline. | or-core | AnchorPipeline, AnchorChunk, RetrievedChunk | Complete |
 | `or-beacon` | Prompt templating and validation. | or-core | PromptBuilder, PromptTemplate, PromptOrchestrator | Complete |
-| `or-bridge` | Native prompt/state bridge for Python, Node, and Dart. | or-beacon, or-core | render_prompt_json, normalize_state_json, BridgeError, orchustr_bridge_version (C-ABI) | Partial |
+| `or-bridge` | Native binding gateway for Python, Node, and Dart, including prompt/state helpers and crate-level JSON invocation. | or-beacon, or-conduit, or-core, or-prism, or-sieve, or-tools-* | render_prompt_json, normalize_state_json, workspace_catalog_json, invoke_crate_json, BridgeError, orchustr_bridge_version (C-ABI) | Partial |
 | `or-checkpoint` | Pause/resume state serialization. | or-core | CheckpointGate, CheckpointRecord | Complete |
 | `or-colony` | Multi-agent coordination and aggregation. | or-core | ColonyOrchestrator, ColonyAgentTrait, ColonyResult | Complete |
 | `or-compass` | Predicate routing. | or-core | CompassRouterBuilder, CompassRouter, RouteSelection | Complete |

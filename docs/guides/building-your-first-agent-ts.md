@@ -1,6 +1,6 @@
 # Building Your First Agent in TypeScript
 
-The TypeScript package currently exposes graph and prompt primitives as a JavaScript facade. That makes a graph-first introduction the most faithful starting point.
+The TypeScript package exposes graph and prompt primitives as JavaScript helpers and can optionally reach Rust-backed crates through `RustCrateBridge` and the `*Tools` wrappers. A graph-first introduction is still the simplest place to start.
 
 ## Minimal Example
 
@@ -21,8 +21,9 @@ console.log(result.prompt);
 
 ## Next Step
 
-If you need HTTP provider access, move to the package conduit helpers or the Rust crates themselves.
+If you need search, web, file, vector, comms, or productivity tools, move next to `SearchTools`, `WebTools`, `FileTools`, or the other `*Tools` wrappers after building the optional native addon.
 
 ⚠️ Known Gaps & Limitations
-- There is no TypeScript exposure of the Rust `or-sentinel` agent runtime today.
-- The TypeScript package does not currently load the native NAPI bridge.
+
+- The binding layer exposes `or-sentinel` through TypeScript workflow helpers rather than a raw direct export of the Rust agent runtime.
+- Native bridge usage still depends on a local `npm run build:native` step.

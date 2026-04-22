@@ -1,4 +1,7 @@
-use crate::{BridgeError, normalize_state_json, render_prompt_json};
+use crate::{
+    BridgeError, invoke_crate_json, normalize_state_json, render_prompt_json,
+    workspace_catalog_json,
+};
 use std::ffi::{CStr, CString, c_char};
 use std::ptr;
 
@@ -93,6 +96,58 @@ pub unsafe extern "C" fn orchustr_normalize_state_json(
         Ok(normalized) => {
             clear_error(error_out);
             into_raw_string(normalized)
+        }
+        Err(error) => {
+            write_error(error_out, error);
+            ptr::null_mut()
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+/// Return the workspace crate-binding catalog as JSON.
+///
+/// # Safety
+/// `error_out`, when non-null, must point to writable memory for a single string pointer.
+pub unsafe extern "C" fn orchustr_workspace_catalog_json(
+    error_out: *mut *mut c_char,
+) -> *mut c_char {
+    match workspace_catalog_json() {
+        Ok(catalog) => {
+            clear_error(error_out);
+            into_raw_string(catalog)
+        }
+        Err(error) => {
+            write_error(error_out, error);
+            ptr::null_mut()
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+/// Invoke a crate operation through the generic JSON bridge.
+///
+/// # Safety
+/// `crate_name`, `operation`, and `payload_json` must be valid pointers to NUL-terminated UTF-8 strings.
+/// `error_out`, when non-null, must point to writable memory for a single string pointer.
+pub unsafe extern "C" fn orchustr_invoke_crate_json(
+    crate_name: *const c_char,
+    operation: *const c_char,
+    payload_json: *const c_char,
+    error_out: *mut *mut c_char,
+) -> *mut c_char {
+    let result = from_ptr(crate_name, "crate_name")
+        .and_then(|crate_name| {
+            from_ptr(operation, "operation")
+                .and_then(|operation| from_ptr(payload_json, "payload_json").map(|payload| (crate_name, operation, payload)))
+        })
+        .and_then(|(crate_name, operation, payload_json)| {
+            invoke_crate_json(&crate_name, &operation, &payload_json)
+        });
+    match result {
+        Ok(output) => {
+            clear_error(error_out);
+            into_raw_string(output)
         }
         Err(error) => {
             write_error(error_out, error);

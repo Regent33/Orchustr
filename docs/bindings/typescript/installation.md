@@ -13,6 +13,7 @@
 ```bash
 cd bindings/typescript
 npm ci
+npm run build:native
 npm run typecheck
 npm test
 ```
@@ -21,8 +22,11 @@ npm test
 
 - `src/index.js`: runtime implementation.
 - `index.d.ts`: declaration surface.
+- `src/native.js`: optional native addon loader.
+- `scripts/build-native.js`: local native build helper.
 - `tests/`: local test and typecheck examples.
 
 ⚠️ Known Gaps & Limitations
+
 - No publish workflow is defined for npm release automation.
-- No WASM build or native addon packaging step exists in the current package.
+- The native addon is a local build step rather than an automatically packaged artifact.

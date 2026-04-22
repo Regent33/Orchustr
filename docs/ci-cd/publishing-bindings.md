@@ -6,7 +6,11 @@ The repository contains `bindings/python/pyproject.toml` configured for `maturin
 
 ## TypeScript
 
-The repository contains `bindings/typescript/package.json` and `index.d.ts`, which are enough to install and test the package locally. There is no checked-in workflow that publishes the package to npm.
+The repository contains `bindings/typescript/package.json`, `index.d.ts`, and a local `build:native` script. That is enough to install and test the package locally. There is no checked-in workflow that publishes the package to npm.
+
+## Dart
+
+The repository contains `bindings/dart/pubspec.yaml` and `tool/build_native.dart`, which are enough to develop the package locally. There is no checked-in workflow that publishes the package to `pub.dev`.
 
 ## What a Manual Publish Would Need
 
@@ -15,5 +19,6 @@ The repository contains `bindings/typescript/package.json` and `index.d.ts`, whi
 - Credentials and publish commands executed outside the checked-in workflow.
 
 ⚠️ Known Gaps & Limitations
+
 - No automated binding publishing pipeline exists in the repository.
-- The TypeScript package is currently a pure JS facade and may need native packaging decisions before a broader release strategy.
+- The TypeScript package now supports local native builds, but broader native packaging and distribution decisions are still open.

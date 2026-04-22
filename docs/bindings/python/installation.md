@@ -17,8 +17,12 @@ maturin develop
 - `orchustr/__init__.py`: top-level exports.
 - `orchustr/_runtime.py`: optional native bridge loader.
 - `orchustr/_orchustr.pyi`: native helper stubs.
-- `orchustr/*.py`: pure-Python graph, prompt, conduit, forge, and MCP facades.
+- `orchustr/bridge.py`: crate catalog and invocation helpers.
+- `orchustr/tools.py`: Rust `or-tools-*` wrappers.
+- `orchustr/workflows.py`: binding-local helpers for workflow crates.
+- `orchustr/*.py`: Python graph, prompt, conduit, forge, and MCP facades.
 
 ⚠️ Known Gaps & Limitations
+
 - No separate wheel publishing workflow exists in the repository today.
-- The native module is limited to the `or-bridge` helper surface.
+- Installing the package still requires building the `or-bridge` extension through `maturin`.

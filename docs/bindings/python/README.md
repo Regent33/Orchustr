@@ -1,6 +1,6 @@
 # Python Bindings
 
-The Python package lives in `bindings/python` and is named `orchustr` in `pyproject.toml`. It uses **maturin + PyO3** for the optional native module and pure Python modules for most of the current package surface.
+The Python package lives in `bindings/python` and is named `orchustr` in `pyproject.toml`. It uses **maturin + PyO3** for the native bridge and Python modules for the higher-level workflow surface. The result is a package that can reach the full workspace without forcing every concept through a raw FFI boundary.
 
 ## Version Requirements
 
@@ -15,21 +15,20 @@ The Python package lives in `bindings/python` and is named `orchustr` in `pyproj
 ## Quickstart
 
 ```python
-from orchustr import GraphBuilder, PromptBuilder
+from orchustr import PromptBuilder, SearchTools
 
-prompt = PromptBuilder().template("Hello, {{name}}!").build()
+prompt = PromptBuilder().template("Find news about {{topic}}").build()
+tools = SearchTools()
 
-async def greet(state: dict) -> dict:
-    return {**state, "message": prompt.render(state)}
-
-graph = GraphBuilder().add_node("greet", greet).set_entry("greet").set_exit("greet").build()
+query = prompt.render({"topic": "retrieval engineering"})
+results = tools.search("tavily", {"query": {"query": query}})
 ```
 
 ## Async Support
 
 - `GraphBuilder` and graph execution are async-friendly in the Python package.
-- HTTP provider helpers use `asyncio.to_thread` around `urllib.request` rather than a native async HTTP client.
-- The native helper module itself exposes sync JSON/string helpers only.
+- HTTP provider helpers use native Python async clients where the binding owns the behavior.
+- The native bridge itself stays JSON/string oriented and sync at the boundary.
 
 ## Rust to Python Type Mapping
 
@@ -38,13 +37,16 @@ graph = GraphBuilder().add_node("greet", greet).set_entry("greet").set_exit("gre
 | `DynState` | `dict[str, object]` |
 | `CompletionResponse` | Python dataclass-like class with `text`, `usage`, `finish_reason` fields |
 | `PromptBuilder` | Python class in `orchustr.prompt` |
-| `render_prompt_json` | native helper behind `_runtime.py` |
+| `RustCrateBridge.invoke(...)` | PyO3-backed JSON bridge behind `_runtime.py` |
 
-## Known Limitations vs Native Rust
+## What Is Exposed
 
-- Most of the Python package is implemented in Python, not as direct wrappers over the Rust crates.
-- The native PyO3 module only exposes prompt rendering and JSON state normalization.
+- `PromptBuilder`, `GraphBuilder`, `ForgeRegistry`, `NexusClient`, and conduit helpers remain Python-first APIs.
+- `RustCrateBridge` exposes the shared native catalog and invocation surface.
+- `SearchTools`, `WebTools`, `VectorTools`, `LoaderTools`, `ExecTools`, `FileTools`, `CommsTools`, and `ProductivityTools` wrap the Rust `or-tools-*` crates.
+- Workflow helpers such as `CheckpointGate`, `PipelineBuilder`, `RecallStore`, and `SentinelOrchestrator` keep callback-heavy behavior in Python.
 
 ⚠️ Known Gaps & Limitations
-- There is no Python exposure of every Rust crate or trait in the current repository.
-- Provider support relies on standard-library HTTP helpers rather than the Rust provider adapters.
+
+- Python exposes every workspace crate, but not as a literal 1:1 projection of every Rust type or trait.
+- Native bridge availability still depends on building the extension through `maturin`.

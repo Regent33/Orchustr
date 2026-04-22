@@ -5,10 +5,11 @@
   "main": "src/index.js",
   "types": "index.d.ts",
   "scripts": {
+    "build:native": "node scripts/build-native.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node tests/bindings.test.js"
   },
   "devDependencies": {
-    "typescript": "6.0.2"
+    "typescript": "6.0.3"
   }
 }

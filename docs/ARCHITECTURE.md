@@ -2,7 +2,7 @@
 
 Orchustr is structured as a layered Cargo workspace rather than a monolithic crate. `or-core` anchors shared contracts, execution crates build upward from those contracts, and integration crates such as `or-conduit`, `or-forge`, and `or-mcp` connect the runtime to external systems.
 
-The repository now exposes three maintained binding surfaces: Python, TypeScript, and Dart. All three sit above `or-bridge`, but only a narrow helper surface is native today, so each language package still carries part of its own runtime behavior.
+The repository exposes three maintained binding surfaces: Python, TypeScript, and Dart. All three sit above `or-bridge`, which now serves as the shared native gateway for prompt/state helpers and Rust-backed crate invocation while each language package still owns its callback-heavy workflow ergonomics locally.
 
 ## Read This Next
 
@@ -23,5 +23,6 @@ The repository now exposes three maintained binding surfaces: Python, TypeScript
 - **Cross-cutting**: `or-prism`, `or-bridge`
 
 ⚠️ Known Gaps & Limitations
+
 - The architecture pages document the current repository state only.
 - Some planned capabilities implied by crate names are still partial in implementation.

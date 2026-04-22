@@ -42,11 +42,21 @@ All notable changes to Orchustr should be documented in this file.
 
 ## [0.1.2]
 
+### Added
+
+- Added a cross-language binding bridge for the workspace through `or-bridge`, including `workspace_catalog_json` and `invoke_crate_json` entry points for Python, Node, and Dart.
+- Added first-class binding helpers for every `or-tools-*` crate:
+  - Python: `RustCrateBridge`, `SearchTools`, `WebTools`, `VectorTools`, `LoaderTools`, `ExecTools`, `FileTools`, `CommsTools`, and `ProductivityTools`
+  - TypeScript: `RustCrateBridge` plus matching `*Tools` classes and an optional `npm run build:native` flow
+  - Dart: `RustCrateBridge` plus matching `*Tools` classes over `dart:ffi`
+- Added binding-local workflow helpers for the crates whose main ergonomics are callback-heavy or host-language-centric, including checkpointing, colony coordination, routing, pipeline execution, recall, relay, sentinel, and sieve-style parsing helpers.
+
 ### Changed
 
 - Aligned the Rust workspace, internal path dependency versions, language binding package versions, and docs references on `0.1.2`.
 - Expanded the `or-tools-*` documentation set so each tool crate explains its purpose, responsibilities, and boundaries in warmer plain language before diving into API and internals detail.
 - Fixed the root workspace manifest version line so `Cargo.toml` remains valid TOML while carrying the new version.
+- Clarified the binding story in docs and release notes: all workspace crates are now available in bindings through a hybrid model that combines a native JSON bridge for Rust-backed operations with binding-local helper layers where direct FFI would be a worse fit.
 
 ## [0.1.1]
 

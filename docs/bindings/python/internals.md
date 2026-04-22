@@ -4,19 +4,21 @@
 
 - Build backend: `maturin`
 - Native technology: PyO3 in `crates/or-bridge` behind the `python` feature
-- Runtime package: mostly pure Python modules under `bindings/python/orchustr`
+- Runtime package: Python modules under `bindings/python/orchustr`
 
 ## GIL and Native Boundary
 
-- The current native bridge only exchanges strings and JSON text.
+- The native bridge exchanges strings and JSON text.
 - No explicit long-running GIL-sensitive native loops were found in the PyO3 layer.
-- Higher-level async behavior lives in Python modules, not inside the native extension.
+- Higher-level async behavior and callback-heavy workflow composition live in Python modules, not inside the native extension.
 
 ## Async Bridge Notes
 
-- `orchustr.conduit` wraps blocking HTTP calls in `asyncio.to_thread`.
-- Graph execution is async at the Python layer and does not depend on the native module.
+- `orchustr.bridge` uses the shared `or-bridge` JSON invocation surface.
+- `orchustr.tools` translates Python dictionaries into native bridge payloads for the Rust `or-tools-*` crates.
+- Graph, relay, pipeline, checkpoint, recall, and sentinel helpers stay in Python where closures and host-language control flow are easier to express.
 
 ⚠️ Known Gaps & Limitations
-- The native module is intentionally narrow and not a full workspace wrapper.
-- No separate Python-only performance layer beyond the optional prompt/state helpers exists today.
+
+- The native module is intentionally JSON-oriented rather than exposing every Rust trait or generic directly.
+- When the extension is unavailable, native crate invocation is unavailable too, but the Python-local helpers still remain usable.

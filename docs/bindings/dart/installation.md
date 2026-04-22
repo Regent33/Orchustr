@@ -29,5 +29,6 @@ dart run test/bindings_test.dart
 ```
 
 ⚠️ Known Gaps & Limitations
+
 - The repository does not currently publish the Dart package to `pub.dev`.
 - Native bridge loading is local-build oriented today.

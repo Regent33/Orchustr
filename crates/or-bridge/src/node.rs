@@ -18,3 +18,18 @@ pub fn normalize_state_json(raw_state: String) -> napi::Result<String> {
     crate::normalize_state_json(&raw_state)
         .map_err(|error| napi::Error::from_reason(error.to_string()))
 }
+
+#[napi]
+pub fn workspace_catalog_json() -> napi::Result<String> {
+    crate::workspace_catalog_json().map_err(|error| napi::Error::from_reason(error.to_string()))
+}
+
+#[napi]
+pub fn invoke_crate_json(
+    crate_name: String,
+    operation: String,
+    payload_json: String,
+) -> napi::Result<String> {
+    crate::invoke_crate_json(&crate_name, &operation, &payload_json)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))
+}
