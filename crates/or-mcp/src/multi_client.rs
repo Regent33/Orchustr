@@ -189,8 +189,7 @@ impl MultiMcpClient {
         let tools = merge_tools(&servers);
         let routes = tools
             .iter()
-            .enumerate()
-            .map(|(_, tool)| {
+            .map(|tool| {
                 let server_index = servers
                     .iter()
                     .position(|server| server.config.name == tool.server_name)

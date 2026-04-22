@@ -24,7 +24,7 @@ where
 {
     pub fn new(provider: P, registry: ForgeRegistry) -> Result<Self, SentinelError> {
         let graph = bind_react(
-            ReActTopology::default().build(),
+            ReActTopology.build(),
             provider.clone(),
             registry.clone(),
         )

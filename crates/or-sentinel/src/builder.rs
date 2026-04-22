@@ -40,10 +40,16 @@ impl SentinelAgentBuilder<ReActTopology, ()> {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            topology: ReActTopology::default(),
+            topology: ReActTopology,
             provider: (),
             registry: ForgeRegistry::new(),
         }
+    }
+}
+
+impl Default for SentinelAgentBuilder<ReActTopology, ()> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
