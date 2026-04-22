@@ -12,7 +12,21 @@ except ImportError:  # pragma: no cover - fall back to urllib for zero-dep envs
     _HAS_AIOHTTP = False
 
 
-class _HttpConduit:
+class ConduitProvider:
+    """Base Python conduit interface mirroring the Rust provider contract."""
+
+    async def complete_text(self, prompt: str):
+        raise NotImplementedError
+
+    async def complete_messages(self, messages: list[dict]):
+        raise NotImplementedError
+
+    async def stream_text(self, prompt: str):
+        response = await self.complete_text(prompt)
+        yield response.text
+
+
+class _HttpConduit(ConduitProvider):
     def __init__(self, api_key: str, model: str, endpoint: str, headers: dict) -> None:
         self._api_key = api_key
         self._model = model

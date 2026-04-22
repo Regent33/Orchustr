@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orchustr Lens</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --panel: #fffaf2;
+      --ink: #1f2a2e;
+      --accent: #0b6e4f;
+      --warn: #d9a404;
+      --err: #c23b22;
+      --line: #d8cdbd;
+    }
+    body { margin: 0; font: 14px/1.4 "Segoe UI", sans-serif; background: linear-gradient(180deg, var(--bg), #efe7da); color: var(--ink); }
+    header { padding: 20px 24px 8px; }
+    main { display: grid; gap: 16px; grid-template-columns: 280px 1fr 320px; padding: 0 24px 24px; }
+    section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(31,42,46,0.08); }
+    h1, h2 { margin: 0 0 12px; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { border-top: 1px solid var(--line); padding: 10px 0; cursor: pointer; }
+    li:first-child { border-top: 0; }
+    .trace-meta { color: #5b696d; font-size: 12px; }
+    .node { fill: #d7eadf; stroke: #7aa891; stroke-width: 1.5; }
+    .node.warn { fill: #f8ebbf; stroke: #d9a404; }
+    .node.err { fill: #f6d6ce; stroke: #c23b22; }
+    .label { font-size: 12px; fill: var(--ink); }
+    .timeline-row { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px; margin: 8px 0; }
+    .timeline-bar { height: 14px; border-radius: 999px; background: #e5ddd0; overflow: hidden; }
+    .timeline-fill { height: 100%; background: var(--accent); }
+    pre { white-space: pre-wrap; word-break: break-word; margin: 0; }
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Orchustr Lens</h1>
+    <p>Local execution traces, refreshed every 2 seconds.</p>
+  </header>
+  <main>
+    <section>
+      <h2>Recent Traces</h2>
+      <ul id="trace-list"></ul>
+    </section>
+    <section>
+      <h2>Execution Map</h2>
+      <svg id="graph" width="100%" height="260" viewBox="0 0 720 260"></svg>
+      <h2 style="margin-top: 12px;">Timeline</h2>
+      <div id="timeline"></div>
+    </section>
+    <section>
+      <h2>State Delta</h2>
+      <pre id="delta">Click a node to inspect its state delta.</pre>
+    </section>
+  </main>
+  <script>
+    const traceList = document.getElementById("trace-list");
+    const graph = document.getElementById("graph");
+    const timeline = document.getElementById("timeline");
+    const delta = document.getElementById("delta");
+    let selectedTraceId = null;
+
+    async function loadTraces() {
+      const traces = await fetch("/api/traces").then((response) => response.json());
+      renderTraces(traces);
+      if (!selectedTraceId && traces.length > 0) {
+        selectedTraceId = traces[0].trace_id;
+      }
+      if (selectedTraceId) {
+        await loadTrace(selectedTraceId);
+      }
+    }
+
+    function renderTraces(traces) {
+      traceList.innerHTML = "";
+      traces.forEach((trace) => {
+        const item = document.createElement("li");
+        item.innerHTML = `<strong>${trace.trace_id}</strong><div class="trace-meta">${trace.span_count} spans</div>`;
+        item.onclick = () => { selectedTraceId = trace.trace_id; loadTrace(trace.trace_id); };
+        traceList.appendChild(item);
+      });
+    }
+
+    async function loadTrace(traceId) {
+      const snapshot = await fetch(`/api/traces/${traceId}`).then((response) => response.json());
+      renderGraph(snapshot.nodes);
+      renderTimeline(snapshot.nodes);
+    }
+
+    function renderGraph(nodes) {
+      graph.innerHTML = "";
+      const width = 140;
+      nodes.forEach((node, index) => {
+        const x = 20 + index * 160;
+        const y = 70;
+        if (index > 0) {
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", String(x - 20));
+          line.setAttribute("y1", "100");
+          line.setAttribute("x2", String(x));
+          line.setAttribute("y2", "100");
+          line.setAttribute("stroke", "#9a8f80");
+          line.setAttribute("stroke-width", "2");
+          graph.appendChild(line);
+        }
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", String(x));
+        rect.setAttribute("y", String(y));
+        rect.setAttribute("width", String(width));
+        rect.setAttribute("height", "60");
+        rect.setAttribute("rx", "16");
+        rect.setAttribute("class", `node ${node.status === "Errored" ? "err" : node.status === "InProgress" ? "warn" : ""}`);
+        rect.onclick = () => { delta.textContent = JSON.stringify(node.state_delta, null, 2); };
+        graph.appendChild(rect);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", String(x + 14));
+        text.setAttribute("y", "104");
+        text.setAttribute("class", "label");
+        text.textContent = node.name;
+        graph.appendChild(text);
+      });
+    }
+
+    function renderTimeline(nodes) {
+      timeline.innerHTML = "";
+      const maxDuration = Math.max(...nodes.map((node) => node.duration_ms || 1), 1);
+      nodes.forEach((node) => {
+        const row = document.createElement("div");
+        row.className = "timeline-row";
+        row.innerHTML = `
+          <div><strong>${node.name}</strong><div class="trace-meta">${node.duration_ms} ms</div></div>
+          <div class="timeline-bar"><div class="timeline-fill" style="width:${Math.max((node.duration_ms / maxDuration) * 100, 6)}%"></div></div>
+        `;
+        row.onclick = () => { delta.textContent = JSON.stringify(node.state_delta, null, 2); };
+        timeline.appendChild(row);
+      });
+    }
+
+    loadTraces();
+    setInterval(loadTraces, 2000);
+  </script>
+</body>
+</html>

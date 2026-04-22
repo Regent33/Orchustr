@@ -16,6 +16,8 @@ import json
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from orchustr import ForgeRegistry, NexusClient, OpenAiCompatConduit, PromptBuilder
@@ -48,7 +50,7 @@ async def _chat(messages: list[dict], max_tokens: int = 128) -> str:
 
 # ── Test 1: Basic completion ─────────────────────────────────────────
 
-async def test_basic_completion():
+async def _test_basic_completion():
     text = await _chat([{"role": "user", "content": "Reply with exactly one word: hello"}], 64)
     print(f"Response: {text!r}")
     assert len(text) > 0, "response should not be empty"
@@ -57,7 +59,7 @@ async def test_basic_completion():
 
 # ── Test 2: Multi-turn memory ────────────────────────────────────────
 
-async def test_memory_multi_turn():
+async def _test_memory_multi_turn():
     # Turn 1: tell the model a fact
     turn1 = await _chat([
         {"role": "system", "content": "You are a memory test assistant. Remember everything."},
@@ -79,7 +81,7 @@ async def test_memory_multi_turn():
 
 # ── Test 3: Tool-call agent loop ─────────────────────────────────────
 
-async def test_tool_call_agent():
+async def _test_tool_call_agent():
     # Register tools in ForgeRegistry
     forge = ForgeRegistry()
     forge.register("calculate", lambda args: {"result": eval(args["expression"])})
@@ -114,7 +116,7 @@ async def test_tool_call_agent():
 
 # ── Test 4: MCP round-trip ───────────────────────────────────────────
 
-async def test_mcp_forge_round_trip():
+async def _test_mcp_forge_round_trip():
     """Test ForgeRegistry importing tools from a mock MCP server."""
     import http.server
     import threading
@@ -180,6 +182,34 @@ async def test_mcp_forge_round_trip():
     print("PASS mcp_forge_round_trip")
 
 
+def _run_live(factory):
+    if not API_KEY:
+        pytest.skip("OPENROUTER_API_KEY not set")
+    try:
+        import aiohttp
+    except ImportError:
+        pytest.skip("aiohttp not installed")
+    global _conduit
+    _conduit = OpenAiCompatConduit.openrouter(API_KEY, MODEL)
+    asyncio.run(factory())
+
+
+def test_basic_completion():
+    _run_live(_test_basic_completion)
+
+
+def test_memory_multi_turn():
+    _run_live(_test_memory_multi_turn)
+
+
+def test_tool_call_agent():
+    _run_live(_test_tool_call_agent)
+
+
+def test_mcp_forge_round_trip():
+    _run_live(_test_mcp_forge_round_trip)
+
+
 # ── Main ─────────────────────────────────────────────────────────────
 
 async def main():
@@ -195,10 +225,10 @@ async def main():
         return
 
     _conduit = OpenAiCompatConduit.openrouter(API_KEY, MODEL)
-    await test_basic_completion()
-    await test_memory_multi_turn()
-    await test_tool_call_agent()
-    await test_mcp_forge_round_trip()
+    await _test_basic_completion()
+    await _test_memory_multi_turn()
+    await _test_tool_call_agent()
+    await _test_mcp_forge_round_trip()
     print("\nAll Python live OpenRouter tests passed!")
 
 

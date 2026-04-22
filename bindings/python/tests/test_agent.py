@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from orchustr import ForgeRegistry, GraphBuilder, PromptBuilder
 
 
-async def test_prompt_builder_preserves_template_chars():
+async def _test_prompt_builder_preserves_template_chars():
     """Bug 8: template string should NOT be sanitized."""
     # A template with a tab character should survive
     template = PromptBuilder().template("Hello\t{{name}}").build()
@@ -32,7 +32,7 @@ async def test_prompt_builder_preserves_template_chars():
     print("PASS prompt_builder_preserves_template_chars")
 
 
-async def test_forge_closure_captures_client():
+async def _test_forge_closure_captures_client():
     """Bug 7: closure should capture client reference explicitly."""
 
     class MockMcpClient:
@@ -61,7 +61,7 @@ async def test_forge_closure_captures_client():
     print("PASS forge_closure_captures_client")
 
 
-async def test_react_agent_loop():
+async def _test_react_agent_loop():
     """Full ReAct agent loop using pipeline-style graph (linear chain per run)."""
 
     # Register tools
@@ -98,7 +98,7 @@ async def test_react_agent_loop():
     print("PASS react_agent_loop")
 
 
-async def test_pipeline_agent():
+async def _test_pipeline_agent():
     """Multi-step pipeline that enriches state through a chain."""
     graph = (
         GraphBuilder()
@@ -119,6 +119,22 @@ async def test_pipeline_agent():
     assert "weather" in result["response"], f"response: {result['response']}"
     assert result["input"] == "What's the weather?", "input should survive"
     print("PASS pipeline_agent")
+
+
+def test_prompt_builder_preserves_template_chars():
+    asyncio.run(_test_prompt_builder_preserves_template_chars())
+
+
+def test_forge_closure_captures_client():
+    asyncio.run(_test_forge_closure_captures_client())
+
+
+def test_react_agent_loop():
+    asyncio.run(_test_react_agent_loop())
+
+
+def test_pipeline_agent():
+    asyncio.run(_test_pipeline_agent())
 
 
 # ── Node handlers ────────────────────────────────────────────────────
@@ -166,10 +182,10 @@ async def _generate(state):
 # ── Main ─────────────────────────────────────────────────────────────
 
 async def main():
-    await test_prompt_builder_preserves_template_chars()
-    await test_forge_closure_captures_client()
-    await test_react_agent_loop()
-    await test_pipeline_agent()
+    await _test_prompt_builder_preserves_template_chars()
+    await _test_forge_closure_captures_client()
+    await _test_react_agent_loop()
+    await _test_pipeline_agent()
     print("\nAll Python agent tests passed!")
 
 

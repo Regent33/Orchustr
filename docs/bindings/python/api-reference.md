@@ -4,27 +4,35 @@
 
 | Name | Kind | Backing implementation | Notes |
 |---|---|---|---|
-| `PromptBuilder` | class | `orchustr/prompt.py` | Validates `{{variable}}` templates and renders prompts. |
-| `GraphBuilder` | class | `orchustr/graph.py` | Builds a simple sequential execution graph. |
-| `ForgeRegistry` | class | `orchustr/forge.py` | Registers async tools and can import MCP tools. |
+| `DynState` | class | `orchustr/state.py` | Mutable graph state helper used by the Python graph surface. |
+| `NodeResult` | class | `orchustr/result.py` | Encodes `advance`, `exit`, `branch`, and `pause` outcomes. |
+| `GraphBuilder` | class | `orchustr/graph.py` | Builds async execution graphs with explicit entry and exit nodes. |
+| `PromptBuilder` | class | `orchustr/prompt.py` | Validates and renders `{{variable}}` templates. |
+| `ConduitProvider` | class | `orchustr/conduit.py` | Base class for Python conduit implementations. |
+| `ForgeRegistry` | class | `orchustr/forge.py` | Registers async tools and imports MCP tools. |
 | `NexusClient` | class | `orchustr/mcp.py` | Async HTTP MCP helper. |
-| `OpenAiConduit` | class | `orchustr/conduit.py` | Python-side provider wrapper using HTTP requests. |
-| `AnthropicConduit` | class | `orchustr/conduit.py` | Python-side provider wrapper using HTTP requests. |
+| `PipelineBuilder`, `RelayBuilder`, `ColonyBuilder`, `SentinelOrchestrator`, and related workflow helpers | classes/functions | `orchustr/workflows.py` | Binding-local helpers for callback-heavy workspace crates. |
 | `RustCrateBridge` | class | `orchustr/bridge.py` | Lists binding-visible crates and invokes Rust-backed operations. |
-| `SearchTools` / `WebTools` / `VectorTools` / `LoaderTools` / `ExecTools` / `FileTools` / `CommsTools` / `ProductivityTools` | classes | `orchustr/tools.py` | Friendly wrappers over the Rust `or-tools-*` crates. |
-| `CoreOrchestrator`, `CheckpointGate`, `PipelineBuilder`, `RecallStore`, `RelayExecutor`, `SentinelOrchestrator`, and related workflow helpers | classes/functions | `orchustr/workflows.py` | Binding-local helpers for callback-heavy workspace crates. |
 
-## Native Helper Surface
+## Optional Native Wrapper Surface
 
-| Name | Signature | Source |
-|---|---|---|
-| `version` | `() -> str` | `_orchustr.pyi` / `or-bridge` |
-| `render_prompt_json` | `(template: str, context_json: str) -> str` | `_orchustr.pyi` / `or-bridge` |
-| `normalize_state_json` | `(raw_state: str) -> str` | `_orchustr.pyi` / `or-bridge` |
-| `workspace_catalog_json` | `() -> str` | `_orchustr.pyi` / `or-bridge` |
-| `invoke_crate_json` | `(crate_name: str, operation: str, payload_json: str) -> str` | `_orchustr.pyi` / `or-bridge` |
+When the PyO3 extension is available, `_runtime.py` also re-exports:
 
-⚠️ Known Gaps & Limitations
+- `PyGraphBuilder`
+- `PyExecutionGraph`
+- `PyDynState`
+- `PyNodeResult`
+- `PyPromptBuilder`
+- `PyPromptTemplate`
+- `PyPipelineBuilder`
+- `PyPipeline`
+- `PyConduitProvider`
+- `PyForgeRegistry`
+- `PyColonyBuilder`
+- `PyRelayBuilder`
+- `PyRelayPlan`
 
-- The API surface documented here reflects the binding package, not a raw dump of every Rust item.
-- Several Python classes intentionally mirror Rust concepts through Python-native ergonomics rather than direct FFI wrappers.
+## Known Gaps & Limitations
+
+- The Python package intentionally blends Python-native helpers with optional native wrappers instead of projecting every Rust item one-for-one.
+- Native bridge availability depends on building the extension successfully in the local environment.

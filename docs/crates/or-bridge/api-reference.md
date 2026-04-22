@@ -1,6 +1,6 @@
 # or-bridge API Reference
 
-This page documents the main public surface re-exported by `or-bridge/src/lib.rs` and the key entry points behind those re-exports.
+This page documents the main public surface re-exported by `or-bridge/src/lib.rs`.
 
 ### `render_prompt_json`
 
@@ -43,7 +43,7 @@ pub fn normalize_state_json(raw_state: &str) -> Result<String, BridgeError>
 | **File** | crates/or-bridge/src/application/orchestrators.rs |
 | **Status** | Partial |
 
-**Description**: Returns a JSON catalog describing which workspace crates are available through the binding layer and whether they are native, mixed, or language-runtime surfaces.
+**Description**: Returns a JSON catalog describing which workspace crates are available through the binding layer.
 
 **Signature**
 ```rust
@@ -86,23 +86,25 @@ pub fn invoke_crate_json(
 pub enum BridgeError { ... }
 ```
 
-### `BridgeState`
+### `python`
 
 | Property | Value |
 |---|---|
-| **Kind** | struct |
+| **Kind** | module |
 | **Visibility** | pub |
-| **File** | crates/or-bridge/src/domain/entities.rs |
+| **File** | crates/or-bridge/src/python/mod.rs |
 | **Status** | Partial |
 
-**Description**: Wrapper for JSON payloads crossing the binding boundary.
+**Description**: Feature-gated PyO3 wrapper module that exposes additive Python-facing classes for graph, prompt, pipeline, relay, colony, conduit, and state concepts.
 
-**Signature**
+**Representative items**
 ```rust
-pub struct BridgeState { pub json: String }
+PyGraphBuilder, PyExecutionGraph, PyDynState, PyNodeResult, PyPromptBuilder,
+PyPipelineBuilder, PyPipeline, PyConduitProvider, PyForgeRegistry,
+PyColonyBuilder, PyRelayBuilder, PyRelayPlan
 ```
 
-⚠️ Known Gaps & Limitations
+## Known Gaps & Limitations
 
-- The bridge exposes supported crate operations rather than a raw 1:1 export of every Rust item.
-- Some higher-level runtime constructs remain binding-local by design.
+- The bridge exposes binding-safe entry points rather than a complete raw export of every Rust symbol.
+- Python helper classes are feature-gated and complement, rather than replace, the higher-level Python package helpers under `bindings/python/orchustr/`.

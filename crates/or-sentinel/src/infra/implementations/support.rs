@@ -4,7 +4,7 @@ use or_core::CoreOrchestrator;
 use or_forge::ForgeRegistry;
 use or_loom::LoomError;
 
-pub(super) async fn invoke_with_retry(
+pub(crate) async fn invoke_with_retry(
     registry: &ForgeRegistry,
     tool_name: &str,
     args: serde_json::Value,
@@ -28,7 +28,7 @@ pub(super) async fn invoke_with_retry(
     Err(SentinelError::Forge("tool retry exhausted".to_owned()))
 }
 
-pub(super) fn node_error(node: &str, error: SentinelError) -> LoomError {
+pub(crate) fn node_error(node: &str, error: SentinelError) -> LoomError {
     LoomError::NodeExecution {
         node: format!("sentinel::{node}"),
         message: error.to_string(),

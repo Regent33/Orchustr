@@ -6,6 +6,11 @@ All notable changes to Orchustr should be documented in this file.
 
 ### Added
 
+- **Pluggable sentinel topologies** (`or-sentinel`): Added `LoopTopology`, `SentinelAgentBuilder`, and built-in `ReActTopology`, `PlanExecuteTopology`, and `ReflectionTopology` for additive loop customization without changing `SentinelAgent::new`.
+- **Graph late binding and inspection** (`or-loom`): Added placeholder-node support, handler rebinding, `ExecutionGraph::inspect()`, `GraphInspection`, and `LoomError::UnboundNode` so higher-level crates can compose graph structure before wiring runtime handlers.
+- **Binding parity helpers** (`or-bridge`, Python, TypeScript): Added additive graph/state/result/conduit/workflow builder surfaces so Python and TypeScript can assemble offline Orchustr graphs with `DynState`, `NodeResult`, `GraphBuilder`, `PipelineBuilder`, `RelayBuilder`, and `ColonyBuilder` without requiring live provider keys.
+- **Serializable graph descriptors** (`or-schema`, `or-loom`): Added the new `or-schema` crate with JSON/YAML `GraphSpec` loading plus `or-loom::NodeRegistry` for resolving named handlers and conditional edges into live execution graphs.
+- **Local dashboard runtime** (`or-lens`, `or-prism`): Added the new `or-lens` crate with an embedded HTML dashboard, in-memory span collector, execution snapshots, and additive `or-prism::init_with_dashboard` support behind the `lens` feature.
 - **19 LLM Provider Support** (`or-conduit`):
   - Direct providers: OpenAI, Anthropic, Gemini, Cohere, AI21, Hugging Face, Replicate, DeepSeek, Mistral, xAI, Nvidia, Ollama.
   - Aggregators/routers: OpenRouter, Together AI, Groq, Fireworks AI, AWS Bedrock, Azure OpenAI, Google Vertex AI.
@@ -29,6 +34,7 @@ All notable changes to Orchustr should be documented in this file.
 
 ### Fixed
 
+- **Observability** (`or-prism`): OTLP HTTP exporter installation now provides a compatible HTTP client explicitly, restoring `install_global_subscriber` and `lens` feature tests under the current OpenTelemetry dependency set.
 - **Security**: API keys are redacted in all `Debug` implementations (`[REDACTED]`), preventing accidental logging of secrets.
 - **Security**: Added 64KB input size guard to `or-sentinel` `parse_decision` to prevent OOM from oversized LLM responses.
 - **Security**: Added 1MB argument payload size guard to `or-forge` `invoke_tool` to prevent injection/OOM.

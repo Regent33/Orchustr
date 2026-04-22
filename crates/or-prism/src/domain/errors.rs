@@ -7,6 +7,8 @@ pub enum PrismError {
     InvalidEndpoint(String),
     #[error("OTLP exporter error: {0}")]
     Exporter(String),
+    #[error("dashboard initialization error: {0}")]
+    Lens(String),
     #[error("subscriber install error: {0}")]
     Subscriber(String),
 }

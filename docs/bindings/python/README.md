@@ -1,52 +1,59 @@
 # Python Bindings
 
-The Python package lives in `bindings/python` and is named `orchustr` in `pyproject.toml`. It uses **maturin + PyO3** for the native bridge and Python modules for the higher-level workflow surface. The result is a package that can reach the full workspace without forcing every concept through a raw FFI boundary.
-
-## Version Requirements
-
-- Package metadata: `requires-python = ">=3.10"`
-- CI validation: Python `3.14.4` in `.github/workflows/ci.yml`
+The Python package lives in `bindings/python` and is named `orchustr`. It combines Python-first workflow helpers with an optional PyO3 native bridge surface for selected Rust-backed helpers.
 
 ## Installation
 
-- Local editable install with native extension path: `cd bindings/python && maturin develop`
-- Package-style install from source: `pip install -e bindings/python`
+- Editable install: `pip install -e bindings/python`
+- Native-extension development path: `cd bindings/python && maturin develop`
 
 ## Quickstart
 
 ```python
-from orchustr import PromptBuilder, SearchTools
+from orchustr import GraphBuilder, DynState, NodeResult
+import asyncio
 
-prompt = PromptBuilder().template("Find news about {{topic}}").build()
-tools = SearchTools()
+async def think_node(state: DynState) -> NodeResult:
+    state["thought"] = "I should look this up"
+    return NodeResult.advance(state)
 
-query = prompt.render({"topic": "retrieval engineering"})
-results = tools.search("tavily", {"query": {"query": query}})
+async def act_node(state: DynState) -> NodeResult:
+    state["action"] = "search"
+    return NodeResult.exit(state)
+
+async def main():
+    graph = (
+        GraphBuilder()
+        .add_node("think", think_node)
+        .add_node("act", act_node)
+        .add_edge("think", "act")
+        .set_entry("think")
+        .set_exit("act")
+        .build()
+    )
+    result = await graph.invoke(DynState({"query": "What is Orchustr?"}))
+    print(result)
+
+asyncio.run(main())
 ```
-
-## Async Support
-
-- `GraphBuilder` and graph execution are async-friendly in the Python package.
-- HTTP provider helpers use native Python async clients where the binding owns the behavior.
-- The native bridge itself stays JSON/string oriented and sync at the boundary.
-
-## Rust to Python Type Mapping
-
-| Rust concept | Python shape |
-|---|---|
-| `DynState` | `dict[str, object]` |
-| `CompletionResponse` | Python dataclass-like class with `text`, `usage`, `finish_reason` fields |
-| `PromptBuilder` | Python class in `orchustr.prompt` |
-| `RustCrateBridge.invoke(...)` | PyO3-backed JSON bridge behind `_runtime.py` |
 
 ## What Is Exposed
 
-- `PromptBuilder`, `GraphBuilder`, `ForgeRegistry`, `NexusClient`, and conduit helpers remain Python-first APIs.
-- `RustCrateBridge` exposes the shared native catalog and invocation surface.
-- `SearchTools`, `WebTools`, `VectorTools`, `LoaderTools`, `ExecTools`, `FileTools`, `CommsTools`, and `ProductivityTools` wrap the Rust `or-tools-*` crates.
-- Workflow helpers such as `CheckpointGate`, `PipelineBuilder`, `RecallStore`, and `SentinelOrchestrator` keep callback-heavy behavior in Python.
+- Python-first helpers: `DynState`, `NodeResult`, `GraphBuilder`, `PromptBuilder`, `ForgeRegistry`, `NexusClient`, `PipelineBuilder`, `RelayBuilder`, `ColonyBuilder`, and workflow helpers in `orchustr.workflows`
+- Optional native wrappers: `PyGraphBuilder`, `PyExecutionGraph`, `PyDynState`, `PyNodeResult`, `PyPromptBuilder`, `PyPipelineBuilder`, `PyConduitProvider`, `PyForgeRegistry`, `PyColonyBuilder`, and `PyRelayBuilder`
+- Tool wrappers: `SearchTools`, `WebTools`, `VectorTools`, `LoaderTools`, `ExecTools`, `FileTools`, `CommsTools`, and `ProductivityTools`
 
-⚠️ Known Gaps & Limitations
+## Rust to Python Shape Mapping
 
-- Python exposes every workspace crate, but not as a literal 1:1 projection of every Rust type or trait.
-- Native bridge availability still depends on building the extension through `maturin`.
+| Rust concept | Python shape |
+|---|---|
+| `DynState` | `orchustr.state.DynState` |
+| `NodeResult` | `orchustr.result.NodeResult` |
+| `PromptBuilder` | `orchustr.prompt.PromptBuilder` |
+| `GraphBuilder<DynState>` | `orchustr.graph.GraphBuilder` |
+| `or-bridge` native classes | optional `Py*` classes exported from `_runtime.py` |
+
+## Known Gaps & Limitations
+
+- The native bridge is optional; many workflow helpers intentionally remain Python-first.
+- Local development installs from source still need to build the extension when native bridge features are required.

@@ -1,83 +1,46 @@
 # API Reference Matrix
 
-This document provides a highly detailed yet intuitive breakdown of all the **primary functions, methods, and classes** across the Orchustr framework. It maps the native Rust concepts (`crates/`) to their respective availability in the **Python**, **TypeScript**, and **Dart** bindings.
+This matrix focuses on the user-facing surfaces that changed or became newly important across Phases 1-4. It is intentionally narrower than a full workspace dump so it can stay accurate.
 
-> [!NOTE]
-> 🟢 **Available natively** | 🟡 **Re-implemented purely in binding language** | 🔴 **Not yet exposed**
+## Availability Legend
 
----
+- `Native`: exposed by the Rust crate directly
+- `Binding helper`: implemented in the binding language with Orchustr-compatible behavior
+- `Native wrapper`: exposed through the optional native bridge
+- `Not exposed`: no matching public surface today
 
-## 1. Core State & Utilities (`or-core` / `or-checkpoint`)
-Manages the shared memory maps, retry policies, token limits, and DB checkpoints.
+## Graph, State, and Prompt Surfaces
 
-| Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
-|:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`DynState`** | `merge(patch)`, `get(key)` | The universal dictionary used to pass memory between nodes. It safely deep-merges nested dictionaries when an agent finishes a step. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`TokenBudget`** | `new(ctx, comp)` | Defines strict token limits to prevent LLMs from infinitely generating or blowing past billing caps before HTTP calls are even made. `or-core`. | 🟢 | 🔴 | 🔴 | 🔴 |
-| **`RetryPolicy`** | `default_llm()`, `delay()` | Defines the exponential backoff strategies when encountering `HTTP 429` Rate Limits or `503` server errors. `or-core`. | 🟢 | 🔴 | 🔴 | 🔴 |
-| **`CheckpointGate`** | `save()`, `restore()` | Pauses a graph's execution, serializes the `DynState` to a database via a PersistenceBackend, and waits for Human-in-the-loop approval. `or-checkpoint`. | 🟢 | 🔴 | 🔴 | 🔴 |
+| Surface | Rust | Python | TypeScript | Notes |
+|---|---|---|---|---|
+| `DynState` | Native (`or-core`) | Binding helper (`orchustr.state.DynState`) plus `PyDynState` when the native bridge is present | Binding helper (`DynState`) | Python and TypeScript now expose additive state classes for graph authoring. |
+| `NodeResult` | Native (`or-loom`) | Binding helper (`orchustr.result.NodeResult`) plus `PyNodeResult` when the native bridge is present | Binding helper (`NodeResult`) | Supports `advance`, `exit`, `branch`, and `pause`. |
+| `GraphBuilder` | Native (`or-loom`) | Binding helper (`orchustr.graph.GraphBuilder`) plus `PyGraphBuilder` and `PyExecutionGraph` | Binding helper (`GraphBuilder`) | Python and TypeScript graph helpers support explicit `NodeResult`-based control flow and `invoke()`. |
+| `PromptBuilder` | Native (`or-beacon`) | Binding helper plus `PyPromptBuilder` | Binding helper | Prompt helpers remain intentionally ergonomic in each binding. |
+| `PipelineBuilder` | Native (`or-pipeline`) | Binding helper plus `PyPipelineBuilder` and `PyPipeline` | Binding helper | Sequential pipeline helpers exist in both updated bindings. |
+| `RelayBuilder` | Native (`or-relay`) | Binding helper plus `PyRelayBuilder` and `PyRelayPlan` | Binding helper | TypeScript includes both `addBranch` and `add_branch` aliases. |
+| `ColonyBuilder` | Native (`or-colony`) | Binding helper plus `PyColonyBuilder` | Binding helper | Added as an ergonomic builder surface in Python and TypeScript. |
 
----
+## Schema and Agent Surfaces
 
-## 2. LLM Providers (`or-conduit`)
-The abstraction layer meant to route Prompts and chat completion instructions to 19 AI providers.
+| Surface | Rust | Python | TypeScript | Notes |
+|---|---|---|---|---|
+| `GraphSpec` / `NodeSpec` / `EdgeSpec` | Native (`or-schema`) | Not exposed | Not exposed | Serializable graph descriptors are currently Rust-first. |
+| `NodeRegistry` | Native (`or-loom`, feature=`serde`) | Not exposed | Not exposed | Compiles named handlers and conditional edges into a live `ExecutionGraph`. |
+| `LoopTopology` | Native (`or-sentinel`) | Not exposed | Not exposed | Additive custom loop extension point for sentinel agents. |
+| `SentinelAgentBuilder` | Native (`or-sentinel`) | Not exposed | Not exposed | Builds agents from built-in or custom topologies while preserving legacy `SentinelAgent::new`. |
+| `ReActTopology` / `PlanExecuteTopology` / `ReflectionTopology` | Native (`or-sentinel`) | Not exposed | Not exposed | Built-in loop shapes added in Phase 1. |
 
-| Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
-|:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`OpenAiCompatConduit`** | `complete_text(prompt)` | Sends a single raw string to OpenAI-compatible endpoints (OpenRouter, Groq, Together, Mistral, Ollama) and returns the text output. | 🟢 | 🟡 | 🟡 | 🟡 |
-| *(Any Conduit)* | `complete_messages(list)` | The lower-level API that accepts specific role arrays (System, User, Assistant) with Vision/Image contexts. Used internally by Agents. | 🟢 | 🟡 | 🟡 | 🟡 |
-| *(Any Conduit)* | `stream_text()` | Streams the response chunk-by-chunk for Real-time UX interactions or streaming web-apps. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`AnthropicConduit`** | `new(key, model)` | Bypasses the OpenAI standard mapping to handle Claude's unique requirement of placing System messages at the top-level rather than in the array. | 🟢 | 🟡 | 🟡 | 🟡 |
+## Observability Surfaces
 
----
+| Surface | Rust | Python | TypeScript | Notes |
+|---|---|---|---|---|
+| `install_global_subscriber` | Native (`or-prism`) | Binding helper (`install_global_subscriber`) | Binding helper (`installGlobalSubscriber`) | Installs OTLP export and JSON tracing output. |
+| `init_with_dashboard` | Native (`or-prism`, feature=`lens`) | Not exposed | Not exposed | Starts the local `or-lens` dashboard and installs a trace mirroring layer. |
+| `or-lens` dashboard | Native (`or-lens`, feature=`dashboard`) | Not exposed | Not exposed | Current implementation is an in-process Axum dashboard backed by `LensLayer` and `SpanCollector`. |
 
-## 3. Tool Calling & MCP (`or-forge`, `or-mcp`, `or-sieve`)
-Gives your agents "hands" to manipulate files, run shell commands, fetch web pages, or bridge into local MCP servers.
+## Notes
 
-| Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
-|:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`ForgeRegistry`** | `register(name, fn)` | Registers local native language codes (like a Python script or JS function) so the LLM can trigger it. `or-forge`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`ForgeRegistry`** | `invoke(name, args)` | Programmatically executes a registered tool via its JSON schema. `or-forge`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`ForgeRegistry`** | `import_from_mcp(client)` | Imports remote tools from a local MCP server (like the Firebase or Desktop MCP servers) directly into the agent. `or-mcp`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`NexusClient`** | `connect_http(url)` | Creates a bidirectional WebSocket/HTTP connection to a Model Context Protocol Server to discover remote tools. `or-mcp`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`Sieve`** | `validate_json(schema)` | Validates that an LLM's returned JSON arguments exactly match the strict JSON Schema defined by your tool before executing it. `or-sieve`. | 🟢 | 🔴 | 🔴 | 🔴 |
-
----
-
-## 4. Graphs, Pipelines & Routing (`or-loom`, `or-pipeline`, `or-relay`)
-The heart of Orchustr's ReAct agent memory looping and flow control.
-
-| Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
-|:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`GraphBuilder`** | `add_node()`, `add_edge()` | Creates cyclic workflows where an LLM can think, execute, and loop back indefinitely until finished. `or-loom`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`GraphBuilder`** | `set_entry()`, `set_exit()`| Dictates exactly where the memory loop begins and at what node the entire process shuts down. `or-loom`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`GraphExecutor`** | `execute(initial_state)` | Compiles the graph, checks for deadlocks, and begins the async traversal until the exit node is hit. `or-loom`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`PipelineBuilder`** | `add_node(name, fn)` | Creates a strict **sequential** pipeline of tasks. No complex cycles or branching, just Step A -> Step B -> Step C. `or-pipeline`. | 🟢 | 🟡 | 🟡 | 🟡 |
-| **`RelayRouter`** | `fan_out()`, `gather()` | Executes multiple tasks concurrently (e.g. searching 3 web pages at the same time) and gathers the result. `or-relay`. | 🟢 | 🔴 | 🔴 | 🔴 |
-
----
-
-## 5. Prompts & Memory (`or-beacon`, `or-anchor`, `or-recall`)
-Ensures templates are safely passed downstream, and handles RAG (Retrieval-Augmented Generation) memory.
-
-| Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
-|:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`PromptBuilder`** | `template()`, `render()` | Defines a Handlebars/Mustache string like `"Hello {{name}}!"` and safely substitutes parameters to prevent injection attacks. `or-beacon`. | 🟢 | 🟢 | 🟢 | 🟢 |
-| **`AnchorPipeline`** | `chunk()`, `retrieve()` | Takes massive text documents, splits them into small embeddings, and retrieves the most relevant chunks via Vector cosine-similarity. `or-anchor`. | 🟢 | 🔴 | 🔴 | 🔴 |
-| **`RecallStore`** | `store_interaction()` | Automatically stores User and Assistant dialogue into a long-term database (like SQLite/PostgreSQL) so the agent remembers past conversations across sessions. `or-recall`.| 🟢 | 🔴 | 🔴 | 🔴 |
-
----
-
-## 6. Pre-Packaged Agents (`or-sentinel`)
-If you don't want to build a graph from scratch, these pre-built templates do the work for you.
-
-| Struct / Class | Key Functions / Methods | Purpose & Usecase | Rust | Python | TS | Dart |
-|:---|:---|:---|:---:|:---:|:---:|:---:|
-| **`SentinelAgent`** | `new(provider, registry)`, `run(state)` | A pre-compiled ReAct-style graph that gives an LLM a Prompt, lets it call tools from a Registry, and loops back to itself until it solves the user's objective. | 🟢 | 🔴 | 🔴 | 🔴 |
-| **`PlanExecuteAgent`** | `new(planner, registry)`, `run(state)` | A pre-compiled plan-and-execute pipeline: uses a fast LLM to decompose the user's goal into steps, then executes each step with a `SentinelAgent` worker. | 🟢 | 🔴 | 🔴 | 🔴 |
-
----
-
-> [!TIP]
-> **Why are some marked as 🟡 Re-implemented?** 
-> To maximize parallel performance in JavaScript, Python, and Dart, network features like `fetch` or `aiohttp` are implemented entirely natively inside those bindings rather than funneling C-string pointers across an FFI bridge. Operations that require zero-latency mathematical bounding or secure Handlebars processing (like `PromptBuilder`) rely directly on the Native Rust Bridge (`or-bridge`).
+- Python and TypeScript now have stronger offline graph-authoring parity than before, but they still do not mirror every Rust type one-for-one.
+- `or-schema` and `NodeRegistry` are intentionally Rust-first right now so graph descriptors can compile against registered Rust handlers safely.
+- The current local dashboard path is in-process rather than a standalone OTLP receiver service.

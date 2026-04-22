@@ -1,4 +1,6 @@
 mod graph;
+#[cfg(feature = "serde")]
+mod registry;
 mod stress;
 
 use or_checkpoint::{CheckpointGate, CheckpointOrchestrator};

@@ -189,6 +189,9 @@ class PipelineBuilder:
                     state = _merge_state(state, patch)
                 return state
 
+            async def invoke(self, initial_state: dict[str, Any]) -> dict[str, Any]:
+                return await self.execute(initial_state)
+
         return _Pipeline()
 
 
@@ -247,6 +250,20 @@ class ColonyResult:
     summary: str
     state: dict[str, Any]
     transcript: list[ColonyMessage]
+
+
+class ColonyBuilder:
+    def __init__(self) -> None:
+        self._orchestrator = ColonyOrchestrator()
+
+    def add_member(
+        self, name: str, role: str, agent: Callable[[dict[str, Any], list[ColonyMessage], ColonyMember], Any]
+    ) -> "ColonyBuilder":
+        self._orchestrator.add_member(name, role, agent)
+        return self
+
+    def build(self) -> ColonyOrchestrator:
+        return self._orchestrator
 
 
 class ColonyOrchestrator:

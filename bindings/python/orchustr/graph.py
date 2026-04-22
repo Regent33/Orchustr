@@ -1,5 +1,32 @@
 from __future__ import annotations
 
+import asyncio
+import inspect
+
+from .result import NodeResult
+from .state import DynState
+
+
+async def _maybe_await(value):
+    if asyncio.iscoroutine(value) or inspect.isawaitable(value):
+        return await value
+    return value
+
+
+def _coerce_state(state: dict | DynState) -> DynState:
+    if isinstance(state, DynState):
+        return state.copy()
+    return DynState(state)
+
+
+def _coerce_result(result, current: str, exits: set[str]) -> NodeResult:
+    if isinstance(result, NodeResult):
+        return result
+    state = _coerce_state(result)
+    if current in exits:
+        return NodeResult.exit(state)
+    return NodeResult.advance(state)
+
 
 class ExecutionGraph:
     def __init__(self, nodes: dict, edges: dict, entry: str, exit_node: str) -> None:
@@ -7,20 +34,36 @@ class ExecutionGraph:
         self._edges = edges
         self._entry = entry
         self._exit = exit_node
+        self._exits = {exit_node}
 
-    async def execute(self, state: dict) -> dict:
+    async def invoke(self, state: dict | DynState) -> DynState:
         current = self._entry
-        data = dict(state)
+        data = _coerce_state(state)
         for _ in range(1024):
-            next_state = await self._nodes[current](dict(data))
-            data = dict(next_state)
-            if current == self._exit:
+            outcome = await _maybe_await(self._nodes[current](_coerce_state(data)))
+            result = _coerce_result(outcome, current, self._exits)
+            data = result.state.copy()
+            if result.kind == "exit":
                 return data
+            if result.kind == "advance" and current in self._exits:
+                return data
+            if result.kind == "pause":
+                raise RuntimeError(
+                    f"graph paused at checkpoint {result.checkpoint_id or '<unknown>'}"
+                )
+            if result.kind == "branch":
+                if not result.next:
+                    raise ValueError(f"node {current} returned branch without a next node")
+                current = result.next
+                continue
             targets = self._edges.get(current, [])
             if len(targets) != 1:
                 raise ValueError(f"node {current} requires exactly one default edge")
             current = targets[0]
         raise RuntimeError("graph exceeded execution limit")
+
+    async def execute(self, state: dict | DynState) -> DynState:
+        return await self.invoke(state)
 
 
 class GraphBuilder:

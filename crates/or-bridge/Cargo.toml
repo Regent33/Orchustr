@@ -20,6 +20,7 @@ dart = []
 or-beacon = { path = "../or-beacon", version = "0.1.2" }
 or-conduit = { path = "../or-conduit", version = "0.1.2" }
 or-core = { path = "../or-core", version = "0.1.2" }
+or-loom = { path = "../or-loom", version = "0.1.2" }
 or-prism = { path = "../or-prism", version = "0.1.2" }
 or-sieve = { path = "../or-sieve", version = "0.1.2" }
 or-tools-comms = { path = "../tools/or-tools-comms", version = "0.1.2", features = ["all"] }

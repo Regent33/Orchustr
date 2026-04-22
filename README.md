@@ -11,7 +11,7 @@
 <br/>
 
 <div align="center">
-  <strong>Orchustr</strong> is a secure, blazing-fast, Rust-based orchestration framework for building autonomous AI agents and massive LLM workflows.
+  <strong>Orchustr</strong> is a Rust-first orchestration framework for building reliable AI agents, stateful workflows, and local-first developer tooling.
 </div>
 
 <p align="center">
@@ -24,28 +24,36 @@
 
 ## What is Orchustr?
 
-Orchustr brings systems-level reliability to AI. Unlike dynamic frameworks (like LangChain or LangGraph) where complex agent loops often fail at runtime due to dictionary errors, Orchustr combines **strict compile-time type safety** with massive **async concurrency** to build production-grade agent pipelines. 
+Orchustr brings explicit orchestration boundaries to AI systems. Instead of relying on loosely structured runtime state and ad-hoc loops, it gives you graph builders, agent runtimes, prompt tooling, observability hooks, and cross-language bindings that can be tested offline.
 
-With 19 native LLM providers packed in, built-in graph state machines, deterministic multi-agent routing, and cross-language support for Python, TypeScript, and Dart, Orchustr is built to never hang or crash in production.
+The current workspace includes:
 
-- 🛡️ **Predictable State:** Pure Rust trait boundaries ensure state transitions are verified at compile time.
-- 🚀 **Blazing Fast:** Tokio-based runtime handles parallel agent routing, network requests, and heavy branch fan-outs with near-zero scheduling overhead.
-- 🔌 **Universal Compatibility:** Deep integration with the **Model Context Protocol (MCP)** ensures instant plug-and-play capability with thousands of external tools.
+- Pluggable Sentinel loops through `LoopTopology` and `SentinelAgentBuilder`, while preserving the legacy `SentinelAgent::new(...)` path unchanged.
+- Serializable graph definitions through `or-schema::GraphSpec` plus `or-loom::NodeRegistry` for compiling named handlers into live graphs.
+- A local execution dashboard through `or-lens` and `or-prism`'s optional `lens` feature for in-process trace inspection.
+- Cross-language bindings for Python, TypeScript, and Dart, with Python and TypeScript now exposing additive `DynState`, `NodeResult`, and graph builder helpers.
+
+## Why Teams Reach for It
+
+- Predictable state flow: graph and agent boundaries are explicit instead of implicit.
+- Async by default: Tokio-backed runtimes handle tool calls, branching, and orchestration efficiently.
+- Binding-friendly: Python and TypeScript can author graphs and workflows without needing to mirror every Rust type directly.
+- Local visibility: observability is not limited to third-party telemetry backends anymore.
 
 ## Quick Links
 
-- [📖 Full Documentation](docs/README.md)
-- [⚡ Quickstart Guide](docs/QUICKSTART.md)
-- [🏗️ Architectural Overview](docs/ARCHITECTURE.md)
-- [🛠️ Crate Reference Map](docs/reference/crate-index.md)
-- [📊 Orchustr vs LangChain / LangGraph](docs/langchain-comparison.md)
+- [Full Documentation](docs/README.md)
+- [Quickstart Guide](docs/QUICKSTART.md)
+- [Architectural Overview](docs/ARCHITECTURE.md)
+- [Crate Reference Map](docs/reference/crate-index.md)
+- [LangChain / LangGraph Comparison](docs/langchain-comparison.md)
+- [Example GraphSpec YAML](docs/examples/simple-react-agent.yaml)
 
 ## Contributing
 
-We are building the most robust AI orchestration engine in the world, and **we need your help!** 
-Whether you're developing new conduit providers, adding memory tiers, building out the Python/TS/Dart bridges, or improving our documentation, all contributions are warmly welcomed.
+We are building a Rust-first orchestration engine for production AI systems, and contributions are welcome across providers, tools, bindings, runtime crates, and docs.
 
-1. Check out our [Contributing Guide](docs/CONTRIBUTING.md) to get started.
-2. Join the discussion by opening an Issue or submitting a Pull Request on our [GitHub Repo](https://github.com/Cether144/Orchustr).
+1. Read the [Contributing Guide](docs/CONTRIBUTING.md).
+2. Open an issue or pull request on the [GitHub repository](https://github.com/Cether144/Orchustr).
 
-Let's build secure, production-grade agents together. 🦀🤝🤖
+Let's keep making the workspace clearer, safer, and more useful.

@@ -1,30 +1,26 @@
 # or-prism API Reference
 
-This page documents the main public surface re-exported by `or-prism/src/lib.rs` and the key entry points behind those re-exports. 
+This page documents the main public surface re-exported by `or-prism/src/lib.rs`.
+
 ### `PrismConfig`
+
 | Property | Value |
 |---|---|
 | **Kind** | struct |
 | **Visibility** | pub |
 | **File** | crates/or-prism/src/domain/entities.rs |
-| **Status** | 🟡 |
+| **Status** | Partial |
 
 **Description**: Configuration for OTLP endpoint and service name.
 
-**Signature**
-```rust
-pub struct PrismConfig { pub otlp_endpoint: String, pub service_name: String }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
-
 ### `install_global_subscriber`
+
 | Property | Value |
 |---|---|
 | **Kind** | fn |
 | **Visibility** | pub |
 | **File** | crates/or-prism/src/application/orchestrators.rs |
-| **Status** | 🟡 |
+| **Status** | Partial |
 
 **Description**: Installs the global tracing subscriber and OTLP exporter.
 
@@ -32,26 +28,36 @@ pub struct PrismConfig { pub otlp_endpoint: String, pub service_name: String }
 ```rust
 pub fn install_global_subscriber(otlp_endpoint: &str) -> Result<(), PrismError>
 ```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
+
+### `init_with_dashboard`
+
+| Property | Value |
+|---|---|
+| **Kind** | async fn |
+| **Visibility** | pub |
+| **File** | crates/or-prism/src/lens_bridge.rs |
+| **Status** | Partial |
+
+**Description**: Feature-gated helper that starts the local `or-lens` dashboard and installs the trace mirroring layer.
+
+**Availability**
+```rust
+#[cfg(feature = "lens")]
+pub async fn init_with_dashboard(port: u16) -> Result<LensHandle, PrismError>
+```
 
 ### `PrismError`
+
 | Property | Value |
 |---|---|
 | **Kind** | enum |
 | **Visibility** | pub |
 | **File** | crates/or-prism/src/domain/errors.rs |
-| **Status** | 🟡 |
+| **Status** | Partial |
 
-**Description**: Error type for invalid endpoints, exporter failures, and subscriber installation failures.
+**Description**: Error type for invalid endpoints, exporter failures, dashboard bootstrap failures, and subscriber installation failures.
 
-**Signature**
-```rust
-pub enum PrismError { ... }
-```
-**Panics**: No explicit panics were found in the exported path during source review.
-**Thread Safety**: Follow the type's trait bounds and any synchronization used by its implementation.
+## Known Gaps & Limitations
 
-⚠️ Known Gaps & Limitations
-- The crate focuses on tracing bootstrap and does not yet expose metrics-specific orchestration APIs.
-- It is unrelated to `or-sieve`; the similar short name reflects observability rather than output parsing.
+- The crate remains tracing-focused.
+- `init_with_dashboard` is only available with feature `lens`.

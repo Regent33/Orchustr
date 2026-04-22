@@ -2,6 +2,7 @@ use crate::domain::entities::PrismConfig;
 use crate::domain::errors::PrismError;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_otlp::WithHttpConfig;
 use opentelemetry_sdk::trace::SdkTracerProvider;
 use tokio::runtime::Handle;
 use tracing_subscriber::prelude::*;
@@ -9,6 +10,7 @@ use tracing_subscriber::prelude::*;
 pub(crate) fn install(config: &PrismConfig) -> Result<(), PrismError> {
     let exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_http()
+        .with_http_client(reqwest_otel::Client::new())
         .with_endpoint(config.otlp_endpoint.clone())
         .build()
         .map_err(|error| PrismError::Exporter(error.to_string()))?;

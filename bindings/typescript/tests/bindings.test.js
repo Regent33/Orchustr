@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 
 import {
   CoreOrchestrator,
+  DynState,
   GraphBuilder,
+  NodeResult,
   PipelineBuilder,
   PromptBuilder,
   RustCrateBridge,
@@ -31,6 +33,26 @@ async function testGraphBuilderExecutesAsyncHandlers() {
   assert.equal(result.done, "HELLO");
 }
 
+async function testGraphBuilderSupportsNodeResult() {
+  const graph = new GraphBuilder()
+    .add_node("think", async (state) => {
+      state.thought = "I should look this up";
+      return NodeResult.advance(state);
+    })
+    .add_node("act", async (state) => {
+      state.action = "search";
+      return NodeResult.exit(state);
+    })
+    .add_edge("think", "act")
+    .set_entry("think")
+    .set_exit("act")
+    .build();
+
+  const result = await graph.invoke(new DynState({ query: "What is Orchustr?" }));
+  assert.equal(result.thought, "I should look this up");
+  assert.equal(result.action, "search");
+}
+
 function testCoreOrchestratorEnforcesBudget() {
   new CoreOrchestrator().enforceCompletionBudget(new TokenBudget(100, 20), 70);
 }
@@ -40,7 +62,7 @@ async function testPipelineBuilderExecutesSequentialNodes() {
     .addNode("one", async (state) => ({ ...state, a: 1 }))
     .addNode("two", async (state) => ({ ...state, b: state.a + 1 }))
     .build();
-  const result = await pipeline.execute({});
+  const result = await pipeline.invoke({});
   assert.equal(result.b, 2);
 }
 
@@ -50,6 +72,7 @@ function testRustCrateBridgeCatalogIsOptional() {
 }
 
 await testGraphBuilderExecutesAsyncHandlers();
+await testGraphBuilderSupportsNodeResult();
 await testPipelineBuilderExecutesSequentialNodes();
 testPromptBuilderRendersVariables();
 testPromptBuilderSanitizesControlCharacters();
