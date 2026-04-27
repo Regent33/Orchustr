@@ -30,28 +30,55 @@ impl TelegramSender {
         base_url: impl Into<String>,
         bot_token: impl Into<String>,
     ) -> Self {
-        Self { client, base_url: base_url.into(), bot_token: bot_token.into() }
+        Self {
+            client,
+            base_url: base_url.into(),
+            bot_token: bot_token.into(),
+        }
     }
 }
 
 #[derive(Deserialize)]
-struct TgResult { message_id: i64 }
+struct TgResult {
+    message_id: i64,
+}
 #[derive(Deserialize)]
-struct TgResponse { result: TgResult }
+struct TgResponse {
+    result: TgResult,
+}
 
 #[async_trait]
 impl MessageSender for TelegramSender {
-    fn channel(&self) -> &'static str { PROVIDER }
+    fn channel(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn send(&self, msg: Message) -> Result<SendResult, CommsError> {
         let url = format!("{}{}/sendMessage", self.base_url, self.bot_token);
         let body = json!({ "chat_id": msg.to, "text": msg.body });
-        let resp = self.client.post(&url).json(&body).send().await.map_err(transport)?;
+        let resp = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await
+            .map_err(transport)?;
         let status = resp.status().as_u16();
         if !(200..300).contains(&status) {
-            return Err(CommsError::Upstream { provider: PROVIDER.into(), status, body: resp.text().await.unwrap_or_default() });
+            return Err(CommsError::Upstream {
+                provider: PROVIDER.into(),
+                status,
+                body: resp.text().await.unwrap_or_default(),
+            });
         }
-        let parsed: TgResponse = resp.json().await.map_err(|e| CommsError::Transport(e.to_string()))?;
-        Ok(SendResult { message_id: parsed.result.message_id.to_string(), channel: Channel::Telegram, status: "sent".into() })
+        let parsed: TgResponse = resp
+            .json()
+            .await
+            .map_err(|e| CommsError::Transport(e.to_string()))?;
+        Ok(SendResult {
+            message_id: parsed.result.message_id.to_string(),
+            channel: Channel::Telegram,
+            status: "sent".into(),
+        })
     }
 }

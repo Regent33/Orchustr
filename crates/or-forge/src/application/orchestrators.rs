@@ -48,17 +48,13 @@ impl ForgeRegistry {
         server_url: &str,
     ) -> Result<ImportSummary, ForgeError> {
         let client = NexusClient::connect_http(server_url.to_owned());
-        let server_name = client
-            .initialize()
-            .await
-            .ok()
-            .and_then(|value| {
-                value
-                    .get("serverInfo")
-                    .and_then(|info| info.get("name"))
-                    .and_then(serde_json::Value::as_str)
-                    .map(ToOwned::to_owned)
-            });
+        let server_name = client.initialize().await.ok().and_then(|value| {
+            value
+                .get("serverInfo")
+                .and_then(|info| info.get("name"))
+                .and_then(serde_json::Value::as_str)
+                .map(ToOwned::to_owned)
+        });
         let tool_names = self.import_tools_from_client(client).await?;
         Ok(ImportSummary {
             tools_imported: tool_names.len(),

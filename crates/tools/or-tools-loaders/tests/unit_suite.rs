@@ -1,14 +1,16 @@
 use or_tools_core::{Tool, ToolInput};
+use or_tools_loaders::application::orchestrators::LoaderTool;
 use or_tools_loaders::{
     DocumentKind, DocumentLoader, LoaderError, LoaderOrchestrator, LoaderRequest, LoaderSource,
 };
-use or_tools_loaders::application::orchestrators::LoaderTool;
 use serde_json::json;
 use std::sync::Arc;
 
 fn raw_req(content: &str, kind: DocumentKind) -> LoaderRequest {
     LoaderRequest {
-        source: LoaderSource::Raw { content: content.to_string() },
+        source: LoaderSource::Raw {
+            content: content.to_string(),
+        },
         kind_hint: Some(kind),
         chunk_size: 0,
         metadata: serde_json::Value::Null,
@@ -20,7 +22,10 @@ fn raw_req(content: &str, kind: DocumentKind) -> LoaderRequest {
 async fn text_loader_returns_content() {
     use or_tools_loaders::infra::text::TextLoader;
     let loader = TextLoader;
-    let docs = loader.load(raw_req("hello world", DocumentKind::Text)).await.unwrap();
+    let docs = loader
+        .load(raw_req("hello world", DocumentKind::Text))
+        .await
+        .unwrap();
     assert_eq!(docs.len(), 1);
     assert_eq!(docs[0].content, "hello world");
 }
@@ -31,9 +36,16 @@ async fn markdown_loader_strips_frontmatter() {
     use or_tools_loaders::infra::markdown::MarkdownLoader;
     let loader = MarkdownLoader;
     let md = "---\ntitle: test\n---\n# Hello";
-    let docs = loader.load(raw_req(md, DocumentKind::Markdown)).await.unwrap();
+    let docs = loader
+        .load(raw_req(md, DocumentKind::Markdown))
+        .await
+        .unwrap();
     assert_eq!(docs.len(), 1);
-    assert!(docs[0].content.contains("# Hello"), "expected heading, got: {}", docs[0].content);
+    assert!(
+        docs[0].content.contains("# Hello"),
+        "expected heading, got: {}",
+        docs[0].content
+    );
 }
 
 #[cfg(feature = "json")]
@@ -41,7 +53,10 @@ async fn markdown_loader_strips_frontmatter() {
 async fn json_loader_validates_json() {
     use or_tools_loaders::infra::json::JsonLoader;
     let loader = JsonLoader;
-    let docs = loader.load(raw_req(r#"{"key": "val"}"#, DocumentKind::Json)).await.unwrap();
+    let docs = loader
+        .load(raw_req(r#"{"key": "val"}"#, DocumentKind::Json))
+        .await
+        .unwrap();
     assert!(!docs.is_empty());
 }
 
@@ -62,7 +77,10 @@ async fn orchestrator_routes_by_kind_hint() {
     orch.register(Arc::new(TextLoader));
     orch.register(Arc::new(JsonLoader));
 
-    let docs = orch.load(raw_req("hello", DocumentKind::Text)).await.unwrap();
+    let docs = orch
+        .load(raw_req("hello", DocumentKind::Text))
+        .await
+        .unwrap();
     assert_eq!(docs[0].kind, DocumentKind::Text);
 }
 
@@ -72,7 +90,9 @@ async fn text_loader_chunks_large_content() {
     use or_tools_loaders::infra::text::TextLoader;
     let loader = TextLoader;
     let req = LoaderRequest {
-        source: LoaderSource::Raw { content: "a".repeat(100) },
+        source: LoaderSource::Raw {
+            content: "a".repeat(100),
+        },
         kind_hint: Some(DocumentKind::Text),
         chunk_size: 30,
         metadata: serde_json::Value::Null,
@@ -89,12 +109,18 @@ async fn loader_tool_dispatches_via_tool_trait() {
     orch.register(Arc::new(TextLoader));
     orch.register(Arc::new(JsonLoader));
     let tool = LoaderTool::new(Arc::new(orch));
-    let out = tool.invoke(ToolInput::new("loader", json!({
-        "source": { "type": "raw", "content": "hello" },
-        "kind_hint": "text",
-        "chunk_size": 0,
-        "metadata": null
-    }))).await.unwrap();
+    let out = tool
+        .invoke(ToolInput::new(
+            "loader",
+            json!({
+                "source": { "type": "raw", "content": "hello" },
+                "kind_hint": "text",
+                "chunk_size": 0,
+                "metadata": null
+            }),
+        ))
+        .await
+        .unwrap();
     let arr = out.payload.as_array().unwrap();
     assert_eq!(arr.len(), 1);
 }

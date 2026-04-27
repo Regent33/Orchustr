@@ -27,7 +27,7 @@ Orchustr is a Rust-based AI orchestration workspace organized around focused cra
 - `or-beacon`: prompt templating and validation
 - `or-bridge`: native binding gateway for Python, Node, and Dart
 - `or-checkpoint`: checkpoint pause/resume support
-- `or-colony`: multi-agent coordination and aggregation
+- `or-colony`: multi-agent coordination — sequential cascade (`coordinate`) or parallel fan-out (`coordinate_parallel`)
 - `or-compass`: predicate-based routing
 - `or-conduit`: LLM provider abstraction and adapters
 - `or-forge`: async tool registry and MCP import path

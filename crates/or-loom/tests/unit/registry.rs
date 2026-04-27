@@ -163,7 +163,9 @@ async fn node_registry_conditional_edges_fall_back_to_default() {
         ],
     };
 
-    let graph = registry.compile(&spec).expect("graph compilation should succeed");
+    let graph = registry
+        .compile(&spec)
+        .expect("graph compilation should succeed");
     let result = LoomOrchestrator
         .execute_graph(&graph, DynState::new())
         .await

@@ -25,7 +25,9 @@ async fn index() -> Html<&'static str> {
     Html(DASHBOARD_HTML)
 }
 
-async fn list_traces<R: TraceRepository>(State(state): State<AppState<R>>) -> Json<Vec<TraceSummary>> {
+async fn list_traces<R: TraceRepository>(
+    State(state): State<AppState<R>>,
+) -> Json<Vec<TraceSummary>> {
     Json(state.repository.traces())
 }
 

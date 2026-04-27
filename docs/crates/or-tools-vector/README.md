@@ -1,6 +1,6 @@
 # or-tools-vector
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `(none)` | **Feature flags**: `pinecone`, `weaviate`, `qdrant`, `chroma`, `milvus`, `pgvector`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `(none)` | **Feature flags**: `pinecone`, `weaviate`, `qdrant`, `chroma`, `milvus`, `pgvector`, `all`
 
 Feature-gated vector store integrations for Orchustr retrieval and RAG flows. The crate defines a normalized vector-store contract, shared collection/query/upsert entities, a thin `RagOrchestrator`, and feature-gated backends for managed and self-hosted vector databases.
 

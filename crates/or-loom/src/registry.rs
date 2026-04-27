@@ -80,9 +80,12 @@ impl NodeRegistry {
                     let original_state = state.clone();
                     match handler(state).await? {
                         NodeResult::Advance(patch) => {
-                            if let Some(next) =
-                                select_conditional_target(&node_name, &original_state, &patch, &routing)?
-                            {
+                            if let Some(next) = select_conditional_target(
+                                &node_name,
+                                &original_state,
+                                &patch,
+                                &routing,
+                            )? {
                                 NodeResult::branch(patch, next)
                             } else {
                                 NodeResult::advance(patch)

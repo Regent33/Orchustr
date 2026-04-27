@@ -8,17 +8,17 @@ use std::time::Duration;
 
 #[tokio::test]
 async fn import_all_from_mcp_mock_server() {
-    let server_url = spawn_mock_mcp_server(
-        "forge-mock",
-        vec![tool("echo"), tool("inspect")],
-    );
+    let server_url = spawn_mock_mcp_server("forge-mock", vec![tool("echo"), tool("inspect")]);
     let mut registry = ForgeRegistry::new();
 
     let summary = registry.import_all_from_mcp(&server_url).await.unwrap();
 
     assert_eq!(summary.tools_imported, 2);
     assert_eq!(summary.server_name.as_deref(), Some("forge-mock"));
-    assert_eq!(summary.tool_names, vec!["echo".to_owned(), "inspect".to_owned()]);
+    assert_eq!(
+        summary.tool_names,
+        vec!["echo".to_owned(), "inspect".to_owned()]
+    );
 
     let result = registry
         .invoke("inspect", serde_json::json!({ "value": 7 }))
@@ -99,7 +99,9 @@ fn read_request_body(stream: &mut TcpStream) -> std::io::Result<serde_json::Valu
 
 fn extract_body(buffer: &[u8]) -> Option<&[u8]> {
     let marker = b"\r\n\r\n";
-    let header_end = buffer.windows(marker.len()).position(|part| part == marker)?;
+    let header_end = buffer
+        .windows(marker.len())
+        .position(|part| part == marker)?;
     let headers = std::str::from_utf8(&buffer[..header_end]).ok()?;
     let content_length = headers
         .lines()

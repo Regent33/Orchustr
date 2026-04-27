@@ -1,6 +1,6 @@
 # or-tools-exec
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `python`, `shell` | **Feature flags**: `python`, `shell`, `e2b`, `bearly`, `daytona`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `python`, `shell` | **Feature flags**: `python`, `shell`, `e2b`, `bearly`, `daytona`, `all`
 
 Code execution tools for Orchustr. The crate defines a normalized execution request/result model, routes requests to the first executor that supports the requested language, and provides both local-process executors and feature-gated remote sandbox integrations.
 
@@ -50,10 +50,21 @@ graph LR
 | Feature | Module | Main type | Supports | Config from env |
 |---|---|---|---|---|
 | `python` | `infra/python.rs` | `PythonExecutor` | `Language::Python` | none |
-| `shell` | `infra/shell.rs` | `ShellExecutor` | `Language::Shell` | none |
+| `shell` | `infra/shell.rs` | `ShellExecutor` | `Language::Shell` | **`ORCHUSTR_ALLOW_UNSANDBOXED_SHELL=1` required** to enable; otherwise returns `ExecError::ExecutorNotFound`. |
 | `e2b` | `infra/e2b.rs` | `E2BExecutor` | any `Language` value | `E2B_API_KEY` |
 | `bearly` | `infra/bearly.rs` | `BearlyExecutor` | `Language::Python` | `BEARLY_API_KEY` |
 | `daytona` | `infra/daytona.rs` | `DaytonaExecutor` | any `Language` value | `DAYTONA_SERVER_URL`, `DAYTONA_API_KEY` |
+
+### Shell executor security note
+
+`ShellExecutor` pipes `req.code` to `sh -c` (Unix) or `cmd /C` (Windows)
+with no sandboxing, allowlist, or resource limits. If `req.code` could
+ever be influenced by an LLM or other untrusted input, do not enable
+the opt-in env var; route to a sandboxed executor (`E2BExecutor`,
+`DaytonaExecutor`, or `BearlyExecutor`) instead.
+
+All executors set `kill_on_drop(true)` on their child processes, so a
+fired timeout reaps the child rather than orphaning it.
 
 ## Dependencies
 
@@ -63,5 +74,5 @@ graph LR
 ## Known Gaps & Limitations
 
 - `PythonExecutor` invokes `python3` directly, so availability depends on the host PATH.
-- `ShellExecutor` chooses `cmd /C` on Windows and `sh -c` elsewhere.
+- `ShellExecutor` is unsandboxed; the `ORCHUSTR_ALLOW_UNSANDBOXED_SHELL` opt-in is the only gate against accidental production use.
 - Remote executors currently return `duration_ms = 0` in some implementations when the upstream API does not provide timing data.

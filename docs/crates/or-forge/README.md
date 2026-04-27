@@ -1,6 +1,6 @@
 # or-forge
 
-**Status**: Partial | **Version**: `0.1.2` | **Deps**: schemars, serde, serde_json, thiserror, tracing
+**Status**: Partial | **Version**: `0.1.3` | **Deps**: schemars, serde, serde_json, thiserror, tracing
 
 Async tool registry for local Rust tools and imported MCP tools, with JSON Schema validation at invocation time.
 

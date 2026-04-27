@@ -7,7 +7,11 @@ pub enum ProductivityError {
     #[error("transport error: {0}")]
     Transport(String),
     #[error("upstream error from {provider}: HTTP {status}")]
-    Upstream { provider: String, status: u16, body: String },
+    Upstream {
+        provider: String,
+        status: u16,
+        body: String,
+    },
     #[error("invalid input: {0}")]
     InvalidInput(String),
     #[error("not found: {0}")]

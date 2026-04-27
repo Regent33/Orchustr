@@ -1,13 +1,9 @@
 use crate::domain::errors::SentinelError;
 use crate::infra::implementations::SentinelAgent;
-use crate::topologies::{
-    PlanExecuteTopology, ReActTopology, ReflectionTopology, bind_plan_execute, bind_react,
-    bind_reflection,
-};
+use crate::topologies::ReActTopology;
 use crate::topology::LoopTopology;
 use or_conduit::ConduitProvider;
 use or_forge::ForgeRegistry;
-use std::any::Any;
 
 /// Constructs a `SentinelAgent` in `or-sentinel` with a user-supplied loop topology.
 ///
@@ -89,41 +85,20 @@ where
 {
     /// Builds a `SentinelAgent` using the configured topology and runtime dependencies.
     pub fn build(self) -> Result<SentinelAgent<P>, SentinelError> {
-        let graph = bind_topology(
-            self.topology.build(),
-            &self.topology,
-            self.provider.clone(),
-            self.registry.clone(),
-        )
-        .build()
-        .map_err(|error| SentinelError::Loom(error.to_string()))?;
+        // Topologies own their own binding via `LoopTopology::bind`. Custom
+        // topologies that attach handlers in `build` rely on the trait's
+        // default `bind` (a no-op). Built-in topologies override `bind` to
+        // wire `provider` and `registry` into their nodes.
+        let builder = self.topology.build();
+        let graph = self
+            .topology
+            .bind(builder, self.provider.clone(), self.registry.clone())
+            .build()
+            .map_err(SentinelError::from)?;
         Ok(SentinelAgent::from_graph(
             graph,
             self.provider,
             self.registry,
         ))
     }
-}
-
-fn bind_topology<T, P>(
-    builder: or_loom::GraphBuilder<or_core::DynState>,
-    topology: &T,
-    provider: P,
-    registry: ForgeRegistry,
-) -> or_loom::GraphBuilder<or_core::DynState>
-where
-    T: LoopTopology,
-    P: ConduitProvider + Clone + Send + Sync + 'static,
-{
-    let topology_any = topology as &dyn Any;
-    if topology_any.is::<ReActTopology>() {
-        return bind_react(builder, provider, registry);
-    }
-    if topology_any.is::<PlanExecuteTopology>() {
-        return bind_plan_execute(builder, provider, registry);
-    }
-    if let Some(reflection) = topology_any.downcast_ref::<ReflectionTopology>() {
-        return bind_reflection(builder, reflection, provider, registry);
-    }
-    builder
 }

@@ -42,10 +42,9 @@ impl From<VectorError> for ToolError {
                 "vector",
                 format!("dimension mismatch: expected {expected}, got {actual}"),
             ),
-            VectorError::CollectionNotFound(c) => ToolError::invalid_input(
-                "vector",
-                format!("collection `{c}` not found"),
-            ),
+            VectorError::CollectionNotFound(c) => {
+                ToolError::invalid_input("vector", format!("collection `{c}` not found"))
+            }
             VectorError::Upstream {
                 provider,
                 status,

@@ -12,10 +12,17 @@ pub struct FileOrchestrator {
 
 impl FileOrchestrator {
     #[must_use]
-    pub fn new(store: Arc<dyn FileStore>) -> Self { Self { store } }
+    pub fn new(store: Arc<dyn FileStore>) -> Self {
+        Self { store }
+    }
 
     pub async fn read(&self, path: &str) -> Result<FileContent, FileError> {
-        let span = tracing::info_span!("tools.file.read", otel.name = "tools.file.read", path, status = tracing::field::Empty);
+        let span = tracing::info_span!(
+            "tools.file.read",
+            otel.name = "tools.file.read",
+            path,
+            status = tracing::field::Empty
+        );
         let _guard = span.enter();
         let result = self.store.read(path).await;
         span.record("status", if result.is_ok() { "success" } else { "failure" });
@@ -23,11 +30,15 @@ impl FileOrchestrator {
     }
 }
 
-pub struct FileStoreTool { store: Arc<dyn FileStore> }
+pub struct FileStoreTool {
+    store: Arc<dyn FileStore>,
+}
 
 impl FileStoreTool {
     #[must_use]
-    pub fn new(store: Arc<dyn FileStore>) -> Self { Self { store } }
+    pub fn new(store: Arc<dyn FileStore>) -> Self {
+        Self { store }
+    }
 }
 
 #[async_trait]
@@ -38,7 +49,10 @@ impl Tool for FileStoreTool {
     }
 
     async fn invoke(&self, input: ToolInput) -> Result<ToolOutput, ToolError> {
-        let op = input.payload.get("op").and_then(|v| v.as_str())
+        let op = input
+            .payload
+            .get("op")
+            .and_then(|v| v.as_str())
             .ok_or_else(|| ToolError::invalid_input(&input.tool, "missing `op`"))?;
         let payload = match op {
             "read" => {
@@ -62,24 +76,36 @@ impl Tool for FileStoreTool {
                 self.store.delete(path).await?;
                 Value::String("ok".into())
             }
-            other => return Err(ToolError::invalid_input(&input.tool, format!("unknown op `{other}`"))),
+            other => {
+                return Err(ToolError::invalid_input(
+                    &input.tool,
+                    format!("unknown op `{other}`"),
+                ));
+            }
         };
         Ok(ToolOutput::new(input.tool, payload))
     }
 }
 
-pub struct DataSourceTool { source: Arc<dyn DataSource> }
+pub struct DataSourceTool {
+    source: Arc<dyn DataSource>,
+}
 
 impl DataSourceTool {
     #[must_use]
-    pub fn new(source: Arc<dyn DataSource>) -> Self { Self { source } }
+    pub fn new(source: Arc<dyn DataSource>) -> Self {
+        Self { source }
+    }
 }
 
 #[async_trait]
 impl Tool for DataSourceTool {
     fn meta(&self) -> ToolMeta {
-        ToolMeta::new(format!("datasource.{}", self.source.name()), "External data source")
-            .with_capability(ToolCapability::Network)
+        ToolMeta::new(
+            format!("datasource.{}", self.source.name()),
+            "External data source",
+        )
+        .with_capability(ToolCapability::Network)
     }
 
     async fn invoke(&self, input: ToolInput) -> Result<ToolOutput, ToolError> {
@@ -89,10 +115,16 @@ impl Tool for DataSourceTool {
 }
 
 fn get_str<'a>(input: &'a ToolInput, key: &str) -> Result<&'a str, ToolError> {
-    input.payload.get(key).and_then(|v| v.as_str())
+    input
+        .payload
+        .get(key)
+        .and_then(|v| v.as_str())
         .ok_or_else(|| ToolError::invalid_input(&input.tool, format!("missing `{key}`")))
 }
 
 fn ser_err(tool: &str, e: serde_json::Error) -> ToolError {
-    ToolError::Serialization { tool: tool.into(), reason: e.to_string() }
+    ToolError::Serialization {
+        tool: tool.into(),
+        reason: e.to_string(),
+    }
 }

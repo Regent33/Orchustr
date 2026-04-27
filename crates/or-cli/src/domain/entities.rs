@@ -31,7 +31,9 @@ impl ProjectLanguage {
         match self {
             Self::Rust => format!("pub async fn {name}() {{}}\n"),
             Self::Python => format!("async def {name}(state):\n    return state\n"),
-            Self::Typescript => format!("export async function {name}(state: unknown) {{\n  return state;\n}}\n"),
+            Self::Typescript => {
+                format!("export async function {name}(state: unknown) {{\n  return state;\n}}\n")
+            }
             Self::Dart => format!("Future<dynamic> {name}(dynamic state) async => state;\n"),
         }
     }

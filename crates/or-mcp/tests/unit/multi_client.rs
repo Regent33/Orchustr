@@ -22,7 +22,10 @@ async fn multi_client_merges_two_servers() {
         .iter()
         .map(|tool| tool.registered_name.clone())
         .collect::<Vec<_>>();
-    assert_eq!(names, vec!["alpha::echo".to_owned(), "beta::echo".to_owned()]);
+    assert_eq!(
+        names,
+        vec!["alpha::echo".to_owned(), "beta::echo".to_owned()]
+    );
 
     let alpha_result = session
         .invoke("alpha::echo", serde_json::json!({ "value": 1 }))
@@ -102,7 +105,9 @@ fn read_request_body(stream: &mut TcpStream) -> std::io::Result<serde_json::Valu
 
 fn extract_body(buffer: &[u8]) -> Option<&[u8]> {
     let marker = b"\r\n\r\n";
-    let header_end = buffer.windows(marker.len()).position(|part| part == marker)?;
+    let header_end = buffer
+        .windows(marker.len())
+        .position(|part| part == marker)?;
     let headers = std::str::from_utf8(&buffer[..header_end]).ok()?;
     let content_length = headers
         .lines()

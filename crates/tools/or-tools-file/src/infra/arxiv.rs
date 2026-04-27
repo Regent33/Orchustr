@@ -17,28 +17,41 @@ pub struct ArxivSource {
 impl ArxivSource {
     #[must_use]
     pub fn new() -> Self {
-        Self { client: reqwest::Client::new(), endpoint: DEFAULT_URL.to_string() }
+        Self {
+            client: reqwest::Client::new(),
+            endpoint: DEFAULT_URL.to_string(),
+        }
     }
 
     #[must_use]
     pub fn with_endpoint(client: reqwest::Client, endpoint: impl Into<String>) -> Self {
-        Self { client, endpoint: endpoint.into() }
+        Self {
+            client,
+            endpoint: endpoint.into(),
+        }
     }
 }
 
 impl Default for ArxivSource {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[async_trait]
 impl DataSource for ArxivSource {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn fetch(&self, query: Value) -> Result<Value, FileError> {
         let q = query.get("query").and_then(|v| v.as_str()).unwrap_or("");
-        let max = query.get("max_results").and_then(|v| v.as_u64()).unwrap_or(5);
-        let mut url = Url::parse(&self.endpoint)
-            .map_err(|e| FileError::Transport(e.to_string()))?;
+        let max = query
+            .get("max_results")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(5);
+        let mut url =
+            Url::parse(&self.endpoint).map_err(|e| FileError::Transport(e.to_string()))?;
         url.query_pairs_mut()
             .append_pair("search_query", q)
             .append_pair("max_results", &max.to_string());
@@ -46,7 +59,11 @@ impl DataSource for ArxivSource {
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         if !status.is_success() {
-            return Err(FileError::Upstream { provider: PROVIDER.into(), status: status.as_u16(), body });
+            return Err(FileError::Upstream {
+                provider: PROVIDER.into(),
+                status: status.as_u16(),
+                body,
+            });
         }
         // Parse Atom XML minimally — extract entry titles and IDs as JSON
         let papers = parse_atom(&body);

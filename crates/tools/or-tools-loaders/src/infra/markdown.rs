@@ -8,13 +8,19 @@ pub struct MarkdownLoader;
 
 #[async_trait]
 impl DocumentLoader for MarkdownLoader {
-    fn name(&self) -> &'static str { "markdown" }
+    fn name(&self) -> &'static str {
+        "markdown"
+    }
 
     async fn load(&self, req: LoaderRequest) -> Result<Vec<Document>, LoaderError> {
         let content = read_source(&req).await?;
         // Strip YAML front-matter (--- ... ---) for clean RAG ingestion.
         let clean = strip_frontmatter(&content);
-        Ok(chunk(clean.to_string(), DocumentKind::Markdown, req.chunk_size))
+        Ok(chunk(
+            clean.to_string(),
+            DocumentKind::Markdown,
+            req.chunk_size,
+        ))
     }
 }
 

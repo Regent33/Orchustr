@@ -9,6 +9,6 @@ pub mod infra;
 pub use application::orchestrators::RagOrchestrator;
 pub use domain::contracts::VectorStoreClient;
 pub use domain::entities::{
-    CollectionConfig, DeleteRequest, Distance, QueryFilter, VectorMatch, UpsertBatch, UpsertItem,
+    CollectionConfig, DeleteRequest, Distance, QueryFilter, UpsertBatch, UpsertItem, VectorMatch,
 };
 pub use domain::errors::VectorError;

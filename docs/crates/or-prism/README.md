@@ -1,6 +1,6 @@
 # or-prism
 
-**Status**: Partial | **Version**: `0.1.2` | **Deps**: opentelemetry, opentelemetry-otlp, opentelemetry_sdk, reqwest, serde, thiserror, tokio, tracing, tracing-opentelemetry, tracing-subscriber
+**Status**: Partial | **Version**: `0.1.3` | **Deps**: opentelemetry, opentelemetry-otlp, opentelemetry_sdk, reqwest, serde, thiserror, tokio, tracing, tracing-opentelemetry, tracing-subscriber
 
 `or-prism` is the observability bootstrap crate for Orchustr. It installs a tracing subscriber with OTLP export, JSON log formatting, and environment-driven filtering. With the optional `lens` feature enabled, it can also start the local `or-lens` dashboard.
 

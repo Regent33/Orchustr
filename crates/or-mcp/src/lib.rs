@@ -16,4 +16,6 @@ pub use domain::entities::{
 pub use domain::errors::McpError;
 pub use infra::http_transport::StreamableHttpTransport;
 pub use infra::stdio_transport::StdioTransport;
-pub use multi_client::{DiscoveredMcpTool, McpServerConfig, McpServerTransport, MultiMcpClient, MultiMcpSession};
+pub use multi_client::{
+    DiscoveredMcpTool, McpServerConfig, McpServerTransport, MultiMcpClient, MultiMcpSession,
+};

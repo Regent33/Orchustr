@@ -13,6 +13,9 @@ pub enum CliError {
     Validation(String),
     #[error("invalid project: {0}")]
     InvalidProject(String),
+    /// Wraps a typed `or_lens::LensError` so callers can match on the
+    /// underlying dashboard failure (bind vs serve) instead of pattern
+    /// matching on a stringified message.
     #[error("dashboard error: {0}")]
-    Lens(String),
+    Lens(#[from] or_lens::LensError),
 }

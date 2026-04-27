@@ -17,7 +17,11 @@ pub struct FacebookSender {
 
 impl FacebookSender {
     pub fn from_env() -> Result<Self, CommsError> {
-        Ok(Self { client: reqwest::Client::new(), base_url: BASE_URL.into(), page_token: load_credential(TOKEN_ENV)? })
+        Ok(Self {
+            client: reqwest::Client::new(),
+            base_url: BASE_URL.into(),
+            page_token: load_credential(TOKEN_ENV)?,
+        })
     }
 
     pub fn with_config(
@@ -25,16 +29,24 @@ impl FacebookSender {
         base_url: impl Into<String>,
         page_token: impl Into<String>,
     ) -> Self {
-        Self { client, base_url: base_url.into(), page_token: page_token.into() }
+        Self {
+            client,
+            base_url: base_url.into(),
+            page_token: page_token.into(),
+        }
     }
 }
 
 #[derive(Deserialize)]
-struct FbResponse { id: String }
+struct FbResponse {
+    id: String,
+}
 
 #[async_trait]
 impl MessageSender for FacebookSender {
-    fn channel(&self) -> &'static str { PROVIDER }
+    fn channel(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn send(&self, msg: Message) -> Result<SendResult, CommsError> {
         let url = format!("{}/{}/feed", self.base_url, msg.to);
@@ -44,15 +56,30 @@ impl MessageSender for FacebookSender {
             form.append_pair("access_token", &self.page_token);
             form.finish()
         };
-        let resp = self.client.post(&url)
+        let resp = self
+            .client
+            .post(&url)
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let status = resp.status().as_u16();
         if !(200..300).contains(&status) {
-            return Err(CommsError::Upstream { provider: PROVIDER.into(), status, body: resp.text().await.unwrap_or_default() });
+            return Err(CommsError::Upstream {
+                provider: PROVIDER.into(),
+                status,
+                body: resp.text().await.unwrap_or_default(),
+            });
         }
-        let parsed: FbResponse = resp.json().await.map_err(|e| CommsError::Transport(e.to_string()))?;
-        Ok(SendResult { message_id: parsed.id, channel: Channel::Facebook, status: "posted".into() })
+        let parsed: FbResponse = resp
+            .json()
+            .await
+            .map_err(|e| CommsError::Transport(e.to_string()))?;
+        Ok(SendResult {
+            message_id: parsed.id,
+            channel: Channel::Facebook,
+            status: "posted".into(),
+        })
     }
 }

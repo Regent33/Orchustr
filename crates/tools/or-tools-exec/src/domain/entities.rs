@@ -33,7 +33,9 @@ pub struct ExecRequest {
     pub env: std::collections::HashMap<String, String>,
 }
 
-fn default_timeout() -> u64 { 30_000 }
+fn default_timeout() -> u64 {
+    30_000
+}
 
 impl ExecRequest {
     #[must_use]
@@ -59,9 +61,16 @@ pub struct ExecResult {
 impl ExecResult {
     #[must_use]
     pub fn success(stdout: impl Into<String>) -> Self {
-        Self { stdout: stdout.into(), stderr: String::new(), exit_code: 0, duration_ms: 0 }
+        Self {
+            stdout: stdout.into(),
+            stderr: String::new(),
+            exit_code: 0,
+            duration_ms: 0,
+        }
     }
 
     #[must_use]
-    pub fn is_success(&self) -> bool { self.exit_code == 0 }
+    pub fn is_success(&self) -> bool {
+        self.exit_code == 0
+    }
 }

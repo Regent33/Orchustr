@@ -1,10 +1,8 @@
 use crate::domain::entities::PlanStep;
 use crate::domain::errors::SentinelError;
+use crate::infra::adapters::context::with_context;
 use crate::infra::adapters::parsing::{ModelDecision, parse_decision, parse_plan};
-use crate::infra::adapters::state::{
-    append_tool_observation, config_from_state, messages_from_state, set_final_answer,
-    write_messages,
-};
+use crate::infra::adapters::state::{append_tool_observation, messages_from_state, write_messages};
 use crate::infra::implementations::support::{invoke_with_retry, node_error};
 use crate::topology::LoopTopology;
 use or_conduit::{CompletionMessage, ConduitProvider, ContentPart, MessageRole};
@@ -43,6 +41,18 @@ impl LoopTopology for PlanExecuteTopology {
 
     fn name(&self) -> &'static str {
         "plan_execute"
+    }
+
+    fn bind<P>(
+        &self,
+        builder: GraphBuilder<DynState>,
+        provider: P,
+        registry: ForgeRegistry,
+    ) -> GraphBuilder<DynState>
+    where
+        P: ConduitProvider + Clone + Send + Sync + 'static,
+    {
+        bind_plan_execute(builder, provider, registry)
     }
 }
 
@@ -84,13 +94,15 @@ where
                         })?;
                     let steps =
                         parse_plan(&response.text).map_err(|error| node_error("plan", error))?;
-                    let mut next = state.clone();
-                    insert_value(&mut next, "plan", &steps, "plan")?;
-                    insert_value(&mut next, PLAN_STEPS_KEY, &steps, "plan")?;
-                    next.insert(PLAN_CURSOR_KEY.to_owned(), serde_json::json!(0usize));
-                    insert_value(&mut next, PLAN_NOTES_KEY, &Vec::<String>::new(), "plan")?;
-                    insert_value(&mut next, PLAN_ORDER_KEY, &Vec::<String>::new(), "plan")?;
-                    NodeResult::advance(next)
+                    // Mutate the executor-supplied state in place; no
+                    // need for the additional defensive clone.
+                    let mut state = state;
+                    insert_value(&mut state, "plan", &steps, "plan")?;
+                    insert_value(&mut state, PLAN_STEPS_KEY, &steps, "plan")?;
+                    state.insert(PLAN_CURSOR_KEY.to_owned(), serde_json::json!(0usize));
+                    insert_value(&mut state, PLAN_NOTES_KEY, &Vec::<String>::new(), "plan")?;
+                    insert_value(&mut state, PLAN_ORDER_KEY, &Vec::<String>::new(), "plan")?;
+                    NodeResult::advance(state)
                 }
             }
         })
@@ -128,11 +140,12 @@ where
                                 )
                             })?;
 
-                    let mut next = state.clone();
-                    write_messages(&mut next, &messages)
+                    // Mutate the executor-supplied state in place.
+                    let mut state = state;
+                    write_messages(&mut state, &messages)
                         .map_err(|error| node_error("execute_step", error))?;
                     push_string(
-                        &mut next,
+                        &mut state,
                         PLAN_ORDER_KEY,
                         step.description.clone(),
                         "execute_step",
@@ -142,29 +155,28 @@ where
                         .map_err(|error| node_error("execute_step", error))?
                     {
                         ModelDecision::ToolCall { tool_name, args } => {
-                            let config = config_from_state(&state)
+                            let config = with_context(|ctx| ctx.config())
                                 .map_err(|error| node_error("execute_step", error))?;
                             let tool_result =
                                 invoke_with_retry(&registry, &tool_name, args, &config)
                                     .await
                                     .map_err(|error| node_error("execute_step", error))?;
-                            append_tool_observation(&mut next, &tool_result)
+                            append_tool_observation(&mut state, &tool_result)
                                 .map_err(|error| node_error("execute_step", error))?;
                         }
                         ModelDecision::FinalAnswer { answer } => {
-                            push_string(&mut next, PLAN_NOTES_KEY, answer, "execute_step")?;
+                            push_string(&mut state, PLAN_NOTES_KEY, answer, "execute_step")?;
                         }
                     }
 
-                    next.insert(PLAN_CURSOR_KEY.to_owned(), serde_json::json!(cursor + 1));
-                    NodeResult::advance(next)
+                    state.insert(PLAN_CURSOR_KEY.to_owned(), serde_json::json!(cursor + 1));
+                    NodeResult::advance(state)
                 }
             }
         })
         .bind_node("check_done", |state: DynState| async move {
             let steps = plan_steps_from_state(&state)?;
             let cursor = plan_cursor_from_state(&state)?;
-            let mut next = state.clone();
             if cursor >= steps.len() {
                 let notes = string_list_from_state(&state, PLAN_NOTES_KEY)?;
                 let answer = if notes.is_empty() {
@@ -172,10 +184,11 @@ where
                 } else {
                     notes.join("\n")
                 };
-                set_final_answer(&mut next, answer);
-                return NodeResult::branch(next, "exit");
+                with_context(|ctx| ctx.set_final_answer(answer))
+                    .map_err(|error| node_error("check_done", error))?;
+                return NodeResult::branch(state, "exit");
             }
-            NodeResult::branch(next, "execute_step")
+            NodeResult::branch(state, "execute_step")
         })
         .bind_node("exit", |state: DynState| async move {
             NodeResult::advance(state)

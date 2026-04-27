@@ -65,6 +65,15 @@ async fn sentinel_react_loop_invokes_tool_and_returns_final_answer() {
                     .unwrap()
                     .contains("\"tool\"")
             );
+            // Regression for audit #4: sentinel-internal control data
+            // (config, step index, pending/last tool call, final answer)
+            // must no longer leak into the user-facing DynState.
+            for key in state.keys() {
+                assert!(
+                    !key.starts_with("__sentinel_"),
+                    "sentinel-internal key leaked into user state: {key}"
+                );
+            }
         }
         other => panic!("unexpected outcome: {other:?}"),
     }

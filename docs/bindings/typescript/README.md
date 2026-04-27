@@ -39,7 +39,31 @@ console.log(result);
 - Workflow helpers: `PipelineBuilder`, `RelayBuilder`, `ColonyBuilder`, `SentinelOrchestrator`, `PrismConfig`, and related classes from `src/workflows.js`
 - Optional native bridge: `RustCrateBridge`
 
+## Streaming
+
+`OpenAiConduit`, `AnthropicConduit`, and `OpenAiCompatConduit` (which
+covers OpenRouter, Groq, Together, Fireworks, DeepSeek, Mistral, xAI,
+NVIDIA, and Ollama) all expose a real SSE-driven `streamText(prompt)`
+async iterator that yields token-level deltas as they arrive:
+
+```ts
+const conduit = OpenAiCompatConduit.openrouter(apiKey, model);
+for await (const delta of conduit.streamText("Say hi token by token")) {
+  process.stdout.write(delta);
+}
+```
+
+The shared `_sseEvents(response)` parser in `src/index.js` handles the
+three wire formats:
+- OpenAI Responses API → `event: response.output_text.delta`
+- Anthropic Messages API → `event: content_block_delta`
+- OpenAI Chat Completions (everything else) → `data: {choices:[{delta:{content:...}}]}`
+
+If the runtime lacks `ReadableStream` support on the fetch response,
+`streamText` falls back to a single non-streaming chunk.
+
 ## Known Gaps & Limitations
 
 - The package is JavaScript-first; it does not attempt to mirror every Rust type exactly.
 - Browser support is not a primary tested target in this repository.
+- `addNode`/`add_node` aliases are both supported during a deprecation cycle; pick the camelCase form for new code.

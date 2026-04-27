@@ -1,6 +1,6 @@
 # or-core
 
-**Status**: 🟢 Complete | **Version**: `0.1.2` | **Deps**: rand, serde, serde_json, thiserror, tokio, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.3` | **Deps**: rand, serde, serde_json, thiserror, tokio, tracing
 
 Shared state contracts, retry and token budget types, and in-memory persistence/vector primitives that most other crates build on.
 
@@ -17,7 +17,7 @@ graph LR
 |---|---|---|
 | State contracts | 🟢 | `OrchState`, `DynState`, `PersistenceBackend`, and `VectorStore` are implemented. |
 | Budget and retry utilities | 🟢 | `TokenBudget`, `RetryPolicy`, and `BackoffStrategy` are present and tested. |
-| In-memory infrastructure | 🟢 | HashMap-backed persistence and cosine-similarity vector storage are implemented. |
+| In-memory infrastructure | 🟢 | HashMap-backed persistence; cosine-similarity vector storage with bounded top-k via `BinaryHeap<Reverse<_>>` (O(N log limit), not O(N log N)). |
 
 ## Public Surface
 

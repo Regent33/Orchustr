@@ -1,8 +1,8 @@
 use crate::domain::contracts::MessageSender;
 use crate::domain::entities::{Message, SendResult};
 use crate::domain::errors::CommsError;
-use or_tools_core::{Tool, ToolCapability, ToolError, ToolInput, ToolMeta, ToolOutput};
 use async_trait::async_trait;
+use or_tools_core::{Tool, ToolCapability, ToolError, ToolInput, ToolMeta, ToolOutput};
 use std::sync::Arc;
 
 pub struct CommsOrchestrator {
@@ -38,15 +38,31 @@ impl CommsTool {
 #[async_trait]
 impl Tool for CommsTool {
     fn meta(&self) -> ToolMeta {
-        ToolMeta::new("comms", "Send messages via SMS, Telegram, Discord, WhatsApp, Facebook, Messenger")
-            .with_capability(ToolCapability::Network)
+        ToolMeta::new(
+            "comms",
+            "Send messages via SMS, Telegram, Discord, WhatsApp, Facebook, Messenger",
+        )
+        .with_capability(ToolCapability::Network)
     }
 
     async fn invoke(&self, input: ToolInput) -> Result<ToolOutput, ToolError> {
-        let msg: Message = serde_json::from_value(input.payload.clone())
-            .map_err(|e| ToolError::InvalidInput { tool: "comms".into(), reason: e.to_string() })?;
-        let result = self.orchestrator.send(msg).await
-            .map_err(|e| ToolError::Upstream { tool: "comms".into(), status: 0, body: e.to_string() })?;
-        Ok(ToolOutput::new("comms", serde_json::to_value(&result).unwrap_or_default()))
+        let msg: Message =
+            serde_json::from_value(input.payload.clone()).map_err(|e| ToolError::InvalidInput {
+                tool: "comms".into(),
+                reason: e.to_string(),
+            })?;
+        let result = self
+            .orchestrator
+            .send(msg)
+            .await
+            .map_err(|e| ToolError::Upstream {
+                tool: "comms".into(),
+                status: 0,
+                body: e.to_string(),
+            })?;
+        Ok(ToolOutput::new(
+            "comms",
+            serde_json::to_value(&result).unwrap_or_default(),
+        ))
     }
 }

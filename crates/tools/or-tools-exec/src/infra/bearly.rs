@@ -27,8 +27,16 @@ impl BearlyExecutor {
     }
 
     #[must_use]
-    pub fn with_config(client: reqwest::Client, endpoint: impl Into<String>, api_key: impl Into<String>) -> Self {
-        Self { client, endpoint: endpoint.into(), api_key: api_key.into() }
+    pub fn with_config(
+        client: reqwest::Client,
+        endpoint: impl Into<String>,
+        api_key: impl Into<String>,
+    ) -> Self {
+        Self {
+            client,
+            endpoint: endpoint.into(),
+            api_key: api_key.into(),
+        }
     }
 }
 
@@ -43,7 +51,9 @@ struct BearlyResponse {
 
 #[async_trait]
 impl CodeExecutor for BearlyExecutor {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
     fn supports(&self, lang: Language) -> bool {
         matches!(lang, Language::Python)
@@ -51,10 +61,14 @@ impl CodeExecutor for BearlyExecutor {
 
     async fn execute(&self, req: ExecRequest) -> Result<ExecResult, ExecError> {
         let body = json!({ "fileContents": req.code });
-        let resp = self.client.post(&self.endpoint)
+        let resp = self
+            .client
+            .post(&self.endpoint)
             .bearer_auth(&self.api_key)
             .json(&body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let parsed: BearlyResponse = decode(PROVIDER, resp).await?;
         Ok(ExecResult {
             stdout: parsed.stdout,

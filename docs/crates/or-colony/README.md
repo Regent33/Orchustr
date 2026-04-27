@@ -1,8 +1,10 @@
 # or-colony
 
-**Status**: 🟡 Partial | **Version**: `0.1.2` | **Deps**: serde, serde_json, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.3` | **Deps**: futures, serde, serde_json, thiserror, tracing
 
-Multi-agent coordination crate that sequences member responses, shares a transcript, and aggregates outputs into final colony state.
+Multi-agent coordination crate. Members run either sequentially as a
+cascading hand-off or in parallel as a fan-out, depending on which
+orchestrator entry point you call.
 
 ## Position in the Workspace
 
@@ -17,7 +19,8 @@ graph LR
 | Component | Status | Notes |
 |---|---|---|
 | Agent contract | 🟢 | `ColonyAgentTrait` defines the async response interface for individual members. |
-| Coordination runtime | 🟡 | `ColonyOrchestrator` coordinates members sequentially and records outputs. |
+| Sequential cascade | 🟢 | `ColonyOrchestrator::coordinate` threads each member's reply into the next member's transcript. Use this for Researcher → Writer → Editor flows. |
+| Parallel fan-out | 🟢 | `ColonyOrchestrator::coordinate_parallel` polls all members concurrently with `futures::try_join_all`. Each sees only the seed transcript; replies are merged in deterministic roster order. Use this for "ask three reviewers in parallel" flows. |
 | Aggregation | 🟢 | Message and summary aggregation are implemented in adapter helpers. |
 
 ## Public Surface
@@ -32,8 +35,11 @@ graph LR
 ## Dependencies
 
 - Internal crates: or-core
-- External crates: serde, serde_json, thiserror, tracing
+- External crates: futures, serde, serde_json, thiserror, tracing
 
 ⚠️ Known Gaps & Limitations
-- Execution is sequential rather than concurrent.
 - The initial state contract currently requires a `task` field.
+- `coordinate_parallel` short-circuits on the first member error; for
+  best-effort fan-out (collect all replies even when some fail) callers
+  should currently catch errors inside their `ColonyAgentTrait::respond`
+  implementation rather than letting them propagate.

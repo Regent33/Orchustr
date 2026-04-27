@@ -22,11 +22,8 @@ fn api_key() -> Option<String> {
 }
 
 fn conduit() -> OpenAiCompatConduit {
-    OpenAiCompatConduit::openrouter(
-        api_key().unwrap(),
-        "liquid/lfm-2.5-1.2b-instruct:free",
-    )
-    .expect("conduit should construct")
+    OpenAiCompatConduit::openrouter(api_key().unwrap(), "liquid/lfm-2.5-1.2b-instruct:free")
+        .expect("conduit should construct")
 }
 
 // ── Test 1: Basic completion ────────────────────────────────────────
@@ -47,7 +44,10 @@ async fn live_openrouter_basic_completion() {
         .expect("OpenRouter should return a response");
 
     println!("Response: {:?}", response.text);
-    assert!(!response.text.trim().is_empty(), "response must not be empty");
+    assert!(
+        !response.text.trim().is_empty(),
+        "response must not be empty"
+    );
 }
 
 // ── Test 2: Multi-turn memory ───────────────────────────────────────
@@ -151,10 +151,7 @@ async fn live_openrouter_tool_call_agent() {
                  {\"tool\": \"calculate\", \"expression\": \"2+2\"}\n\
                  Do not include any other text.",
             ),
-            CompletionMessage::single_text(
-                MessageRole::User,
-                "What is 15 * 3?",
-            ),
+            CompletionMessage::single_text(MessageRole::User, "What is 15 * 3?"),
         ])
         .await
         .expect("tool-call prompt should succeed");
@@ -188,4 +185,3 @@ async fn live_openrouter_tool_call_agent() {
 // MCP round-trip relies on proper HTTP bindings which are complex to mock
 // safely in a quick live test. This was already validated in tests/integration/mcp_client_server.rs
 // using ChannelTransport. We skip the redundant mock test here.
-

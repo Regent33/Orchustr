@@ -1,6 +1,6 @@
 # or-tools-core
 
-**Status**: Implemented | **Version**: `0.1.2` | **Feature flags**: `(none)` | **Deps**: async-trait, serde, serde_json, thiserror, tokio, tracing
+**Status**: Implemented | **Version**: `0.1.3` | **Feature flags**: `(none)` | **Deps**: async-trait, serde, serde_json, thiserror, tokio, tracing
 
 Shared tool abstractions for the Orchustr tool ecosystem. Every `or-tools-*` crate builds on this crate for tool metadata, invocation envelopes, registry contracts, dispatcher behavior, and the canonical `ToolError` type.
 

@@ -10,7 +10,9 @@ pub struct PythonExecutor;
 
 #[async_trait]
 impl CodeExecutor for PythonExecutor {
-    fn name(&self) -> &'static str { "python" }
+    fn name(&self) -> &'static str {
+        "python"
+    }
 
     fn supports(&self, lang: Language) -> bool {
         matches!(lang, Language::Python)
@@ -26,8 +28,12 @@ impl CodeExecutor for PythonExecutor {
             .spawn()
             .map_err(|e| ExecError::Spawn(e.to_string()))?;
 
-        let wait = timeout(Duration::from_millis(req.timeout_ms), child.wait_with_output());
-        let output = wait.await
+        let wait = timeout(
+            Duration::from_millis(req.timeout_ms),
+            child.wait_with_output(),
+        );
+        let output = wait
+            .await
             .map_err(|_| ExecError::Timeout(req.timeout_ms))?
             .map_err(|e| ExecError::Io(e.to_string()))?;
 

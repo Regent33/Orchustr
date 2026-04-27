@@ -1,6 +1,6 @@
 # or-sentinel
 
-**Status**: Partial | **Version**: `0.1.2` | **Deps**: serde, serde_json, thiserror, tokio, tracing
+**Status**: Partial | **Version**: `0.1.3` | **Deps**: serde, serde_json, thiserror, tokio, tracing
 
 Agent runtime crate that implements graph-backed sentinel loops on top of provider completions, tool invocation, and typed dynamic state.
 
@@ -20,9 +20,12 @@ graph LR
 | Component | Status | Notes |
 |---|---|---|
 | ReAct-style runtime | Complete | `SentinelAgent` uses an internal `ExecutionGraph` to model think, act, and exit nodes. |
-| Topology builder | Complete | `SentinelAgentBuilder` can build agents from built-in or custom `LoopTopology` implementations. |
+| Topology builder | Complete | `SentinelAgentBuilder` can build agents from built-in or custom `LoopTopology` implementations. Custom topologies plug in by overriding `LoopTopology::bind` (or by attaching handlers in `build()` and relying on the trait's no-op default). |
 | Plan-and-execute runtime | Partial | `PlanExecuteAgent` remains available, and `PlanExecuteTopology` adds a builder-friendly graph form. |
 | Reflection runtime | Partial | `ReflectionTopology` adds bounded self-critique without replacing the legacy constructor. |
+| Step context | Complete | Sentinel-internal control data (config, step index, pending/completed tool call, final answer) lives in a `tokio::task_local!` `SentinelStepContext` rather than `__sentinel_*` keys in `DynState`. The user-facing `DynState` only carries `messages`, plan notes, and other application-visible data. |
+| Retry classification | Complete | `invoke_with_retry` only retries `ForgeError::Invocation`. Terminal errors (`UnknownTool`, `InvalidArguments`, `DuplicateTool`) short-circuit immediately. |
+| Typed error chains | Complete | `SentinelError::Loom` and `SentinelError::Core` wrap the underlying typed error via `#[from]`. Pattern-match on the inner error to recover full context. |
 
 ## Public Surface
 

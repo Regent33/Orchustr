@@ -20,7 +20,11 @@ pub enum ExecError {
     Spawn(String),
 
     #[error("upstream `{provider}` error {status}: {body}")]
-    Upstream { provider: String, status: u16, body: String },
+    Upstream {
+        provider: String,
+        status: u16,
+        body: String,
+    },
 
     #[error("transport error: {0}")]
     Transport(String),
@@ -32,16 +36,42 @@ pub enum ExecError {
 impl From<ExecError> for ToolError {
     fn from(err: ExecError) -> Self {
         match err {
-            ExecError::UnsupportedLanguage(l) => ToolError::invalid_input("exec", format!("unsupported language: {l}")),
-            ExecError::MissingCredential(env_var) => ToolError::MissingCredential { tool: "exec".into(), env_var },
-            ExecError::Timeout(ms) => ToolError::Timeout { tool: "exec".into(), timeout_ms: ms },
-            ExecError::Spawn(r) => ToolError::Unavailable { tool: "exec".into(), reason: r },
-            ExecError::Upstream { provider, status, body } => ToolError::Upstream { tool: provider, status, body },
-            ExecError::Transport(r) => ToolError::Transport { tool: "exec".into(), reason: r },
-            ExecError::Io(r) => ToolError::Transport { tool: "exec".into(), reason: r },
-            ExecError::ExecutorNotFound { executor, reason } => {
-                ToolError::Unavailable { tool: executor, reason }
+            ExecError::UnsupportedLanguage(l) => {
+                ToolError::invalid_input("exec", format!("unsupported language: {l}"))
             }
+            ExecError::MissingCredential(env_var) => ToolError::MissingCredential {
+                tool: "exec".into(),
+                env_var,
+            },
+            ExecError::Timeout(ms) => ToolError::Timeout {
+                tool: "exec".into(),
+                timeout_ms: ms,
+            },
+            ExecError::Spawn(r) => ToolError::Unavailable {
+                tool: "exec".into(),
+                reason: r,
+            },
+            ExecError::Upstream {
+                provider,
+                status,
+                body,
+            } => ToolError::Upstream {
+                tool: provider,
+                status,
+                body,
+            },
+            ExecError::Transport(r) => ToolError::Transport {
+                tool: "exec".into(),
+                reason: r,
+            },
+            ExecError::Io(r) => ToolError::Transport {
+                tool: "exec".into(),
+                reason: r,
+            },
+            ExecError::ExecutorNotFound { executor, reason } => ToolError::Unavailable {
+                tool: executor,
+                reason,
+            },
         }
     }
 }

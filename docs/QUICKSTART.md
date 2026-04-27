@@ -44,9 +44,15 @@ cargo run -p or-cli -- trace path/to/project
 
 Notes:
 
-- `lint` validates graph specs and `orchustr.yaml` references offline.
-- `trace` boots the local `or-lens` dashboard entry point for the configured project.
-- `run` parses config and graph descriptors and hands them to the current runner hook; it is not yet a full language-runtime executor by itself.
+- `lint` validates graph specs and `orchustr.yaml` references offline. Each validated path is printed.
+- `trace` boots the local `or-lens` dashboard, prints the bound port, and keeps it serving until you hit Ctrl-C.
+- `run` parses the project's config + graph and shells out to the language entrypoint declared in `orchustr.yaml`:
+  - `language: rust` → `cargo run` in the project dir
+  - `language: python` → first of `main.py` / `agent.py` / `app.py` via `python` (Windows) or `python3` (Unix)
+  - `language: typescript` → `npm start` if `package.json` exists, otherwise `npx tsx src/index.ts`
+  - `language: dart` → `dart run` against `pubspec.yaml`
+
+  stdout/stderr are inherited from the child process, and `kill_on_drop` ensures the child is reaped if `orchustr run` is interrupted.
 
 ## Step 5: Install a Binding Package
 

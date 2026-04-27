@@ -34,18 +34,29 @@ impl WhatsAppSender {
         access_token: impl Into<String>,
         phone_id: impl Into<String>,
     ) -> Self {
-        Self { client, base_url: base_url.into(), access_token: access_token.into(), phone_id: phone_id.into() }
+        Self {
+            client,
+            base_url: base_url.into(),
+            access_token: access_token.into(),
+            phone_id: phone_id.into(),
+        }
     }
 }
 
 #[derive(Deserialize)]
-struct WaMessage { id: String }
+struct WaMessage {
+    id: String,
+}
 #[derive(Deserialize)]
-struct WaResponse { messages: Vec<WaMessage> }
+struct WaResponse {
+    messages: Vec<WaMessage>,
+}
 
 #[async_trait]
 impl MessageSender for WhatsAppSender {
-    fn channel(&self) -> &'static str { PROVIDER }
+    fn channel(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn send(&self, msg: Message) -> Result<SendResult, CommsError> {
         let url = format!("{}/{}/messages", self.base_url, self.phone_id);
@@ -55,16 +66,36 @@ impl MessageSender for WhatsAppSender {
             "type": "text",
             "text": { "body": msg.body }
         });
-        let resp = self.client.post(&url)
+        let resp = self
+            .client
+            .post(&url)
             .header("Authorization", format!("Bearer {}", self.access_token))
             .json(&body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let status = resp.status().as_u16();
         if !(200..300).contains(&status) {
-            return Err(CommsError::Upstream { provider: PROVIDER.into(), status, body: resp.text().await.unwrap_or_default() });
+            return Err(CommsError::Upstream {
+                provider: PROVIDER.into(),
+                status,
+                body: resp.text().await.unwrap_or_default(),
+            });
         }
-        let parsed: WaResponse = resp.json().await.map_err(|e| CommsError::Transport(e.to_string()))?;
-        let id = parsed.messages.into_iter().next().map(|m| m.id).unwrap_or_default();
-        Ok(SendResult { message_id: id, channel: Channel::WhatsApp, status: "sent".into() })
+        let parsed: WaResponse = resp
+            .json()
+            .await
+            .map_err(|e| CommsError::Transport(e.to_string()))?;
+        let id = parsed
+            .messages
+            .into_iter()
+            .next()
+            .map(|m| m.id)
+            .unwrap_or_default();
+        Ok(SendResult {
+            message_id: id,
+            channel: Channel::WhatsApp,
+            status: "sent".into(),
+        })
     }
 }

@@ -16,7 +16,10 @@ impl ExecOrchestrator {
     }
 
     pub async fn execute(&self, req: ExecRequest) -> Result<ExecResult, ExecError> {
-        let executor = self.executors.iter().find(|e| e.supports(req.language))
+        let executor = self
+            .executors
+            .iter()
+            .find(|e| e.supports(req.language))
             .ok_or_else(|| ExecError::UnsupportedLanguage(req.language.as_str().into()))?;
         let span = tracing::info_span!(
             "tools.exec.execute",
@@ -46,8 +49,11 @@ impl ExecTool {
 #[async_trait]
 impl Tool for ExecTool {
     fn meta(&self) -> ToolMeta {
-        ToolMeta::new("exec", "Code execution — Python, Shell, and sandboxed runtimes")
-            .with_capability(ToolCapability::Subprocess)
+        ToolMeta::new(
+            "exec",
+            "Code execution — Python, Shell, and sandboxed runtimes",
+        )
+        .with_capability(ToolCapability::Subprocess)
     }
 
     async fn invoke(&self, input: ToolInput) -> Result<ToolOutput, ToolError> {

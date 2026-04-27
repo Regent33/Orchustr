@@ -1,5 +1,7 @@
 use crate::domain::contracts::VectorStoreClient;
-use crate::domain::entities::{CollectionConfig, DeleteRequest, QueryFilter, UpsertBatch, VectorMatch};
+use crate::domain::entities::{
+    CollectionConfig, DeleteRequest, QueryFilter, UpsertBatch, VectorMatch,
+};
 use crate::domain::errors::VectorError;
 use async_trait::async_trait;
 use or_tools_core::{Tool, ToolCapability, ToolError, ToolInput, ToolMeta, ToolOutput};
@@ -79,18 +81,16 @@ impl<C: VectorStoreClient> Tool for VectorStoreTool<C> {
 
         let payload = match op {
             "upsert" => {
-                let batch: UpsertBatch = serde_json::from_value(
-                    input.payload.get("data").cloned().unwrap_or_default(),
-                )
-                .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
+                let batch: UpsertBatch =
+                    serde_json::from_value(input.payload.get("data").cloned().unwrap_or_default())
+                        .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
                 self.client.upsert(batch).await?;
                 serde_json::json!({ "status": "ok" })
             }
             "query" => {
-                let filter: QueryFilter = serde_json::from_value(
-                    input.payload.get("data").cloned().unwrap_or_default(),
-                )
-                .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
+                let filter: QueryFilter =
+                    serde_json::from_value(input.payload.get("data").cloned().unwrap_or_default())
+                        .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
                 let matches = self.client.query(filter).await?;
                 serde_json::to_value(matches).map_err(|e| ToolError::Serialization {
                     tool: input.tool.clone(),
@@ -98,18 +98,16 @@ impl<C: VectorStoreClient> Tool for VectorStoreTool<C> {
                 })?
             }
             "delete" => {
-                let req: DeleteRequest = serde_json::from_value(
-                    input.payload.get("data").cloned().unwrap_or_default(),
-                )
-                .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
+                let req: DeleteRequest =
+                    serde_json::from_value(input.payload.get("data").cloned().unwrap_or_default())
+                        .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
                 self.client.delete(req).await?;
                 serde_json::json!({ "status": "ok" })
             }
             "ensure_collection" => {
-                let cfg: CollectionConfig = serde_json::from_value(
-                    input.payload.get("data").cloned().unwrap_or_default(),
-                )
-                .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
+                let cfg: CollectionConfig =
+                    serde_json::from_value(input.payload.get("data").cloned().unwrap_or_default())
+                        .map_err(|e| ToolError::invalid_input(&input.tool, e.to_string()))?;
                 self.client.ensure_collection(cfg).await?;
                 serde_json::json!({ "status": "ok" })
             }
@@ -117,7 +115,7 @@ impl<C: VectorStoreClient> Tool for VectorStoreTool<C> {
                 return Err(ToolError::invalid_input(
                     &input.tool,
                     format!("unknown op `{other}`"),
-                ))
+                ));
             }
         };
         Ok(ToolOutput::new(input.tool, payload))

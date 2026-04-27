@@ -12,17 +12,14 @@
 use or_core::{DynState, OrchState};
 use or_loom::{GraphBuilder, NodeResult};
 use or_pipeline::PipelineBuilder;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Verifies that DynState::merge actually merges keys instead of replacing.
 #[tokio::test]
 async fn dynstate_merge_accumulates_keys() {
-    let current: DynState = [
-        ("count".into(), json!(1)),
-        ("name".into(), json!("agent")),
-    ]
-    .into_iter()
-    .collect();
+    let current: DynState = [("count".into(), json!(1)), ("name".into(), json!("agent"))]
+        .into_iter()
+        .collect();
 
     let patch: DynState = [("count".into(), json!(2)), ("tool".into(), json!("search"))]
         .into_iter()
@@ -31,7 +28,11 @@ async fn dynstate_merge_accumulates_keys() {
     let merged = DynState::merge(&current, patch);
 
     // Bug 3 fix: "name" from current MUST survive the merge
-    assert_eq!(merged.get("name"), Some(&json!("agent")), "current key preserved");
+    assert_eq!(
+        merged.get("name"),
+        Some(&json!("agent")),
+        "current key preserved"
+    );
     // Patch key takes precedence
     assert_eq!(merged.get("count"), Some(&json!(2)), "patch key overwrites");
     // New key from patch is present
@@ -50,10 +51,7 @@ async fn dynstate_merge_accumulates_keys() {
 async fn react_agent_loop_with_tool_use() {
     let graph = GraphBuilder::<DynState>::new()
         .add_node("plan", |state| async move {
-            let iteration = state
-                .get("iteration")
-                .and_then(Value::as_u64)
-                .unwrap_or(0);
+            let iteration = state.get("iteration").and_then(Value::as_u64).unwrap_or(0);
             let task = state
                 .get("task")
                 .and_then(Value::as_str)
@@ -68,7 +66,10 @@ async fn react_agent_loop_with_tool_use() {
                 patch.insert("tool_args".into(), json!({"expression": "2+2"}));
             } else {
                 patch.insert("action".into(), json!("answer"));
-                patch.insert("final_answer".into(), json!(format!("The result is 4 for task: {}", task)));
+                patch.insert(
+                    "final_answer".into(),
+                    json!(format!("The result is 4 for task: {}", task)),
+                );
             }
             NodeResult::advance(patch)
         })
@@ -99,12 +100,10 @@ async fn react_agent_loop_with_tool_use() {
                 NodeResult::branch(patch, "plan")
             }
         })
-        .add_node("answer", |state| async move {
-            NodeResult::advance(state)
-        })
+        .add_node("answer", |state| async move { NodeResult::advance(state) })
         .add_edge("plan", "act")
         .add_edge("act", "observe")
-        .add_edge("observe", "plan")   // loop back
+        .add_edge("observe", "plan") // loop back
         .add_edge("observe", "answer") // or exit
         .set_entry("plan")
         .set_exit("answer")
@@ -118,10 +117,16 @@ async fn react_agent_loop_with_tool_use() {
     .into_iter()
     .collect();
 
-    let result = graph.execute(initial).await.expect("agent loop should complete");
+    let result = graph
+        .execute(initial)
+        .await
+        .expect("agent loop should complete");
 
     // Verify the agent completed the loop
-    assert!(result.contains_key("final_answer"), "agent should produce a final answer");
+    assert!(
+        result.contains_key("final_answer"),
+        "agent should produce a final answer"
+    );
     assert_eq!(
         result.get("iteration").and_then(Value::as_u64),
         Some(2),
@@ -152,13 +157,20 @@ async fn pipeline_agent_enriches_state_through_chain() {
             let text = state.get("input").and_then(Value::as_str).unwrap_or("");
             out.insert(
                 "intent".into(),
-                json!(if text.contains("weather") { "weather" } else { "general" }),
+                json!(if text.contains("weather") {
+                    "weather"
+                } else {
+                    "general"
+                }),
             );
             Ok(out)
         })
         .add_node("fetch", |state| async move {
             let mut out = state.clone();
-            let intent = state.get("intent").and_then(Value::as_str).unwrap_or("general");
+            let intent = state
+                .get("intent")
+                .and_then(Value::as_str)
+                .unwrap_or("general");
             out.insert(
                 "context".into(),
                 json!(format!("fetched data for intent={}", intent)),
@@ -168,7 +180,10 @@ async fn pipeline_agent_enriches_state_through_chain() {
         .add_node("generate", |state| async move {
             let mut out = state.clone();
             let context = state.get("context").and_then(Value::as_str).unwrap_or("");
-            out.insert("response".into(), json!(format!("Answer based on: {}", context)));
+            out.insert(
+                "response".into(),
+                json!(format!("Answer based on: {}", context)),
+            );
             Ok(out)
         })
         .build()
@@ -178,7 +193,10 @@ async fn pipeline_agent_enriches_state_through_chain() {
         .into_iter()
         .collect();
 
-    let result = pipeline.execute(initial).await.expect("pipeline should complete");
+    let result = pipeline
+        .execute(initial)
+        .await
+        .expect("pipeline should complete");
 
     // Bug 3: all intermediate state keys must survive
     assert!(result.contains_key("input"), "input key preserved");

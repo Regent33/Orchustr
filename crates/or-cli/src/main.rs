@@ -15,9 +15,15 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Init(InitArgs),
-    Run { project_dir: PathBuf },
-    Lint { project_dir: PathBuf },
-    Trace { project_dir: PathBuf },
+    Run {
+        project_dir: PathBuf,
+    },
+    Lint {
+        project_dir: PathBuf,
+    },
+    Trace {
+        project_dir: PathBuf,
+    },
     New {
         #[command(subcommand)]
         command: NewArgs,
@@ -95,7 +101,16 @@ impl From<ProviderArg> for ProviderKind {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), CliError> {
+async fn main() {
+    if let Err(error) = run().await {
+        // Render the user-facing `Display` form rather than letting `main`
+        // return `Err`, which would print the `Debug` representation.
+        eprintln!("orchustr: {error}");
+        std::process::exit(1);
+    }
+}
+
+async fn run() -> Result<(), CliError> {
     let cli = Cli::parse();
     match cli.command {
         Command::Init(args) => {
@@ -108,13 +123,25 @@ async fn main() -> Result<(), CliError> {
             })?;
         }
         Command::Run { project_dir } => {
-            let _ = run_project(&project_dir, &DefaultProjectRunner).await?;
+            let summary = run_project(&project_dir, &DefaultProjectRunner).await?;
+            println!("validated project: {}", summary.project_name);
+            if let Some(port) = summary.dashboard_port {
+                println!("dashboard port (configured): {port}");
+            }
         }
         Command::Lint { project_dir } => {
-            let _ = lint_path(&project_dir)?;
+            let validated = lint_path(&project_dir)?;
+            for path in validated {
+                println!("ok: {}", path.display());
+            }
         }
         Command::Trace { project_dir } => {
-            let _ = trace_project(&project_dir).await?;
+            let handle = trace_project(&project_dir).await?;
+            println!("dashboard listening on http://127.0.0.1:{}", handle.port());
+            println!("press Ctrl-C to stop");
+            // Keep the dashboard alive until the user interrupts.
+            let _ = tokio::signal::ctrl_c().await;
+            handle.shutdown();
         }
         Command::New {
             command: NewArgs::Node { name, project_dir },

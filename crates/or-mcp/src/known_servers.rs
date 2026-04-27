@@ -58,10 +58,7 @@ pub mod known {
             "slack",
             "stdio://slack",
             "npx",
-            vec![
-                "-y".to_owned(),
-                "@zencoderai/slack-mcp-server".to_owned(),
-            ],
+            vec!["-y".to_owned(), "@zencoderai/slack-mcp-server".to_owned()],
         )
     }
 

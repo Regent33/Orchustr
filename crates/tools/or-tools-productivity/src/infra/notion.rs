@@ -4,7 +4,7 @@ use crate::domain::entities::Page;
 use crate::domain::errors::ProductivityError;
 use async_trait::async_trait;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const PROVIDER: &str = "notion";
 const API_KEY_ENV: &str = "NOTION_API_KEY";
@@ -35,21 +35,39 @@ impl NotionBase {
         api_key: impl Into<String>,
         database_id: impl Into<String>,
     ) -> Self {
-        Self { client, base_url: base_url.into(), api_key: api_key.into(), database_id: database_id.into() }
+        Self {
+            client,
+            base_url: base_url.into(),
+            api_key: api_key.into(),
+            database_id: database_id.into(),
+        }
     }
 
-    fn auth(&self) -> String { format!("Bearer {}", self.api_key) }
+    fn auth(&self) -> String {
+        format!("Bearer {}", self.api_key)
+    }
 }
 
 #[derive(Deserialize)]
-struct NotionResults { results: Vec<NotionPage> }
+struct NotionResults {
+    results: Vec<NotionPage>,
+}
 #[derive(Deserialize)]
-struct NotionPage { id: String, #[serde(default)] url: Option<String>, properties: Value }
+struct NotionPage {
+    id: String,
+    #[serde(default)]
+    url: Option<String>,
+    properties: Value,
+}
 #[derive(Deserialize)]
-struct NotionCreated { id: String }
+struct NotionCreated {
+    id: String,
+}
 
 fn extract_title(props: &Value) -> String {
-    props.get("Name").or_else(|| props.get("title"))
+    props
+        .get("Name")
+        .or_else(|| props.get("title"))
         .and_then(|p| p.get("title"))
         .and_then(|t| t.as_array())
         .and_then(|a| a.first())
@@ -61,28 +79,45 @@ fn extract_title(props: &Value) -> String {
 
 #[async_trait]
 impl KnowledgeBase for NotionBase {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn search(&self, query: Value) -> Result<Vec<Page>, ProductivityError> {
         let filter = query.get("filter").cloned().unwrap_or(json!({}));
         let url = format!("{}/databases/{}/query", self.base_url, self.database_id);
         let body = json!({ "filter": filter, "page_size": 20 });
-        let resp = self.client.post(&url)
+        let resp = self
+            .client
+            .post(&url)
             .header("Authorization", self.auth())
             .header("Notion-Version", NOTION_VERSION)
             .json(&body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let status = resp.status();
         if !status.is_success() {
-            return Err(ProductivityError::Upstream { provider: PROVIDER.into(), status: status.as_u16(), body: resp.text().await.unwrap_or_default() });
+            return Err(ProductivityError::Upstream {
+                provider: PROVIDER.into(),
+                status: status.as_u16(),
+                body: resp.text().await.unwrap_or_default(),
+            });
         }
-        let results: NotionResults = resp.json().await.map_err(|e| ProductivityError::Transport(e.to_string()))?;
-        Ok(results.results.into_iter().map(|p| Page {
-            id: p.id,
-            title: extract_title(&p.properties),
-            content: String::new(),
-            url: p.url,
-        }).collect())
+        let results: NotionResults = resp
+            .json()
+            .await
+            .map_err(|e| ProductivityError::Transport(e.to_string()))?;
+        Ok(results
+            .results
+            .into_iter()
+            .map(|p| Page {
+                id: p.id,
+                title: extract_title(&p.properties),
+                content: String::new(),
+                url: p.url,
+            })
+            .collect())
     }
 
     async fn create_page(&self, page: Page) -> Result<String, ProductivityError> {
@@ -98,16 +133,27 @@ impl KnowledgeBase for NotionBase {
                 "paragraph": { "rich_text": [{ "text": { "content": page.content } }] }
             }]
         });
-        let resp = self.client.post(&url)
+        let resp = self
+            .client
+            .post(&url)
             .header("Authorization", self.auth())
             .header("Notion-Version", NOTION_VERSION)
             .json(&body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let status = resp.status();
         if !status.is_success() {
-            return Err(ProductivityError::Upstream { provider: PROVIDER.into(), status: status.as_u16(), body: resp.text().await.unwrap_or_default() });
+            return Err(ProductivityError::Upstream {
+                provider: PROVIDER.into(),
+                status: status.as_u16(),
+                body: resp.text().await.unwrap_or_default(),
+            });
         }
-        let created: NotionCreated = resp.json().await.map_err(|e| ProductivityError::Transport(e.to_string()))?;
+        let created: NotionCreated = resp
+            .json()
+            .await
+            .map_err(|e| ProductivityError::Transport(e.to_string()))?;
         Ok(created.id)
     }
 }

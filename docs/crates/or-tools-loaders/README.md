@@ -1,6 +1,6 @@
 # or-tools-loaders
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `text`, `markdown`, `json`, `csv`, `html` | **Feature flags**: `text`, `markdown`, `json`, `csv`, `html`, `pdf`, `docx`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `text`, `markdown`, `json`, `csv`, `html` | **Feature flags**: `text`, `markdown`, `json`, `csv`, `html`, `pdf`, `docx`, `all`
 
 Document loading and normalization tools for Orchustr. The crate turns local paths or raw input into normalized `Document` chunks, routing requests by document kind through registered loaders and exposing the workflow through a generic `Tool`.
 

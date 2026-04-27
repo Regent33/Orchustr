@@ -1,6 +1,6 @@
 # or-cli
 
-**Status**: Partial | **Version**: `0.1.2` | **Deps**: clap, serde, serde_yaml, thiserror, tokio
+**Status**: Partial | **Version**: `0.1.3` | **Deps**: clap, serde, serde_yaml, thiserror, tokio
 
 Command-line scaffolding and validation crate for Orchustr projects.
 
@@ -18,9 +18,10 @@ graph LR
 | Component | Status | Notes |
 |---|---|---|
 | Project scaffolding | Complete | `orchustr init` generates Rust, Python, TypeScript, and Dart starter files plus `orchustr.yaml`. |
-| Graph linting | Complete | `orchustr lint` validates graph descriptors and project config references offline. |
-| Trace bootstrap | Partial | `orchustr trace` verifies the dashboard port and boot path by starting and stopping `or-lens`. |
-| Project run hook | Partial | `run_project` parses config and graph descriptors, then hands them to a `ProjectRunner`; the default runner is intentionally a no-op scaffold hook. |
+| Graph linting | Complete | `orchustr lint` validates graph descriptors and project config references offline and prints each validated path. |
+| Trace dashboard | Complete | `orchustr trace` starts the local `or-lens` dashboard, prints the bound port, and stays running until Ctrl-C. |
+| Project run | Complete | `DefaultProjectRunner` shells out to the language toolchain declared in `orchustr.yaml` (`cargo run` / `python` / `npm start` or `npx tsx` / `dart run`) with inherited stdio and `kill_on_drop`. |
+| Error rendering | Complete | The `orchustr` binary renders `CliError` via `Display` (`orchustr: <message>`) instead of the previous `Debug`-printed struct. |
 
 ## Commands
 
@@ -41,5 +42,5 @@ graph LR
 
 ## Known Gaps & Limitations
 
-- `run_project` currently validates and hands off parsed project state; it does not yet execute language-specific node handlers on its own.
+- `DefaultProjectRunner` shells out to the language toolchain — it does not host node handlers in-process. A "host the graph executor in Rust and call host-language nodes via FFI callbacks" path is not yet wired (audit item #23).
 - Template rendering is intentionally simple and does not yet support user-defined template packs.

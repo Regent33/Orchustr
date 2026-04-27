@@ -80,3 +80,43 @@ async fn in_memory_vector_store_returns_best_match_first() {
     let result = store.query(vec![1.0, 0.0], 1).await.unwrap();
     assert_eq!(result[0].id, "a");
 }
+
+#[tokio::test]
+async fn in_memory_vector_store_top_k_is_bounded_and_ordered() {
+    // Regression for audit #13: query must not materialize the full
+    // sorted record list when callers ask for a small `limit`. We
+    // exercise this by upserting more records than the limit and
+    // checking we get exactly `limit` results back, in descending
+    // score order.
+    let store = InMemoryVectorStore::new();
+    let vectors = [
+        ("near", vec![1.0, 0.0]),
+        ("medium", vec![0.7, 0.7]),
+        ("orthogonal", vec![0.0, 1.0]),
+        ("opposite", vec![-1.0, 0.0]),
+    ];
+    for (id, vector) in &vectors {
+        store
+            .upsert(id, vector.clone(), json!({"id": id}))
+            .await
+            .unwrap();
+    }
+
+    let result = store.query(vec![1.0, 0.0], 2).await.unwrap();
+    assert_eq!(result.len(), 2, "limit must be respected");
+    assert_eq!(result[0].id, "near", "best match must come first");
+    assert_eq!(result[1].id, "medium", "second-best must come next");
+    // Strictly descending score order.
+    assert!(result[0].score >= result[1].score);
+}
+
+#[tokio::test]
+async fn in_memory_vector_store_zero_limit_returns_empty() {
+    // Edge case: a zero limit must return an empty Vec, not panic and
+    // not return all records. Previously the sort-then-truncate path
+    // would happily allocate the full sorted list before truncating.
+    let store = InMemoryVectorStore::new();
+    store.upsert("a", vec![1.0, 0.0], json!({})).await.unwrap();
+    let result = store.query(vec![1.0, 0.0], 0).await.unwrap();
+    assert!(result.is_empty());
+}

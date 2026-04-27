@@ -1,5 +1,7 @@
 use crate::domain::contracts::VectorStoreClient;
-use crate::domain::entities::{CollectionConfig, DeleteRequest, QueryFilter, UpsertBatch, VectorMatch};
+use crate::domain::entities::{
+    CollectionConfig, DeleteRequest, QueryFilter, UpsertBatch, VectorMatch,
+};
 use crate::domain::errors::VectorError;
 use async_trait::async_trait;
 use serde_json::Value;
@@ -20,10 +22,12 @@ impl PgVectorClient {
     pub async fn from_env() -> Result<Self, VectorError> {
         let url = std::env::var(DB_URL_ENV)
             .map_err(|_| VectorError::MissingCredential(DB_URL_ENV.into()))?;
-        let pool = PgPool::connect(&url).await.map_err(|e| VectorError::Transport {
-            provider: PROVIDER.into(),
-            reason: e.to_string(),
-        })?;
+        let pool = PgPool::connect(&url)
+            .await
+            .map_err(|e| VectorError::Transport {
+                provider: PROVIDER.into(),
+                reason: e.to_string(),
+            })?;
         Ok(Self { pool })
     }
 
@@ -35,7 +39,9 @@ impl PgVectorClient {
 
 #[async_trait]
 impl VectorStoreClient for PgVectorClient {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn ensure_collection(&self, cfg: CollectionConfig) -> Result<(), VectorError> {
         let sql = format!(
@@ -46,17 +52,26 @@ impl VectorStoreClient for PgVectorClient {
             )"#,
             cfg.name, cfg.dimension
         );
-        sqlx::query(&sql).execute(&self.pool).await.map_err(|e| VectorError::Transport {
-            provider: PROVIDER.into(),
-            reason: e.to_string(),
-        })?;
+        sqlx::query(&sql)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| VectorError::Transport {
+                provider: PROVIDER.into(),
+                reason: e.to_string(),
+            })?;
         Ok(())
     }
 
     async fn upsert(&self, batch: UpsertBatch) -> Result<(), VectorError> {
         for item in batch.items {
-            let vec_str = format!("[{}]", item.vector.iter()
-                .map(|f| f.to_string()).collect::<Vec<_>>().join(","));
+            let vec_str = format!(
+                "[{}]",
+                item.vector
+                    .iter()
+                    .map(|f| f.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
             let meta = item.metadata.to_string();
             let sql = format!(
                 r#"INSERT INTO "{}" (id, embedding, metadata)
@@ -71,21 +86,37 @@ impl VectorStoreClient for PgVectorClient {
                 .bind(&meta)
                 .execute(&self.pool)
                 .await
-                .map_err(|e| VectorError::Transport { provider: PROVIDER.into(), reason: e.to_string() })?;
+                .map_err(|e| VectorError::Transport {
+                    provider: PROVIDER.into(),
+                    reason: e.to_string(),
+                })?;
         }
         Ok(())
     }
 
     async fn delete(&self, req: DeleteRequest) -> Result<(), VectorError> {
         let sql = format!(r#"DELETE FROM "{}" WHERE id = ANY($1)"#, req.collection);
-        sqlx::query(&sql).bind(&req.ids).execute(&self.pool)
-            .await.map_err(|e| VectorError::Transport { provider: PROVIDER.into(), reason: e.to_string() })?;
+        sqlx::query(&sql)
+            .bind(&req.ids)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| VectorError::Transport {
+                provider: PROVIDER.into(),
+                reason: e.to_string(),
+            })?;
         Ok(())
     }
 
     async fn query(&self, filter: QueryFilter) -> Result<Vec<VectorMatch>, VectorError> {
-        let vec_str = format!("[{}]", filter.vector.iter()
-            .map(|f| f.to_string()).collect::<Vec<_>>().join(","));
+        let vec_str = format!(
+            "[{}]",
+            filter
+                .vector
+                .iter()
+                .map(|f| f.to_string())
+                .collect::<Vec<_>>()
+                .join(",")
+        );
         let sql = format!(
             r#"SELECT id, metadata, 1 - (embedding <=> $1::vector) AS score
                FROM "{}" ORDER BY embedding <=> $1::vector LIMIT $2"#,
@@ -96,14 +127,26 @@ impl VectorStoreClient for PgVectorClient {
             .bind(filter.top_k as i64)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| VectorError::Transport { provider: PROVIDER.into(), reason: e.to_string() })?;
-        let results = rows.into_iter().map(|row| {
-            use sqlx::Row;
-            let id: String = row.try_get("id").unwrap_or_default();
-            let score: f64 = row.try_get("score").unwrap_or(0.0);
-            let meta: Value = row.try_get::<serde_json::Value, _>("metadata").unwrap_or(Value::Null);
-            VectorMatch { id, score: score as f32, metadata: meta }
-        }).collect();
+            .map_err(|e| VectorError::Transport {
+                provider: PROVIDER.into(),
+                reason: e.to_string(),
+            })?;
+        let results = rows
+            .into_iter()
+            .map(|row| {
+                use sqlx::Row;
+                let id: String = row.try_get("id").unwrap_or_default();
+                let score: f64 = row.try_get("score").unwrap_or(0.0);
+                let meta: Value = row
+                    .try_get::<serde_json::Value, _>("metadata")
+                    .unwrap_or(Value::Null);
+                VectorMatch {
+                    id,
+                    score: score as f32,
+                    metadata: meta,
+                }
+            })
+            .collect();
         Ok(results)
     }
 }

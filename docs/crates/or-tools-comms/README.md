@@ -1,6 +1,6 @@
 # or-tools-comms
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `(none)` | **Feature flags**: `twilio`, `telegram`, `discord`, `whatsapp`, `facebook`, `messenger`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `(none)` | **Feature flags**: `twilio`, `telegram`, `discord`, `whatsapp`, `facebook`, `messenger`, `all`
 
 Communication tools for Orchustr. The crate defines normalized outbound message entities, routes messages to channel-specific senders, and provides feature-gated HTTP integrations for SMS and chat platforms.
 

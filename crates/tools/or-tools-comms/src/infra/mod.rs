@@ -8,9 +8,15 @@
 ))]
 pub(crate) mod shared;
 
-#[cfg(feature = "twilio")] pub mod twilio;
-#[cfg(feature = "telegram")] pub mod telegram;
-#[cfg(feature = "discord")] pub mod discord;
-#[cfg(feature = "whatsapp")] pub mod whatsapp;
-#[cfg(feature = "facebook")] pub mod facebook;
-#[cfg(feature = "messenger")] pub mod messenger;
+#[cfg(feature = "discord")]
+pub mod discord;
+#[cfg(feature = "facebook")]
+pub mod facebook;
+#[cfg(feature = "messenger")]
+pub mod messenger;
+#[cfg(feature = "telegram")]
+pub mod telegram;
+#[cfg(feature = "twilio")]
+pub mod twilio;
+#[cfg(feature = "whatsapp")]
+pub mod whatsapp;

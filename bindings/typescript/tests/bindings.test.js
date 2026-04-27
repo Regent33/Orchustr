@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 
 import {
+  AnthropicConduit,
   CoreOrchestrator,
   DynState,
   GraphBuilder,
   NodeResult,
+  OpenAiCompatConduit,
+  OpenAiConduit,
   PipelineBuilder,
   PromptBuilder,
   RustCrateBridge,
@@ -71,6 +74,88 @@ function testRustCrateBridgeCatalogIsOptional() {
   assert.ok(Array.isArray(catalog));
 }
 
+// ── SSE streaming tests (regression for audit #24) ─────────────────
+
+/**
+ * Builds a Response-like object whose body streams the given chunks
+ * one at a time. Mirrors what `fetch` returns for a streaming SSE
+ * endpoint without needing a real network call.
+ */
+function makeSseResponse(chunks) {
+  const encoder = new TextEncoder();
+  const queue = chunks.map((chunk) => encoder.encode(chunk));
+  return {
+    ok: true,
+    status: 200,
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (queue.length === 0) return { done: true, value: undefined };
+            return { done: false, value: queue.shift() };
+          },
+        };
+      },
+    },
+    async text() {
+      return "";
+    },
+  };
+}
+
+async function withStubFetch(stub, fn) {
+  const original = globalThis.fetch;
+  globalThis.fetch = stub;
+  try {
+    return await fn();
+  } finally {
+    globalThis.fetch = original;
+  }
+}
+
+async function collect(iter) {
+  const out = [];
+  for await (const value of iter) out.push(value);
+  return out;
+}
+
+async function testOpenAiCompatStreamsDeltas() {
+  const stub = async () =>
+    makeSseResponse([
+      'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":" world"}}]}\n\n',
+      "data: [DONE]\n\n",
+    ]);
+  const conduit = new OpenAiCompatConduit("k", "m", "https://example.invalid/x");
+  const tokens = await withStubFetch(stub, () => collect(conduit.streamText("hi")));
+  assert.deepEqual(tokens, ["Hello", " world"]);
+}
+
+async function testAnthropicStreamsDeltas() {
+  const stub = async () =>
+    makeSseResponse([
+      'event: message_start\ndata: {"type":"message_start"}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hi "}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"there"}}\n\n',
+      'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+    ]);
+  const conduit = new AnthropicConduit("k", "claude-x");
+  const tokens = await withStubFetch(stub, () => collect(conduit.streamText("hi")));
+  assert.deepEqual(tokens, ["Hi ", "there"]);
+}
+
+async function testOpenAiResponsesApiStreamsDeltas() {
+  const stub = async () =>
+    makeSseResponse([
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"alpha"}\n\n',
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"beta"}\n\n',
+      "data: [DONE]\n\n",
+    ]);
+  const conduit = new OpenAiConduit("k", "m");
+  const tokens = await withStubFetch(stub, () => collect(conduit.streamText("hi")));
+  assert.deepEqual(tokens, ["alpha", "beta"]);
+}
+
 await testGraphBuilderExecutesAsyncHandlers();
 await testGraphBuilderSupportsNodeResult();
 await testPipelineBuilderExecutesSequentialNodes();
@@ -78,3 +163,7 @@ testPromptBuilderRendersVariables();
 testPromptBuilderSanitizesControlCharacters();
 testCoreOrchestratorEnforcesBudget();
 testRustCrateBridgeCatalogIsOptional();
+await testOpenAiCompatStreamsDeltas();
+await testAnthropicStreamsDeltas();
+await testOpenAiResponsesApiStreamsDeltas();
+console.log("All TypeScript bindings tests passed!");

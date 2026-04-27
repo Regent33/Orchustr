@@ -1,7 +1,13 @@
+use or_core::CoreError;
+use or_loom::LoomError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Error, PartialEq, Eq)]
+// `Eq` is intentionally not derived: `Loom(LoomError)` carries
+// `serde_json::Value` (via `LoomError::Paused`), which only implements
+// `PartialEq`. `assert_eq!` and `==` still work because `PartialEq`
+// is what those macros require.
+#[derive(Debug, Clone, Serialize, Deserialize, Error, PartialEq)]
 pub enum SentinelError {
     #[error("messages are missing from state")]
     MissingMessages,
@@ -15,8 +21,13 @@ pub enum SentinelError {
     Conduit(String),
     #[error("forge error: {0}")]
     Forge(String),
+    /// Wraps a typed `or_loom::LoomError` so callers can match on the
+    /// underlying graph failure (paused checkpoint, step-limit, unbound
+    /// node, etc.) instead of pattern-matching on a stringified message.
     #[error("graph error: {0}")]
-    Loom(String),
+    Loom(#[from] LoomError),
+    /// Wraps a typed `or_core::CoreError` so callers can match on the
+    /// underlying budget/retry failure cause.
     #[error("core error: {0}")]
-    Core(String),
+    Core(#[from] CoreError),
 }

@@ -7,11 +7,13 @@ use crate::infra::templates::{
     render_typescript_files,
 };
 use async_trait::async_trait;
-use or_lens::start_dashboard_server;
+use or_lens::{LensHandle, start_dashboard_server};
 use or_schema::GraphSpec;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Stdio;
+use tokio::process::Command;
 
 /// Runtime hook used by `or-cli` to hand parsed project config to an executor.
 #[async_trait]
@@ -20,13 +22,133 @@ pub trait ProjectRunner: Send + Sync {
     async fn run(&self, request: RunRequest) -> Result<(), CliError>;
 }
 
-/// Default no-op runner used by the `orchustr` binary after config validation.
+/// Default project runner used by the `orchustr` binary.
+///
+/// Detects the language declared in `orchustr.yaml` and shells out to the
+/// canonical entrypoint for that language (e.g. `cargo run` for Rust,
+/// `python main.py` for Python). Inherits stdio so the user sees the
+/// child process's output. If no recognised entrypoint is present in
+/// `project_dir`, returns `CliError::InvalidProject` with a hint.
 pub struct DefaultProjectRunner;
 
 #[async_trait]
 impl ProjectRunner for DefaultProjectRunner {
-    async fn run(&self, _request: RunRequest) -> Result<(), CliError> {
+    async fn run(&self, request: RunRequest) -> Result<(), CliError> {
+        let plan = launch_plan(&request)?;
+        let mut command = Command::new(&plan.program);
+        command
+            .args(&plan.args)
+            .current_dir(&request.project_dir)
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .stdin(Stdio::inherit())
+            .kill_on_drop(true);
+        let status = command.status().await.map_err(|error| {
+            CliError::InvalidProject(format!(
+                "failed to launch `{}`: {error}. Is the toolchain installed and on PATH?",
+                plan.program
+            ))
+        })?;
+        if !status.success() {
+            return Err(CliError::InvalidProject(format!(
+                "`{}` exited with status {}",
+                plan.program,
+                status
+                    .code()
+                    .map(|c| c.to_string())
+                    .unwrap_or_else(|| "<signal>".to_owned())
+            )));
+        }
         Ok(())
+    }
+}
+
+struct LaunchPlan {
+    program: String,
+    args: Vec<String>,
+}
+
+fn launch_plan(request: &RunRequest) -> Result<LaunchPlan, CliError> {
+    let project_dir = &request.project_dir;
+    match request.config.project.language {
+        ProjectLanguage::Rust => {
+            if project_dir.join("Cargo.toml").is_file() {
+                Ok(LaunchPlan {
+                    program: "cargo".to_owned(),
+                    args: vec!["run".to_owned()],
+                })
+            } else {
+                Err(CliError::InvalidProject(format!(
+                    "no Cargo.toml found in {}",
+                    project_dir.display()
+                )))
+            }
+        }
+        ProjectLanguage::Python => {
+            for candidate in ["main.py", "agent.py", "app.py"] {
+                if project_dir.join(candidate).is_file() {
+                    return Ok(LaunchPlan {
+                        program: python_program(),
+                        args: vec![candidate.to_owned()],
+                    });
+                }
+            }
+            Err(CliError::InvalidProject(format!(
+                "no Python entrypoint (main.py / agent.py / app.py) in {}",
+                project_dir.display()
+            )))
+        }
+        ProjectLanguage::Typescript => {
+            if project_dir.join("package.json").is_file() {
+                Ok(LaunchPlan {
+                    program: npm_program(),
+                    args: vec!["start".to_owned()],
+                })
+            } else if project_dir.join("src/index.ts").is_file() {
+                Ok(LaunchPlan {
+                    program: "npx".to_owned(),
+                    args: vec!["tsx".to_owned(), "src/index.ts".to_owned()],
+                })
+            } else {
+                Err(CliError::InvalidProject(format!(
+                    "no package.json or src/index.ts in {}",
+                    project_dir.display()
+                )))
+            }
+        }
+        ProjectLanguage::Dart => {
+            if project_dir.join("pubspec.yaml").is_file() {
+                Ok(LaunchPlan {
+                    program: "dart".to_owned(),
+                    args: vec!["run".to_owned()],
+                })
+            } else {
+                Err(CliError::InvalidProject(format!(
+                    "no pubspec.yaml in {}",
+                    project_dir.display()
+                )))
+            }
+        }
+    }
+}
+
+fn python_program() -> String {
+    // Prefer `python` then fall back to `python3`. Both are commonly on
+    // PATH; the actual selection is left to the OS resolver.
+    if cfg!(target_os = "windows") {
+        "python".to_owned()
+    } else {
+        "python3".to_owned()
+    }
+}
+
+fn npm_program() -> String {
+    if cfg!(target_os = "windows") {
+        // On Windows, `npm` ships as a .cmd shim that requires invoking via
+        // the shell wrapper to be resolved by `Command`.
+        "npm.cmd".to_owned()
+    } else {
+        "npm".to_owned()
     }
 }
 
@@ -107,15 +229,14 @@ pub async fn run_project<R: ProjectRunner>(
 }
 
 /// Starts the local `or-lens` dashboard configured by an Orchustr project.
-pub async fn trace_project(project_dir: &Path) -> Result<u16, CliError> {
+///
+/// Returns the live `LensHandle` so the caller controls the server lifetime.
+/// The previous version of this function shut the server down before
+/// returning, which made the dashboard unusable for `orchustr trace`.
+pub async fn trace_project(project_dir: &Path) -> Result<LensHandle, CliError> {
     let config = load_config(project_dir)?;
     let port = config.observability.dashboard_port;
-    let handle = start_dashboard_server(port)
-        .await
-        .map_err(|error| CliError::Lens(error.to_string()))?;
-    let bound_port = handle.port();
-    handle.shutdown();
-    Ok(bound_port)
+    start_dashboard_server(port).await.map_err(CliError::from)
 }
 
 /// Scaffolds a node file inside an existing Orchustr project.
@@ -194,7 +315,11 @@ fn validate_graph_file(path: &Path) -> Result<PathBuf, CliError> {
 }
 
 fn validate_graph_spec(graph: &GraphSpec) -> Result<(), CliError> {
-    let nodes = graph.nodes.iter().map(|node| node.id.clone()).collect::<HashSet<_>>();
+    let nodes = graph
+        .nodes
+        .iter()
+        .map(|node| node.id.clone())
+        .collect::<HashSet<_>>();
     if !nodes.contains(&graph.entry) {
         return Err(CliError::Validation(format!(
             "entry node '{}' is not declared",
@@ -202,7 +327,9 @@ fn validate_graph_spec(graph: &GraphSpec) -> Result<(), CliError> {
         )));
     }
     if graph.exits.is_empty() {
-        return Err(CliError::Validation("graph must declare at least one exit node".to_owned()));
+        return Err(CliError::Validation(
+            "graph must declare at least one exit node".to_owned(),
+        ));
     }
     for exit in &graph.exits {
         if !nodes.contains(exit) {

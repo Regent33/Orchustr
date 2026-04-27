@@ -1,6 +1,6 @@
 # or-tools-productivity
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `(none)` | **Feature flags**: `gmail`, `gcalendar`, `slack`, `jira`, `github`, `trello`, `notion`, `clickup`, `office365`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `(none)` | **Feature flags**: `gmail`, `gcalendar`, `slack`, `jira`, `github`, `trello`, `notion`, `clickup`, `office365`, `all`
 
 Productivity tools for Orchustr. The crate defines async contracts for email, calendar, project tracking, knowledge bases, and team messaging, then wires feature-gated HTTP integrations behind a single orchestrator and `Tool` adapter.
 

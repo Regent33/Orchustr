@@ -1,6 +1,6 @@
 # or-tools-file
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `local`, `json-toolkit` | **Feature flags**: `local`, `json-toolkit`, `gdrive`, `arxiv`, `financial`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `local`, `json-toolkit` | **Feature flags**: `local`, `json-toolkit`, `gdrive`, `arxiv`, `financial`, `all`
 
 File and external data-source tools for Orchustr. The crate defines normalized file/data entities, wraps file stores and data sources behind async traits, and ships both local backends and feature-gated HTTP integrations.
 

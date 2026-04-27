@@ -1,8 +1,19 @@
 use crate::domain::entities::SentinelConfig;
 use crate::domain::errors::SentinelError;
 use or_core::CoreOrchestrator;
-use or_forge::ForgeRegistry;
+use or_forge::{ForgeError, ForgeRegistry};
 use or_loom::LoomError;
+
+/// Classifies a `ForgeError` as retriable or terminal.
+///
+/// Terminal errors (`UnknownTool`, `InvalidArguments`, `DuplicateTool`)
+/// are deterministic — the same call will fail the same way next time —
+/// so retrying just burns the attempt budget. `Invocation` is treated
+/// as potentially transient (network/upstream/rate-limit) and is
+/// allowed to retry.
+fn is_retriable(error: &ForgeError) -> bool {
+    matches!(error, ForgeError::Invocation(_))
+}
 
 pub(crate) async fn invoke_with_retry(
     registry: &ForgeRegistry,
@@ -11,21 +22,48 @@ pub(crate) async fn invoke_with_retry(
     config: &SentinelConfig,
 ) -> Result<serde_json::Value, SentinelError> {
     let core = CoreOrchestrator::new();
-    for attempt in 1..=config.tool_retry.max_attempts.max(1) {
+    let max_attempts = config.tool_retry.max_attempts.max(1);
+    let mut last_error: Option<ForgeError> = None;
+    for attempt in 1..=max_attempts {
         match registry.invoke(tool_name, args.clone()).await {
             Ok(result) => return Ok(result),
-            Err(error) if attempt == config.tool_retry.max_attempts.max(1) => {
-                return Err(SentinelError::Forge(error.to_string()));
-            }
-            Err(_) => {
+            Err(error) => {
+                if !is_retriable(&error) {
+                    tracing::debug!(
+                        target: "or_sentinel",
+                        tool = tool_name,
+                        attempt,
+                        reason = %error,
+                        "tool error is terminal; not retrying"
+                    );
+                    return Err(SentinelError::Forge(error.to_string()));
+                }
+                if attempt == max_attempts {
+                    return Err(SentinelError::Forge(error.to_string()));
+                }
+                tracing::debug!(
+                    target: "or_sentinel",
+                    tool = tool_name,
+                    attempt,
+                    reason = %error,
+                    "tool error is retriable; scheduling next attempt"
+                );
+                last_error = Some(error);
                 let delay = core
                     .next_retry_delay(&config.tool_retry, attempt)
-                    .map_err(|error| SentinelError::Core(error.to_string()))?;
+                    .map_err(SentinelError::from)?;
                 tokio::time::sleep(delay).await;
             }
         }
     }
-    Err(SentinelError::Forge("tool retry exhausted".to_owned()))
+    // Loop only exits via early return on success/failure; this branch
+    // remains as a safety net in case `max_attempts` somehow yields zero
+    // iterations.
+    Err(SentinelError::Forge(
+        last_error
+            .map(|error| error.to_string())
+            .unwrap_or_else(|| "tool retry exhausted".to_owned()),
+    ))
 }
 
 pub(crate) fn node_error(node: &str, error: SentinelError) -> LoomError {

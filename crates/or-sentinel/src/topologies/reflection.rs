@@ -1,5 +1,6 @@
 use crate::domain::errors::SentinelError;
-use crate::infra::adapters::state::{messages_from_state, set_final_answer};
+use crate::infra::adapters::context::with_context;
+use crate::infra::adapters::state::messages_from_state;
 use crate::infra::implementations::support::node_error;
 use crate::topology::LoopTopology;
 use or_conduit::{CompletionMessage, ConduitProvider, ContentPart, MessageRole};
@@ -57,6 +58,18 @@ impl LoopTopology for ReflectionTopology {
     fn name(&self) -> &'static str {
         "reflection"
     }
+
+    fn bind<P>(
+        &self,
+        builder: GraphBuilder<DynState>,
+        provider: P,
+        registry: ForgeRegistry,
+    ) -> GraphBuilder<DynState>
+    where
+        P: ConduitProvider + Clone + Send + Sync + 'static,
+    {
+        bind_reflection(builder, self, provider, registry)
+    }
 }
 
 pub(crate) fn bind_reflection<P>(
@@ -71,11 +84,11 @@ where
     let max_reflections = topology.max_reflections();
     builder
         .bind_node("draft", |state: DynState| async move {
-            let mut next = state.clone();
             let updated_draft = draft_from_state(&state)?;
-            next.insert(DRAFT_KEY.to_owned(), serde_json::json!(updated_draft));
-            next.remove(FEEDBACK_KEY);
-            NodeResult::advance(next)
+            let mut state = state;
+            state.insert(DRAFT_KEY.to_owned(), serde_json::json!(updated_draft));
+            state.remove(FEEDBACK_KEY);
+            NodeResult::advance(state)
         })
         .bind_node("critique", move |state: DynState| {
             let provider = provider.clone();
@@ -94,12 +107,13 @@ where
                     .get(ITERATIONS_KEY)
                     .and_then(|value| value.as_u64())
                     .unwrap_or(0);
-                let mut next = state.clone();
-                next.insert(ITERATIONS_KEY.to_owned(), serde_json::json!(iterations));
+                let mut state = state;
+                state.insert(ITERATIONS_KEY.to_owned(), serde_json::json!(iterations));
 
                 if iterations >= u64::from(max_reflections) {
-                    set_final_answer(&mut next, draft);
-                    return NodeResult::branch(next, "exit");
+                    with_context(|ctx| ctx.set_final_answer(draft))
+                        .map_err(|error| node_error("critique", error))?;
+                    return NodeResult::branch(state, "exit");
                 }
 
                 let response = provider
@@ -117,13 +131,14 @@ where
 
                 match parse_critique(&response.text)? {
                     CritiqueDecision::Accept { answer } => {
-                        set_final_answer(&mut next, answer.unwrap_or(draft));
-                        NodeResult::branch(next, "exit")
+                        with_context(|ctx| ctx.set_final_answer(answer.unwrap_or(draft)))
+                            .map_err(|error| node_error("critique", error))?;
+                        NodeResult::branch(state, "exit")
                     }
                     CritiqueDecision::Revise { feedback } => {
-                        next.insert(ITERATIONS_KEY.to_owned(), serde_json::json!(iterations + 1));
-                        next.insert(FEEDBACK_KEY.to_owned(), serde_json::json!(feedback));
-                        NodeResult::branch(next, "draft")
+                        state.insert(ITERATIONS_KEY.to_owned(), serde_json::json!(iterations + 1));
+                        state.insert(FEEDBACK_KEY.to_owned(), serde_json::json!(feedback));
+                        NodeResult::branch(state, "draft")
                     }
                 }
             }

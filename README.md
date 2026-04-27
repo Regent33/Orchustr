@@ -48,6 +48,51 @@ The current workspace includes:
 - Local visibility: observability is not limited to third-party telemetry backends anymore.
 - Faster starts: `orchustr init` and `orchustr lint` reduce the amount of repo knowledge needed to boot a new agent.
 
+## What Runs in Rust vs the Host Language
+
+Each binding is a mix of native Rust code (loaded as a `.dll`/`.so`/`.dylib`
+through the `or-bridge` FFI) and pure host-language code that calls those
+Rust entry points. Knowing which surface is which keeps debugging and
+performance expectations grounded.
+
+| Surface | Python | TypeScript | Dart |
+|---------|--------|------------|------|
+| **Prompt rendering** (`render_prompt_json`) | Rust via FFI | Rust via FFI | Rust via FFI |
+| **State normalization** (`normalize_state_json`) | Rust via FFI | Rust via FFI | Rust via FFI |
+| **Workspace catalog** (`workspace_catalog_json`) | Rust via FFI | Rust via FFI | Rust via FFI |
+| **HTTP-backed tool crates** (search/web/vector/loaders/exec/file/comms/productivity) — `invoke_crate_json` | Rust via FFI | Rust via FFI | Rust via FFI |
+| `GraphBuilder` / `ExecutionGraph` (graph execution loop) | Pure Python (`orchustr.GraphBuilder` in [graph.py](bindings/python/orchustr/graph.py)) | Pure JS (in [src/index.js](bindings/typescript/src/index.js)) | Pure Dart |
+| `ConduitProvider` (LLM provider clients: OpenAI / Anthropic / OpenAI-compat) | Pure Python | Pure JS (with real SSE streaming for OpenAI Responses, Anthropic Messages, and OpenAI Chat Completions) | Pure Dart |
+| `ForgeRegistry` (tool registration) | Pure Python (with the pyo3 `PyForgeRegistry` available for callback-style use) | Pure JS | Pure Dart |
+| `SentinelOrchestrator`, `ColonyOrchestrator`, `PipelineBuilder`, `RelayBuilder`, `CompassRouterBuilder`, `RecallStore`, `CheckpointGate` | Pure Python ([workflows.py](bindings/python/orchustr/workflows.py)) | Pure JS | Pure Dart |
+| Bridge metadata / pyo3 stubs (`PyDynState`, `PyNodeResult`, `PyGraphBuilder`, etc.) | Native Rust types accessible via pyo3 — registered handlers are stored and invocable | n/a (no native types exported beyond the JSON bridge) | n/a |
+
+The graph executor and orchestrator loops live in the host language because
+node handlers are themselves host-language callables — running them through
+Rust would require a per-language async-callback bridge that doesn't yet
+exist. Use `or-bridge::invoke_crate_json` (and its language wrappers) when
+you need the native HTTP-backed tool implementations.
+
+## Building From Source
+
+`cargo build --workspace` builds every crate except `or-bridge`, which
+gates each FFI surface behind a feature flag and refuses to compile
+without one. Pick the binding you actually need:
+
+```bash
+# Default (Dart FFI)
+cargo build -p or-bridge
+
+# Python (pyo3 extension module)
+cargo build -p or-bridge --features python
+
+# Node (napi-rs)
+cargo build -p or-bridge --features node
+```
+
+Workspace-level builds skip `or-bridge` automatically; you only have to
+opt in when you are working on the bindings themselves.
+
 ## Quick Links
 
 - [Full Documentation](docs/README.md)

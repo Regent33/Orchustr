@@ -8,6 +8,11 @@ The repository implements the following concrete safeguards:
 - **Prompt sanitization** in `or-beacon`: Null bytes and control characters are stripped from template variables before rendering, preventing injection through template values.
 - **Schema validation** in `or-forge` and `or-mcp`: Tool input schemas are validated against JSON Schema definitions before invocation.
 - **Input size guards**: `or-sentinel` enforces a 64KB limit on `parse_decision` input; `or-forge` enforces a 1MB limit on tool invocation arguments. Both prevent OOM and denial-of-service from oversized payloads.
+- **Bridge FFI input checks**: `or-bridge` rejects null pointers, non-UTF-8 bytes, and interior NUL bytes at every C-ABI entry, surfacing a typed error instead of producing an ambiguous null return.
+
+### Code Execution
+- **Unsandboxed shell is opt-in**: `or-tools-exec::ShellExecutor` refuses to run unless the caller sets `ORCHUSTR_ALLOW_UNSANDBOXED_SHELL=1`. Without it the executor returns `ExecError::ExecutorNotFound` with guidance toward sandboxed alternatives. This guards against an LLM-influenced prompt reaching `sh -c` / `cmd /C` in production by accident. Production deployments should route to `E2BExecutor`, `DaytonaExecutor`, or `BearlyExecutor`.
+- **Process reaping on timeout**: All `or-tools-exec` executors set `kill_on_drop(true)` so a fired timeout reaps the spawned child process instead of orphaning it.
 
 ### Authentication & Secrets
 - **Key redaction**: All provider conduit `Debug` implementations print `[REDACTED]` instead of raw API keys, preventing accidental logging of secrets.
@@ -33,8 +38,8 @@ The repository implements the following concrete safeguards:
 | LLM04 | Model Denial of Service | Token budgets and argument size guards prevent oversized requests. |
 | LLM05 | Supply Chain Vulnerabilities | `cargo-deny` enforces license and vulnerability audits. |
 | LLM06 | Sensitive Information Disclosure | API keys redacted in Debug; environment-only key storage. |
-| LLM07 | Insecure Plugin Design | Tool schemas validated before invocation; 1MB argument guard. |
-| LLM08 | Excessive Agency | `or-sentinel` enforces step limits in the plan/execute loop. |
+| LLM07 | Insecure Plugin Design | Tool schemas validated before invocation; 1MB argument guard; unsandboxed shell executor disabled by default behind an explicit env opt-in. |
+| LLM08 | Excessive Agency | `or-sentinel` enforces step limits in the plan/execute loop. Retries classify errors so terminal failures (auth, invalid args) do not burn the attempt budget. |
 | LLM09 | Overreliance | Out of scope (application concern, not framework). |
 | LLM10 | Model Theft | Bring-your-own-token design; framework never stores model weights. |
 

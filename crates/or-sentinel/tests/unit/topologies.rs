@@ -3,6 +3,8 @@ use or_conduit::{
 };
 use or_core::{DynState, RetryPolicy, TokenBudget, TokenUsage};
 use or_forge::{ForgeRegistry, ForgeTool};
+use or_loom::{GraphBuilder, NodeResult};
+use or_sentinel::LoopTopology;
 use or_sentinel::domain::contracts::SentinelAgentTrait;
 use or_sentinel::{
     ReActTopology, ReflectionTopology, SentinelAgent, SentinelAgentBuilder, SentinelConfig,
@@ -61,7 +63,7 @@ async fn topology_react_matches_legacy() {
     let provider = SequenceProvider::new(&[]);
     let legacy = SentinelAgent::new(provider.clone(), registry()).unwrap();
     let builder = SentinelAgentBuilder::new()
-        .topology(ReActTopology::default())
+        .topology(ReActTopology)
         .conduit(provider)
         .tool_registry(registry())
         .build()
@@ -94,6 +96,44 @@ async fn topology_reflection_max_iterations() {
     }
 }
 
+/// Regression test for audit finding #19: a user-defined topology that
+/// attaches its own handlers in `build()` must build successfully (the
+/// previous `Any` downcast silently produced an unbound graph).
+#[derive(Default)]
+struct CustomTopology;
+
+impl LoopTopology for CustomTopology {
+    fn build(&self) -> GraphBuilder<DynState> {
+        GraphBuilder::new()
+            .add_node("only", |state: DynState| async move {
+                NodeResult::advance(state)
+            })
+            .set_entry("only")
+            .set_exit("only")
+    }
+
+    fn name(&self) -> &'static str {
+        "custom"
+    }
+    // No `bind` override — the trait default (no-op) must be sufficient
+    // because `build` already attached a handler.
+}
+
+#[tokio::test]
+async fn custom_topology_with_self_attached_handlers_builds() {
+    let provider = SequenceProvider::new(&[]);
+    let agent = SentinelAgentBuilder::new()
+        .topology(CustomTopology)
+        .conduit(provider)
+        .tool_registry(registry())
+        .build()
+        .expect("custom topology must build through the default LoopTopology::bind");
+
+    let inspection = agent.graph_inspection();
+    assert_eq!(inspection.entry, "only");
+    assert_eq!(inspection.exit, "only");
+}
+
 #[tokio::test]
 async fn topology_plan_execute_step_ordering() {
     let provider = SequenceProvider::new(&[
@@ -103,7 +143,7 @@ async fn topology_plan_execute_step_ordering() {
         "{\"type\":\"final_answer\",\"answer\":\"note three\"}",
     ]);
     let agent = SentinelAgentBuilder::new()
-        .topology(or_sentinel::PlanExecuteTopology::default())
+        .topology(or_sentinel::PlanExecuteTopology)
         .conduit(provider)
         .tool_registry(registry())
         .build()

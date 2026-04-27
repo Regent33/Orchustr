@@ -8,9 +8,15 @@ pub(crate) async fn decode<T: serde::de::DeserializeOwned>(
     let status = resp.status();
     if !status.is_success() {
         let body = resp.text().await.unwrap_or_default();
-        return Err(ExecError::Upstream { provider: provider.into(), status: status.as_u16(), body });
+        return Err(ExecError::Upstream {
+            provider: provider.into(),
+            status: status.as_u16(),
+            body,
+        });
     }
-    resp.json::<T>().await.map_err(|e| ExecError::Transport(e.to_string()))
+    resp.json::<T>()
+        .await
+        .map_err(|e| ExecError::Transport(e.to_string()))
 }
 
 pub(crate) fn transport(err: reqwest::Error) -> ExecError {

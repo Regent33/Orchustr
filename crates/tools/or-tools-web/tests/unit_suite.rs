@@ -44,7 +44,10 @@ impl Scraper for StubScraper {
 #[tokio::test]
 async fn orchestrator_rejects_invalid_url() {
     let orch = WebOrchestrator::new(Arc::new(StubBrowser));
-    let err = orch.fetch(FetchRequest::get("not-a-url")).await.unwrap_err();
+    let err = orch
+        .fetch(FetchRequest::get("not-a-url"))
+        .await
+        .unwrap_err();
     assert!(matches!(err, WebError::InvalidUrl(_)));
 }
 

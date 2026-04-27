@@ -232,8 +232,15 @@ impl<T: OrchState> ExecutionGraph<T> {
                     state: patch,
                 } => {
                     state = T::merge(&state, patch);
-                    let _ = state;
-                    return Err(LoomError::Paused { checkpoint_id });
+                    // Serialize the merged state so the error variant can
+                    // carry it across the boundary regardless of `T`. If
+                    // serialization fails we still surface the pause but
+                    // with a null state — better than silently dropping.
+                    let snapshot = serde_json::to_value(&state).unwrap_or(serde_json::Value::Null);
+                    return Err(LoomError::Paused {
+                        checkpoint_id,
+                        state: snapshot,
+                    });
                 }
             }
         }

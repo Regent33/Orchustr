@@ -13,16 +13,17 @@ serde = ["dep:or-schema"]
 yaml = ["serde", "or-schema/yaml"]
 
 [dependencies]
-or-core = { path = "../or-core", version = "0.1.2" }
-or-schema = { path = "../or-schema", version = "0.1.2", optional = true }
+or-core = { path = "../or-core", version = "0.1.3" }
+or-schema = { path = "../or-schema", version = "0.1.3", optional = true }
 serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
 futures.workspace = true
-or-checkpoint = { path = "../or-checkpoint", version = "0.1.2" }
-or-core = { path = "../or-core", version = "0.1.2" }
+or-checkpoint = { path = "../or-checkpoint", version = "0.1.3" }
+or-core = { path = "../or-core", version = "0.1.3" }
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

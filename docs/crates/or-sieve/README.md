@@ -1,6 +1,6 @@
 # or-sieve
 
-**Status**: 🟢 Complete | **Version**: `0.1.2` | **Deps**: schemars, serde, serde_json, thiserror, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.3` | **Deps**: schemars, serde, serde_json, thiserror, tracing
 
 Structured-output parsing crate built around JSON Schema validation and text parsing helpers.
 

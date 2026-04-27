@@ -1,10 +1,12 @@
 use super::shared::{decode, expect_ok, load_credential, transport};
 use crate::domain::contracts::VectorStoreClient;
-use crate::domain::entities::{CollectionConfig, DeleteRequest, QueryFilter, UpsertBatch, VectorMatch};
+use crate::domain::entities::{
+    CollectionConfig, DeleteRequest, QueryFilter, UpsertBatch, VectorMatch,
+};
 use crate::domain::errors::VectorError;
 use async_trait::async_trait;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const PROVIDER: &str = "pinecone";
 const API_KEY_ENV: &str = "PINECONE_API_KEY";
@@ -32,7 +34,11 @@ impl PineconeClient {
         host: impl Into<String>,
         api_key: impl Into<String>,
     ) -> Self {
-        Self { client, host: host.into(), api_key: api_key.into() }
+        Self {
+            client,
+            host: host.into(),
+            api_key: api_key.into(),
+        }
     }
 }
 
@@ -52,7 +58,9 @@ struct PineconeMatch {
 
 #[async_trait]
 impl VectorStoreClient for PineconeClient {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn ensure_collection(&self, _cfg: CollectionConfig) -> Result<(), VectorError> {
         // Pinecone indexes are created via the control-plane API, not inline.
@@ -60,27 +68,39 @@ impl VectorStoreClient for PineconeClient {
     }
 
     async fn upsert(&self, batch: UpsertBatch) -> Result<(), VectorError> {
-        let vectors: Vec<Value> = batch.items.into_iter().map(|item| json!({
-            "id": item.id,
-            "values": item.vector,
-            "metadata": item.metadata,
-        })).collect();
+        let vectors: Vec<Value> = batch
+            .items
+            .into_iter()
+            .map(|item| {
+                json!({
+                    "id": item.id,
+                    "values": item.vector,
+                    "metadata": item.metadata,
+                })
+            })
+            .collect();
         let body = json!({ "vectors": vectors });
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/vectors/upsert", self.host))
             .header("Api-Key", &self.api_key)
             .json(&body)
-            .send().await.map_err(|e| transport(PROVIDER, e))?;
+            .send()
+            .await
+            .map_err(|e| transport(PROVIDER, e))?;
         expect_ok(PROVIDER, resp).await
     }
 
     async fn delete(&self, req: DeleteRequest) -> Result<(), VectorError> {
         let body = json!({ "ids": req.ids });
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/vectors/delete", self.host))
             .header("Api-Key", &self.api_key)
             .json(&body)
-            .send().await.map_err(|e| transport(PROVIDER, e))?;
+            .send()
+            .await
+            .map_err(|e| transport(PROVIDER, e))?;
         expect_ok(PROVIDER, resp).await
     }
 
@@ -91,16 +111,23 @@ impl VectorStoreClient for PineconeClient {
             "includeMetadata": true,
             "filter": filter.filter,
         });
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/query", self.host))
             .header("Api-Key", &self.api_key)
             .json(&body)
-            .send().await.map_err(|e| transport(PROVIDER, e))?;
+            .send()
+            .await
+            .map_err(|e| transport(PROVIDER, e))?;
         let parsed: QueryResponse = decode(PROVIDER, resp).await?;
-        Ok(parsed.matches.into_iter().map(|m| VectorMatch {
-            id: m.id,
-            score: m.score,
-            metadata: m.metadata,
-        }).collect())
+        Ok(parsed
+            .matches
+            .into_iter()
+            .map(|m| VectorMatch {
+                id: m.id,
+                score: m.score,
+                metadata: m.metadata,
+            })
+            .collect())
     }
 }

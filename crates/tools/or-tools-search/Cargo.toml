@@ -19,7 +19,7 @@ bing = []
 all = ["tavily", "exa", "brave", "serper", "searxng", "youcom", "bing"]
 
 [dependencies]
-or-tools-core = { path = "../or-tools-core", version = "0.1.2" }
+or-tools-core = { path = "../or-tools-core", version = "0.1.3" }
 async-trait.workspace = true
 reqwest.workspace = true
 serde.workspace = true

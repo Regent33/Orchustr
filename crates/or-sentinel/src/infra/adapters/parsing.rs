@@ -1,4 +1,4 @@
-use crate::domain::entities::{PlanStep, SentinelConfig};
+use crate::domain::entities::PlanStep;
 use crate::domain::errors::SentinelError;
 use or_conduit::{CompletionMessage, ContentPart};
 use serde::{Deserialize, Serialize};
@@ -75,8 +75,4 @@ pub(crate) fn parse_plan(raw: &str) -> Result<Vec<PlanStep>, SentinelError> {
             })
         })
         .collect())
-}
-
-pub(crate) fn config_to_value(config: &SentinelConfig) -> Result<serde_json::Value, SentinelError> {
-    serde_json::to_value(config).map_err(|error| SentinelError::Serialization(error.to_string()))
 }

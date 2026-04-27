@@ -18,8 +18,8 @@ pgvector = ["dep:sqlx"]
 all = ["pinecone", "weaviate", "qdrant", "chroma", "milvus", "pgvector"]
 
 [dependencies]
-or-core = { path = "../../or-core", version = "0.1.2" }
-or-tools-core = { path = "../or-tools-core", version = "0.1.2" }
+or-core = { path = "../../or-core", version = "0.1.3" }
+or-tools-core = { path = "../or-tools-core", version = "0.1.3" }
 async-trait.workspace = true
 reqwest.workspace = true
 serde.workspace = true

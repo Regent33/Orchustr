@@ -3,9 +3,9 @@
 #[cfg(feature = "dashboard")]
 pub mod application;
 #[cfg(feature = "dashboard")]
-pub mod domain;
-#[cfg(feature = "dashboard")]
 pub mod collector;
+#[cfg(feature = "dashboard")]
+pub mod domain;
 #[cfg(feature = "dashboard")]
 pub mod infra;
 #[cfg(feature = "dashboard")]

@@ -27,8 +27,16 @@ impl FinancialDatasetsSource {
     }
 
     #[must_use]
-    pub fn with_config(client: reqwest::Client, endpoint: impl Into<String>, api_key: impl Into<String>) -> Self {
-        Self { client, endpoint: endpoint.into(), api_key: api_key.into() }
+    pub fn with_config(
+        client: reqwest::Client,
+        endpoint: impl Into<String>,
+        api_key: impl Into<String>,
+    ) -> Self {
+        Self {
+            client,
+            endpoint: endpoint.into(),
+            api_key: api_key.into(),
+        }
     }
 }
 
@@ -53,25 +61,38 @@ struct SnapshotData {
 
 #[async_trait]
 impl DataSource for FinancialDatasetsSource {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
     async fn fetch(&self, query: Value) -> Result<Value, FileError> {
         let symbol = query.get("symbol").and_then(|v| v.as_str()).unwrap_or("");
         if symbol.is_empty() {
             return Err(FileError::Json("missing `symbol`".into()));
         }
-        let mut url = Url::parse(&self.endpoint)
-            .map_err(|e| FileError::Transport(e.to_string()))?;
+        let mut url =
+            Url::parse(&self.endpoint).map_err(|e| FileError::Transport(e.to_string()))?;
         url.query_pairs_mut().append_pair("ticker", symbol);
-        let resp = self.client.get(url)
+        let resp = self
+            .client
+            .get(url)
             .header("X-API-KEY", &self.api_key)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            return Err(FileError::Upstream { provider: PROVIDER.into(), status: status.as_u16(), body });
+            return Err(FileError::Upstream {
+                provider: PROVIDER.into(),
+                status: status.as_u16(),
+                body,
+            });
         }
-        let parsed: SnapshotResponse = resp.json().await.map_err(|e| FileError::Transport(e.to_string()))?;
+        let parsed: SnapshotResponse = resp
+            .json()
+            .await
+            .map_err(|e| FileError::Transport(e.to_string()))?;
         let record = FinancialRecord {
             symbol: symbol.to_uppercase(),
             name: parsed.snapshot.name,

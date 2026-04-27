@@ -4,6 +4,52 @@ All notable changes to Orchustr should be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.3]
+
+### Added
+
+- **Audit fixes batch** ([docs/AUDIT_2026-04-26.md](AUDIT_2026-04-26.md)): 25+ findings landed across the workspace, including:
+  - **`LoomError::Paused` carries merged state** so callers can resume without round-tripping through a `PersistenceBackend`. `LoomError` derives `PartialEq` only (no `Eq`) because the `state` field holds `serde_json::Value`.
+  - **Typed step context for sentinel** (`SentinelStepContext` in a `tokio::task_local!`) replacing the five `__sentinel_*` keys that were previously stuffed into `DynState`. The user-facing `DynState` now stays clean by construction.
+  - **`LoopTopology::bind`** is a real trait method with a no-op default; the previous `Any`-downcast dispatch is gone. Custom topologies that attach handlers in `build()` work unchanged; built-in topologies override `bind` to wire `provider` and `registry`.
+  - **`SentinelError::Loom` and `::Core`** wrap the underlying typed error via `#[from]`. `CliError::Lens` wraps `or_lens::LensError` the same way. Pattern-match on the inner error to recover full context.
+  - **Bounded `or-lens::SpanCollector`** with per-trace and total-trace caps (defaults 10 000 / 1 024) plus FIFO eviction. `SpanCollector::with_capacity` for tuning.
+  - **Bounded top-k in `InMemoryVectorStore::query`** via `BinaryHeap<Reverse<_>>` — O(N log limit) instead of O(N log N), with deterministic tie-breaks and `limit == 0` short-circuit.
+  - **Retry classification in sentinel** — only `ForgeError::Invocation` is retried; terminal forge errors short-circuit immediately. Each attempt logs via `tracing::debug!`.
+- **Parallel colony fan-out** (`or-colony`): new `ColonyOrchestrator::coordinate_parallel` runs every member concurrently with `futures::try_join_all`, merges replies in deterministic roster order. The existing `coordinate` keeps the cascading hand-off semantics.
+- **Real SSE streaming in TypeScript conduits**: `OpenAiConduit`, `AnthropicConduit`, and `OpenAiCompatConduit` (covering OpenRouter, Groq, Together, Fireworks, DeepSeek, Mistral, xAI, NVIDIA, Ollama) now drive `stream: true` requests with a generic SSE parser. Falls back to non-streaming when `response.body` is absent.
+- **`or-bridge` decomposed** into per-crate facade modules under `crates/or-bridge/src/infra/facades/` (one short file per tool surface, plus shared helpers/catalog). Adding a new tool surface now touches one short file instead of an 1100-line monolith.
+- **Workspace README** ships a "What Runs in Rust vs the Host Language" table that names exactly which classes are FFI-backed vs language-native per binding.
+
+### Changed
+
+- **Python FFI handlers are now retained.** `PyForgeRegistry`, `PyGraphBuilder`/`PyExecutionGraph`, and `PyConduitProvider` keep the Python callables they receive. `PyForgeRegistry.invoke` and `PyConduitProvider.complete_messages` actually call them; `PyExecutionGraph.get_handler` returns the registered callable. (Previously they silently discarded the handler argument.)
+- **`orchustr run` shells out** to the language toolchain declared in `orchustr.yaml` (`cargo run` / `python` / `npm start` or `npx tsx` / `dart run`) with inherited stdio and `kill_on_drop`. Previously it was a no-op.
+- **`orchustr trace`** keeps the dashboard alive until Ctrl-C and prints the bound port. Previously it spun up the dashboard then immediately shut it down.
+- **`orchustr` CLI errors** render via `Display` (`orchustr: <message>`) instead of `Debug`-printing the struct.
+- **`SentinelAgentBuilder::build()`** dispatches through `LoopTopology::bind` instead of `Any` downcasting. User-defined topologies finally work end-to-end.
+- **`or-bridge::block_on`** branches on `RuntimeFlavor`: `block_in_place` on multi-thread runtimes, typed `BridgeError` (instead of panicking) on current-thread runtimes — covers `pyo3-asyncio` single-thread setups.
+- **`or-loom`**: removed redundant handler-local `state.clone()` calls in built-in sentinel topologies (one fewer `DynState` clone per node firing). Executor-side clone remains, tracked as accepted technical debt.
+
+### Fixed
+
+- **`ShellExecutor` security gate**: refuses to run unless `ORCHUSTR_ALLOW_UNSANDBOXED_SHELL=1`. Returns `ExecError::ExecutorNotFound` with guidance toward `E2BExecutor` / `DaytonaExecutor` / `BearlyExecutor`.
+- **`ShellExecutor` child reaping**: `kill_on_drop(true)` on the spawned `Command` so a fired timeout reaps the process instead of orphaning it.
+- **`into_raw_string` (Dart bridge)** returns `Result<*mut c_char, BridgeError>`, surfacing interior NUL bytes as a typed error rather than the previous null-on-failure that was indistinguishable from "empty output".
+- **`or-bridge` global runtime documented** as intentional — `OnceLock<Runtime>` lives for process lifetime; pyo3 / napi-rs / dart:ffi all rely on the OS for teardown at exit.
+
+### Documentation
+
+- New **"Accepted Technical Debt"** section in [docs/AUDIT_2026-04-26.md](AUDIT_2026-04-26.md) documenting why audit items #1 (orchestrator shim collapse), #11 (executor-side clone), and #23 (parallel binding executors) are deferred to `0.2.0`.
+- Updated `docs/SECURITY.md` (shell sandbox gate, OWASP LLM07/LLM08 rows), `docs/CONTRIBUTING.md` (or-bridge build steps, "adding a new tool surface" checklist), `docs/QUICKSTART.md` (per-language run matrix), `docs/ARCHITECTURE.md` (cross-cutting layer list), and `docs/reference/error-codes.md` (schema notes for `LoomError::Paused`, typed `SentinelError` chains, `CliError::Lens`, shell `ExecError::ExecutorNotFound`).
+- Per-crate READMEs refreshed for `or-cli`, `or-loom`, `or-sentinel`, `or-colony`, `or-bridge`, `or-lens`, `or-tools-exec`, and `or-core`.
+- Per-binding READMEs (Python / TypeScript / Dart) refreshed: Python's two-`GraphBuilder` clarification, TypeScript's SSE streaming examples, Dart's FFI allocation contract.
+- `cargo clippy --workspace --all-targets --all-features` is now warning-clean.
+
+## [0.1.2-historical]
+
+(originally `[Unreleased]` — content preserved verbatim below)
+
 ### Added
 
 - **Pluggable sentinel topologies** (`or-sentinel`): Added `LoopTopology`, `SentinelAgentBuilder`, and built-in `ReActTopology`, `PlanExecuteTopology`, and `ReflectionTopology` for additive loop customization without changing `SentinelAgent::new`.

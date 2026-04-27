@@ -55,9 +55,18 @@ pub fn render_rust_files(options: &InitOptions) -> Result<Vec<(PathBuf, String)>
     Ok(vec![
         (PathBuf::from("Cargo.toml"), render(RUST_CARGO, options)),
         (PathBuf::from("src/main.rs"), render(RUST_MAIN, options)),
-        (PathBuf::from("src/nodes/mod.rs"), "pub mod think;\npub mod act;\n".to_owned()),
-        (PathBuf::from("src/nodes/think.rs"), render_node(RUST_NODE, "think")),
-        (PathBuf::from("src/nodes/act.rs"), render_node(RUST_NODE, "act")),
+        (
+            PathBuf::from("src/nodes/mod.rs"),
+            "pub mod think;\npub mod act;\n".to_owned(),
+        ),
+        (
+            PathBuf::from("src/nodes/think.rs"),
+            render_node(RUST_NODE, "think"),
+        ),
+        (
+            PathBuf::from("src/nodes/act.rs"),
+            render_node(RUST_NODE, "act"),
+        ),
         (
             PathBuf::from("tests/integration_test.rs"),
             "#[test]\nfn generated_project_builds() {\n    assert!(true);\n}\n".to_owned(),
@@ -71,15 +80,22 @@ pub fn render_python_files(options: &InitOptions) -> Result<Vec<(PathBuf, String
             PathBuf::from("requirements.txt"),
             render(PYTHON_REQUIREMENTS, options),
         ),
-        (PathBuf::from("nodes/think.py"), render_node(PYTHON_NODE, "think")),
-        (PathBuf::from("nodes/act.py"), render_node(PYTHON_NODE, "act")),
-        (PathBuf::from("tests/test_agent.py"), render(PYTHON_TEST, options)),
+        (
+            PathBuf::from("nodes/think.py"),
+            render_node(PYTHON_NODE, "think"),
+        ),
+        (
+            PathBuf::from("nodes/act.py"),
+            render_node(PYTHON_NODE, "act"),
+        ),
+        (
+            PathBuf::from("tests/test_agent.py"),
+            render(PYTHON_TEST, options),
+        ),
     ])
 }
 
-pub fn render_typescript_files(
-    options: &InitOptions,
-) -> Result<Vec<(PathBuf, String)>, CliError> {
+pub fn render_typescript_files(options: &InitOptions) -> Result<Vec<(PathBuf, String)>, CliError> {
     Ok(vec![(
         PathBuf::from("src/index.ts"),
         render(TYPESCRIPT_MAIN, options),

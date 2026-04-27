@@ -17,10 +17,11 @@ The repository exposes three maintained binding surfaces: Python, TypeScript, an
 ## High-Level Layers
 
 - **Foundation**: `or-core`
-- **Execution**: `or-pipeline`, `or-relay`, `or-loom`, `or-compass`
+- **Execution**: `or-pipeline`, `or-relay`, `or-loom`, `or-compass`, `or-checkpoint`
 - **Integration**: `or-conduit`, `or-forge`, `or-mcp`, `or-sieve`, `or-recall`, `or-anchor`
-- **Agents**: `or-sentinel`, `or-colony`
-- **Cross-cutting**: `or-prism`, `or-bridge`
+- **Agents**: `or-sentinel` (single-agent ReAct / plan-execute / reflection topologies), `or-colony` (multi-agent — sequential cascade or parallel fan-out)
+- **Tools**: `or-tools-core` plus the eight HTTP-backed tool crates (`-search`, `-web`, `-vector`, `-loaders`, `-exec`, `-file`, `-comms`, `-productivity`)
+- **Cross-cutting**: `or-prism` (tracing bootstrap), `or-lens` (in-process trace dashboard), `or-bridge` (FFI gateway), `or-cli` (project scaffolding/run/lint/trace)
 
 ⚠️ Known Gaps & Limitations
 

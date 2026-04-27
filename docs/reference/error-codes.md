@@ -177,3 +177,34 @@ This page assigns stable documentation codes to the public error variants used a
 
 - These codes are stable documentation identifiers intended for runbooks, support notes, and changelog references.
 - The runtime still returns the existing Rust enum variants and human-readable messages; no API surface was renamed to introduce these codes.
+
+## Schema Notes
+
+### `LoomError::Paused`
+
+Carries the merged graph state at the point of pause as a
+`serde_json::Value` field named `state` alongside the original
+`checkpoint_id`. Callers can resume directly from this field without
+round-tripping through a `PersistenceBackend`. (Earlier versions of
+this variant only carried `checkpoint_id`, dropping any state changes
+written by the paused node.)
+
+### `SentinelError::Loom` / `SentinelError::Core`
+
+These variants now wrap the underlying typed error (`or_loom::LoomError`
+and `or_core::CoreError` respectively) instead of stringifying it. Use
+`#[from]` propagation or pattern-match the inner error to recover full
+context; `to_string()` still produces the same human-readable message
+as before.
+
+### `CliError::Lens`
+
+Wraps `or_lens::LensError` directly via `#[from]`, so callers can
+distinguish bind failures from serve failures by matching the inner
+variant.
+
+### `ExecError::ExecutorNotFound { executor: "shell" }`
+
+Returned by `or-tools-exec::ShellExecutor::execute` when
+`ORCHUSTR_ALLOW_UNSANDBOXED_SHELL` is not set. The `reason` field
+includes guidance toward sandboxed alternatives.

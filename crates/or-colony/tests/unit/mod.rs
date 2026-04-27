@@ -70,6 +70,62 @@ async fn coordinate_rejects_empty_roster() {
     assert_eq!(result, Err(ColonyError::EmptyColony));
 }
 
+#[tokio::test]
+async fn coordinate_parallel_runs_each_member_against_seed_only() {
+    // Regression for the audit's "multi-agent" overpromise: in
+    // `coordinate_parallel` each member receives only the seed message,
+    // so neither member sees the other's reply in its inbox. The
+    // EchoAgent suffixes the last inbox message — both should echo the
+    // seed, not each other.
+    let orchestrator = ColonyOrchestrator::new()
+        .add_member("planner", "planner", EchoAgent("plan"))
+        .unwrap()
+        .add_member("reviewer", "reviewer", EchoAgent("review"))
+        .unwrap();
+    let result = orchestrator
+        .coordinate_parallel(task_state())
+        .await
+        .unwrap();
+
+    let planner_reply = result
+        .transcript
+        .iter()
+        .find(|m| m.from == "planner")
+        .expect("planner reply must be present");
+    let reviewer_reply = result
+        .transcript
+        .iter()
+        .find(|m| m.from == "reviewer")
+        .expect("reviewer reply must be present");
+
+    // Both replies should reference the seed task content, not the
+    // other member's output.
+    assert!(
+        planner_reply.content.contains("Coordinate a result"),
+        "planner saw {planner_reply:?}"
+    );
+    assert!(
+        reviewer_reply.content.contains("Coordinate a result"),
+        "reviewer saw {reviewer_reply:?}"
+    );
+    // Neither reply should contain the other's distinguishing prefix.
+    assert!(!planner_reply.content.contains("review:"));
+    assert!(!reviewer_reply.content.contains("plan:"));
+
+    // Roster ordering is preserved in the transcript regardless of
+    // which task completed first.
+    let from_order: Vec<_> = result.transcript.iter().map(|m| m.from.as_str()).collect();
+    assert_eq!(from_order, vec!["user", "planner", "reviewer"]);
+}
+
+#[tokio::test]
+async fn coordinate_parallel_rejects_empty_roster() {
+    let result = ColonyOrchestrator::new()
+        .coordinate_parallel(task_state())
+        .await;
+    assert_eq!(result, Err(ColonyError::EmptyColony));
+}
+
 fn task_state() -> DynState {
     let mut state = DynState::new();
     state.insert("task".to_owned(), serde_json::json!("Coordinate a result"));

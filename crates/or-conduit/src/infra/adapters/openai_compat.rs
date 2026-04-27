@@ -117,7 +117,8 @@ fn openai_chat_content(parts: &[ContentPart]) -> Result<Value, ConduitError> {
     if let [ContentPart::Text { text }] = parts {
         return Ok(Value::String(text.clone()));
     }
-    parts.iter()
+    parts
+        .iter()
         .map(openai_chat_part)
         .collect::<Result<Vec<_>, _>>()
         .map(Value::Array)

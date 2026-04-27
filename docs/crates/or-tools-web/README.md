@@ -1,6 +1,6 @@
 # or-tools-web
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `requests` | **Feature flags**: `requests`, `playwright`, `brightdata`, `hyperbrowser`, `agentql`, `oxylabs`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `requests` | **Feature flags**: `requests`, `playwright`, `brightdata`, `hyperbrowser`, `agentql`, `oxylabs`, `all`
 
 Web-browsing and scraping tools for Orchustr. The crate defines normalized fetch and scrape types, validates URL safety, exposes browser and scraper adapters through `Tool`, and ships multiple feature-gated backends ranging from raw HTTP fetches to managed browser services.
 

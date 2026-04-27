@@ -29,7 +29,8 @@ struct FieldCapture {
 
 impl Visit for FieldCapture {
     fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-        self.values.push((field.name().to_owned(), json!(format!("{value:?}"))));
+        self.values
+            .push((field.name().to_owned(), json!(format!("{value:?}"))));
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
@@ -76,7 +77,10 @@ where
         let mut capture = FieldCapture::default();
         attrs.record(&mut capture);
 
-        let parent_id = attrs.parent().cloned().or_else(|| ctx.current_span().id().cloned());
+        let parent_id = attrs
+            .parent()
+            .cloned()
+            .or_else(|| ctx.current_span().id().cloned());
         let parent_span_id = parent_id.as_ref().map(span_key);
         let trace_id = parent_id
             .as_ref()

@@ -10,7 +10,10 @@ pub enum BridgeError {
     #[error("unsupported crate binding: {0}")]
     UnsupportedCrate(String),
     #[error("unsupported operation `{operation}` for crate `{crate_name}`")]
-    UnsupportedOperation { crate_name: String, operation: String },
+    UnsupportedOperation {
+        crate_name: String,
+        operation: String,
+    },
     #[error("bridge invocation failed for `{crate_name}` / `{operation}`: {reason}")]
     Invocation {
         crate_name: String,

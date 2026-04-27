@@ -8,7 +8,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-or-mcp = { path = "../or-mcp", version = "0.1.2" }
+or-mcp = { path = "../or-mcp", version = "0.1.3" }
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true

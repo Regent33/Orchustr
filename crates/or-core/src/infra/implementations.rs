@@ -2,8 +2,8 @@ use crate::domain::contracts::{PersistenceBackend, VectorStore};
 use crate::domain::entities::VectorRecord;
 use crate::domain::errors::CoreError;
 use serde_json::Value;
-use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::cmp::{Ordering, Reverse};
+use std::collections::{BinaryHeap, HashMap};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -56,22 +56,70 @@ impl VectorStore for InMemoryVectorStore {
 
     async fn query(&self, vector: Vec<f32>, limit: usize) -> Result<Vec<VectorRecord>, CoreError> {
         let store = self.store.read().await;
-        let mut records = store
-            .iter()
-            .map(|(id, (candidate, metadata))| VectorRecord {
-                id: id.clone(),
-                score: cosine_similarity(&vector, candidate),
-                metadata: metadata.clone(),
+        if limit == 0 {
+            return Ok(Vec::new());
+        }
+        // Maintain a min-heap of size `limit` so we never materialize the
+        // full sorted record list. For N candidates and a top-k of `limit`,
+        // this is O(N log limit) vs the previous O(N log N), and only
+        // clones the metadata of records that make it into the heap.
+        let mut heap: BinaryHeap<Reverse<HeapEntry<'_>>> = BinaryHeap::with_capacity(limit + 1);
+        for (id, (candidate, metadata)) in store.iter() {
+            let score = cosine_similarity(&vector, candidate);
+            heap.push(Reverse(HeapEntry {
+                id,
+                metadata,
+                score,
+            }));
+            if heap.len() > limit {
+                heap.pop();
+            }
+        }
+        // `into_sorted_vec` on `Reverse<_>` sorts ascending by `Reverse`,
+        // which is descending by the underlying `HeapEntry::cmp` — i.e.
+        // highest-score records first. Exactly the order we want.
+        let records = heap
+            .into_sorted_vec()
+            .into_iter()
+            .map(|Reverse(entry)| VectorRecord {
+                id: entry.id.clone(),
+                score: entry.score,
+                metadata: entry.metadata.clone(),
             })
             .collect::<Vec<_>>();
-        records.sort_by(|left, right| {
-            right
-                .score
-                .partial_cmp(&left.score)
-                .unwrap_or(Ordering::Equal)
-        });
-        records.truncate(limit);
         Ok(records)
+    }
+}
+
+#[derive(Debug)]
+struct HeapEntry<'a> {
+    id: &'a String,
+    metadata: &'a Value,
+    score: f32,
+}
+
+impl PartialEq for HeapEntry<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.score == other.score && self.id == other.id
+    }
+}
+
+impl Eq for HeapEntry<'_> {}
+
+impl PartialOrd for HeapEntry<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for HeapEntry<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // NaN scores sort as equal-and-low so they don't poison the heap.
+        self.score
+            .partial_cmp(&other.score)
+            .unwrap_or(Ordering::Equal)
+            // Tie-break on id so the result is deterministic across runs.
+            .then_with(|| self.id.cmp(other.id))
     }
 }
 

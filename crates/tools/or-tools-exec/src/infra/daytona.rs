@@ -36,9 +36,13 @@ struct DaytonaRunResult {
 
 #[async_trait]
 impl CodeExecutor for DaytonaExecutor {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
-    fn supports(&self, _lang: Language) -> bool { true }
+    fn supports(&self, _lang: Language) -> bool {
+        true
+    }
 
     async fn execute(&self, req: ExecRequest) -> Result<ExecResult, ExecError> {
         let body = json!({
@@ -47,10 +51,14 @@ impl CodeExecutor for DaytonaExecutor {
             "timeout": req.timeout_ms / 1000,
         });
         let url = format!("{}/workspace/exec", self.server_url.trim_end_matches('/'));
-        let resp = self.client.post(&url)
+        let resp = self
+            .client
+            .post(&url)
             .bearer_auth(&self.api_key)
             .json(&body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let parsed: DaytonaRunResult = decode(PROVIDER, resp).await?;
         Ok(ExecResult {
             stdout: parsed.output,

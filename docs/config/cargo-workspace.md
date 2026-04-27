@@ -6,7 +6,7 @@
 - Edition: `2024`
 - Rust version: `1.87.0`
 - License: `MIT OR Apache-2.0`
-- Workspace version: `0.1.2`
+- Workspace version: `0.1.3`
 
 ## What It Defines
 

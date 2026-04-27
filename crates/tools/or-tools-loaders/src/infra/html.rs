@@ -8,7 +8,9 @@ pub struct HtmlLoader;
 
 #[async_trait]
 impl DocumentLoader for HtmlLoader {
-    fn name(&self) -> &'static str { "html" }
+    fn name(&self) -> &'static str {
+        "html"
+    }
 
     async fn load(&self, req: LoaderRequest) -> Result<Vec<Document>, LoaderError> {
         let raw = read_source(&req).await?;

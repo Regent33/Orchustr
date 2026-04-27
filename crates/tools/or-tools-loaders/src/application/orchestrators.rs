@@ -14,7 +14,9 @@ pub struct LoaderOrchestrator {
 impl LoaderOrchestrator {
     #[must_use]
     pub fn new() -> Self {
-        Self { loaders: HashMap::new() }
+        Self {
+            loaders: HashMap::new(),
+        }
     }
 
     pub fn register(&mut self, loader: Arc<dyn DocumentLoader>) {
@@ -24,9 +26,10 @@ impl LoaderOrchestrator {
     pub async fn load(&self, req: LoaderRequest) -> Result<Vec<Document>, LoaderError> {
         let kind = resolve_kind(&req);
         let name = kind_to_loader_name(kind);
-        let loader = self.loaders.get(name).ok_or_else(|| {
-            LoaderError::UnsupportedFormat(format!("{kind:?}"))
-        })?;
+        let loader = self
+            .loaders
+            .get(name)
+            .ok_or_else(|| LoaderError::UnsupportedFormat(format!("{kind:?}")))?;
         let span = tracing::info_span!(
             "tools.loader.load",
             otel.name = "tools.loader.load",
@@ -41,11 +44,15 @@ impl LoaderOrchestrator {
 }
 
 impl Default for LoaderOrchestrator {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 fn resolve_kind(req: &LoaderRequest) -> DocumentKind {
-    if let Some(hint) = req.kind_hint { return hint; }
+    if let Some(hint) = req.kind_hint {
+        return hint;
+    }
     if let LoaderSource::Path { path } = &req.source {
         let ext = path.rsplit('.').next().unwrap_or("");
         return DocumentKind::from_extension(ext);
@@ -79,8 +86,11 @@ impl LoaderTool {
 #[async_trait]
 impl Tool for LoaderTool {
     fn meta(&self) -> ToolMeta {
-        ToolMeta::new("loader", "Document loader — text, markdown, HTML, JSON, CSV, PDF")
-            .with_capability(ToolCapability::Filesystem)
+        ToolMeta::new(
+            "loader",
+            "Document loader — text, markdown, HTML, JSON, CSV, PDF",
+        )
+        .with_capability(ToolCapability::Filesystem)
     }
 
     async fn invoke(&self, input: ToolInput) -> Result<ToolOutput, ToolError> {

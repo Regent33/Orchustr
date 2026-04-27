@@ -1,6 +1,6 @@
 # or-schema
 
-**Status**: Complete | **Version**: `0.1.2` | **Deps**: serde, serde_json, serde_yaml(feature=`yaml`)
+**Status**: Complete | **Version**: `0.1.3` | **Deps**: serde, serde_json, serde_yaml(feature=`yaml`)
 
 `or-schema` provides serializable graph descriptors for Orchustr runtimes. It defines `GraphSpec`, `NodeSpec`, and `EdgeSpec` plus JSON/YAML loader helpers that keep descriptor parsing separate from runtime execution.
 

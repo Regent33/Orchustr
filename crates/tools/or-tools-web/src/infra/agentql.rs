@@ -72,7 +72,10 @@ impl Scraper for AgentQlScraper {
                 body,
             });
         }
-        let parsed: AgentQlResponse = response.json().await.map_err(|e| WebError::HtmlParse(e.to_string()))?;
+        let parsed: AgentQlResponse = response
+            .json()
+            .await
+            .map_err(|e| WebError::HtmlParse(e.to_string()))?;
         Ok(ScrapedPage {
             url: url.to_string(),
             title: parsed.title,

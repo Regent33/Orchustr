@@ -27,8 +27,16 @@ impl E2BExecutor {
     }
 
     #[must_use]
-    pub fn with_config(client: reqwest::Client, endpoint: impl Into<String>, api_key: impl Into<String>) -> Self {
-        Self { client, endpoint: endpoint.into(), api_key: api_key.into() }
+    pub fn with_config(
+        client: reqwest::Client,
+        endpoint: impl Into<String>,
+        api_key: impl Into<String>,
+    ) -> Self {
+        Self {
+            client,
+            endpoint: endpoint.into(),
+            api_key: api_key.into(),
+        }
     }
 }
 
@@ -43,9 +51,13 @@ struct E2BResponse {
 
 #[async_trait]
 impl CodeExecutor for E2BExecutor {
-    fn name(&self) -> &'static str { PROVIDER }
+    fn name(&self) -> &'static str {
+        PROVIDER
+    }
 
-    fn supports(&self, _lang: Language) -> bool { true }
+    fn supports(&self, _lang: Language) -> bool {
+        true
+    }
 
     async fn execute(&self, req: ExecRequest) -> Result<ExecResult, ExecError> {
         let body = json!({
@@ -53,10 +65,14 @@ impl CodeExecutor for E2BExecutor {
             "language": req.language.as_str(),
             "timeout_ms": req.timeout_ms,
         });
-        let resp = self.client.post(&self.endpoint)
+        let resp = self
+            .client
+            .post(&self.endpoint)
             .header("X-API-Key", &self.api_key)
             .json(&body)
-            .send().await.map_err(transport)?;
+            .send()
+            .await
+            .map_err(transport)?;
         let parsed: E2BResponse = decode(PROVIDER, resp).await?;
         Ok(ExecResult {
             stdout: parsed.stdout,

@@ -29,11 +29,20 @@ fn clear_error(error_out: *mut *mut c_char) {
     }
 }
 
-fn into_raw_string(value: String) -> *mut c_char {
-    match CString::new(value) {
-        Ok(text) => text.into_raw(),
-        Err(_) => ptr::null_mut(),
-    }
+/// Converts a Rust `String` into a heap-allocated C string the caller is
+/// responsible for freeing via `orchustr_bridge_free_string`.
+///
+/// Fails (`Err`) only if `value` contains an interior NUL byte. Returning
+/// a `Result` lets callers distinguish a real error from "operation
+/// succeeded with empty output", which the previous null-on-failure
+/// convention conflated.
+fn into_raw_string(value: String) -> Result<*mut c_char, BridgeError> {
+    CString::new(value).map(CString::into_raw).map_err(|error| {
+        BridgeError::InvalidInput(format!(
+            "bridge output contained an interior NUL at byte {}",
+            error.nul_position()
+        ))
+    })
 }
 
 fn from_ptr(value: *const c_char, field: &str) -> Result<String, BridgeError> {
@@ -49,9 +58,33 @@ fn from_ptr(value: *const c_char, field: &str) -> Result<String, BridgeError> {
         .map_err(|_| BridgeError::InvalidInput(format!("{field} must be valid UTF-8")))
 }
 
+/// Translates a `Result<String, BridgeError>` into the FFI ABI:
+/// returns a heap-allocated C string on success, or null with the error
+/// written into `error_out` on failure.
+fn finish(result: Result<String, BridgeError>, error_out: *mut *mut c_char) -> *mut c_char {
+    match result.and_then(into_raw_string) {
+        Ok(ptr) => {
+            clear_error(error_out);
+            ptr
+        }
+        Err(error) => {
+            write_error(error_out, error);
+            ptr::null_mut()
+        }
+    }
+}
+
+/// Returns the bridge crate version as a NUL-terminated UTF-8 C string.
+///
+/// # Allocation
+/// The returned pointer is owned by the Rust side. The caller **must**
+/// free it with [`orchustr_bridge_free_string`]; calling the system
+/// `free` would mismatch allocators and corrupt the heap. Returns null
+/// only if `CARGO_PKG_VERSION` itself contained an interior NUL byte
+/// (impossible in practice).
 #[unsafe(no_mangle)]
 pub extern "C" fn orchustr_bridge_version() -> *mut c_char {
-    into_raw_string(env!("CARGO_PKG_VERSION").to_owned())
+    into_raw_string(env!("CARGO_PKG_VERSION").to_owned()).unwrap_or(ptr::null_mut())
 }
 
 #[unsafe(no_mangle)]
@@ -70,16 +103,7 @@ pub unsafe extern "C" fn orchustr_render_prompt_json(
             from_ptr(context_json, "context_json").map(|context| (template, context))
         })
         .and_then(|(template, context)| render_prompt_json(&template, &context));
-    match result {
-        Ok(rendered) => {
-            clear_error(error_out);
-            into_raw_string(rendered)
-        }
-        Err(error) => {
-            write_error(error_out, error);
-            ptr::null_mut()
-        }
-    }
+    finish(result, error_out)
 }
 
 #[unsafe(no_mangle)]
@@ -92,16 +116,8 @@ pub unsafe extern "C" fn orchustr_normalize_state_json(
     raw_state: *const c_char,
     error_out: *mut *mut c_char,
 ) -> *mut c_char {
-    match from_ptr(raw_state, "raw_state").and_then(|state| normalize_state_json(&state)) {
-        Ok(normalized) => {
-            clear_error(error_out);
-            into_raw_string(normalized)
-        }
-        Err(error) => {
-            write_error(error_out, error);
-            ptr::null_mut()
-        }
-    }
+    let result = from_ptr(raw_state, "raw_state").and_then(|state| normalize_state_json(&state));
+    finish(result, error_out)
 }
 
 #[unsafe(no_mangle)]
@@ -112,16 +128,7 @@ pub unsafe extern "C" fn orchustr_normalize_state_json(
 pub unsafe extern "C" fn orchustr_workspace_catalog_json(
     error_out: *mut *mut c_char,
 ) -> *mut c_char {
-    match workspace_catalog_json() {
-        Ok(catalog) => {
-            clear_error(error_out);
-            into_raw_string(catalog)
-        }
-        Err(error) => {
-            write_error(error_out, error);
-            ptr::null_mut()
-        }
-    }
+    finish(workspace_catalog_json(), error_out)
 }
 
 #[unsafe(no_mangle)]
@@ -138,22 +145,15 @@ pub unsafe extern "C" fn orchustr_invoke_crate_json(
 ) -> *mut c_char {
     let result = from_ptr(crate_name, "crate_name")
         .and_then(|crate_name| {
-            from_ptr(operation, "operation")
-                .and_then(|operation| from_ptr(payload_json, "payload_json").map(|payload| (crate_name, operation, payload)))
+            from_ptr(operation, "operation").and_then(|operation| {
+                from_ptr(payload_json, "payload_json")
+                    .map(|payload| (crate_name, operation, payload))
+            })
         })
         .and_then(|(crate_name, operation, payload_json)| {
             invoke_crate_json(&crate_name, &operation, &payload_json)
         });
-    match result {
-        Ok(output) => {
-            clear_error(error_out);
-            into_raw_string(output)
-        }
-        Err(error) => {
-            write_error(error_out, error);
-            ptr::null_mut()
-        }
-    }
+    finish(result, error_out)
 }
 
 #[unsafe(no_mangle)]

@@ -90,12 +90,18 @@ async fn execute_graph_supports_pause_and_resume() {
     let paused = LoomOrchestrator
         .execute_graph(&graph, GraphState { path: Vec::new() })
         .await;
-    assert_eq!(
-        paused,
+    match paused {
         Err(LoomError::Paused {
-            checkpoint_id: "approval-1".to_owned()
-        })
-    );
+            checkpoint_id,
+            state,
+        }) => {
+            assert_eq!(checkpoint_id, "approval-1");
+            // The pause now also surfaces the merged state at the point of
+            // pause, so callers don't have to round-trip through a backend.
+            assert_eq!(state, serde_json::json!({ "path": ["draft", "approval"] }));
+        }
+        other => panic!("expected Paused, got {:?}", other),
+    }
     let checkpoint = CheckpointOrchestrator
         .resume::<GraphState, _>(&gate, "approval-1")
         .await

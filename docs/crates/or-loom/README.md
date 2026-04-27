@@ -1,6 +1,6 @@
 # or-loom
 
-**Status**: Complete | **Version**: `0.1.2` | **Deps**: serde, thiserror, tracing
+**Status**: Complete | **Version**: `0.1.3` | **Deps**: serde, thiserror, tracing
 
 `or-loom` is the directed execution graph runtime for Orchustr. It builds executable state graphs with explicit entry and exit nodes, branch-aware node results, pause semantics, and optional descriptor compilation through `NodeRegistry`.
 
@@ -19,6 +19,7 @@ graph LR
 |---|---|---|
 | Graph builder | Complete | Nodes, edges, entry, and exit nodes are validated before runtime construction. |
 | Execution runtime | Complete | Graphs execute sequentially with explicit branching, pausing, and step-limit enforcement. |
+| Pause semantics | Complete | `LoomError::Paused` carries both `checkpoint_id` and the merged state at pause as `serde_json::Value`, so callers can resume without round-tripping through a `PersistenceBackend`. |
 | Graph inspection | Complete | `ExecutionGraph::inspect()` exposes node and edge structure for parity and topology tests. |
 | Schema compilation | Complete | `NodeRegistry` compiles `or-schema::GraphSpec` values when the `serde` feature is enabled. |
 
@@ -36,3 +37,5 @@ graph LR
 
 - Schema compilation is intentionally feature-gated so the base crate can still compile without `or-schema`.
 - Execution remains sequential by design; concurrency is modeled in sibling crates such as `or-relay`.
+- `LoomError` derives `PartialEq` only (not `Eq`) because the `Paused` variant carries `serde_json::Value`. `assert_eq!` and `==` still work; using the error as a `HashMap` key does not.
+- The executor still clones `T` once per node entry to keep a copy for `T::merge` afterward. Reducing this to zero clones would require changing the handler contract from `Fn(T)` to `Fn(&T)` (audit item #11).

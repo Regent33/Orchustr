@@ -9,7 +9,9 @@ pub struct CsvLoader;
 
 #[async_trait]
 impl DocumentLoader for CsvLoader {
-    fn name(&self) -> &'static str { "csv" }
+    fn name(&self) -> &'static str {
+        "csv"
+    }
 
     async fn load(&self, req: LoaderRequest) -> Result<Vec<Document>, LoaderError> {
         let raw = read_source(&req).await?;
@@ -25,7 +27,11 @@ impl DocumentLoader for CsvLoader {
         let mut docs: Vec<Document> = Vec::new();
         let mut chunk_idx = 0usize;
         let mut buf = String::new();
-        let chunk_size = if req.chunk_size == 0 { usize::MAX } else { req.chunk_size };
+        let chunk_size = if req.chunk_size == 0 {
+            usize::MAX
+        } else {
+            req.chunk_size
+        };
 
         for (i, result) in reader.records().enumerate() {
             let record = result.map_err(|e| LoaderError::Parse(e.to_string()))?;

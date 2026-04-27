@@ -1,9 +1,7 @@
 use crate::domain::contracts::SentinelAgentTrait;
 use crate::domain::entities::{SentinelConfig, StepOutcome};
 use crate::domain::errors::SentinelError;
-use crate::infra::adapters::state::{
-    clear_internal_state, last_tool_call, prepare_step_state, take_final_answer,
-};
+use crate::infra::adapters::context::{SENTINEL_CTX, SentinelStepContext};
 use crate::topologies::{ReActTopology, bind_react};
 use crate::topology::LoopTopology;
 use or_conduit::ConduitProvider;
@@ -23,13 +21,9 @@ where
     P: ConduitProvider + Clone + Send + Sync + 'static,
 {
     pub fn new(provider: P, registry: ForgeRegistry) -> Result<Self, SentinelError> {
-        let graph = bind_react(
-            ReActTopology.build(),
-            provider.clone(),
-            registry.clone(),
-        )
-        .build()
-        .map_err(|error| SentinelError::Loom(error.to_string()))?;
+        let graph = bind_react(ReActTopology.build(), provider.clone(), registry.clone())
+            .build()
+            .map_err(SentinelError::from)?;
         Ok(Self::from_graph(graph, provider, registry))
     }
 
@@ -61,31 +55,32 @@ where
         config: SentinelConfig,
         step_index: u32,
     ) -> Result<(StepOutcome, DynState), SentinelError> {
-        let mut state = prepare_step_state(state, &config, step_index)?;
-        state = self
-            .graph
-            .execute(state)
+        // Run the graph inside a task-local scope so topology nodes can
+        // reach the typed `SentinelStepContext` instead of the previous
+        // five magic `__sentinel_*` keys in `DynState`.
+        let context = SentinelStepContext::new(config, step_index);
+        let context_for_scope = context.clone();
+        let new_state = SENTINEL_CTX
+            .scope(context_for_scope, self.graph.execute(state))
             .await
-            .map_err(|error| SentinelError::Loom(error.to_string()))?;
-        if let Some(answer) = take_final_answer(&mut state) {
-            let cleaned = clear_internal_state(state);
+            .map_err(SentinelError::from)?;
+        if let Some(answer) = context.take_final_answer() {
             return Ok((
                 StepOutcome::FinalAnswer {
                     answer,
-                    state: cleaned.clone(),
+                    state: new_state.clone(),
                 },
-                cleaned,
+                new_state,
             ));
         }
-        let (tool_name, args) = last_tool_call(&state)?;
-        let cleaned = clear_internal_state(state);
+        let (tool_name, args) = context.take_last_tool_call()?;
         Ok((
             StepOutcome::ToolCall {
                 tool_name,
                 args,
                 step_index,
             },
-            cleaned,
+            new_state,
         ))
     }
 }

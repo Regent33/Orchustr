@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use or_cli::{CliError, ProjectRunner, run_project};
 use or_cli::domain::entities::RunRequest;
+use or_cli::{CliError, ProjectRunner, run_project};
 use std::sync::{Arc, Mutex};
 use tempfile::tempdir;
 

@@ -235,6 +235,71 @@ export class NexusClient {
   }
 }
 
+// ── Server-Sent Events (SSE) parsing ────────────────────────────────
+
+/**
+ * Parses a Server-Sent Events stream from a `fetch` Response body and
+ * yields one `{ event, data }` object per terminated event. The `event`
+ * field is the most recent `event:` line (or `"message"` if absent),
+ * and `data` is the concatenation of all `data:` lines for that event.
+ *
+ * Stops yielding when the stream ends. Throws if `response.body` is
+ * absent (non-streaming environments — fall back to `completeText`).
+ */
+async function* _sseEvents(response) {
+  if (!response.body) {
+    throw new Error("response has no body — streaming is not supported in this environment");
+  }
+  const decoder = new TextDecoder("utf-8");
+  const reader = response.body.getReader();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let separatorIdx;
+    // SSE events are terminated by a blank line (\n\n or \r\n\r\n).
+    while ((separatorIdx = _findEventBoundary(buffer)) !== -1) {
+      const rawEvent = buffer.slice(0, separatorIdx.start);
+      buffer = buffer.slice(separatorIdx.end);
+      const parsed = _parseSseEvent(rawEvent);
+      if (parsed) yield parsed;
+    }
+  }
+  // Flush any trailing event without a terminating blank line.
+  if (buffer.trim().length > 0) {
+    const parsed = _parseSseEvent(buffer);
+    if (parsed) yield parsed;
+  }
+}
+
+function _findEventBoundary(buffer) {
+  const lf = buffer.indexOf("\n\n");
+  const crlf = buffer.indexOf("\r\n\r\n");
+  if (lf === -1 && crlf === -1) return -1;
+  if (crlf !== -1 && (lf === -1 || crlf < lf)) {
+    return { start: crlf, end: crlf + 4 };
+  }
+  return { start: lf, end: lf + 2 };
+}
+
+function _parseSseEvent(raw) {
+  let event = "message";
+  const dataLines = [];
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line || line.startsWith(":")) continue;
+    const colon = line.indexOf(":");
+    if (colon === -1) continue;
+    const field = line.slice(0, colon);
+    // Per spec, a single space after the colon is part of the delimiter.
+    const value = line.slice(colon + 1).replace(/^ /, "");
+    if (field === "event") event = value;
+    else if (field === "data") dataLines.push(value);
+  }
+  if (dataLines.length === 0) return null;
+  return { event, data: dataLines.join("\n") };
+}
+
 // ── Response text extraction ────────────────────────────────────────
 
 /**
@@ -306,12 +371,48 @@ export class OpenAiConduit extends ConduitProvider {
   }
 
   /**
-   * Non-streaming fallback — yields the full response as one chunk.
-   * Override for true SSE streaming.
+   * Streams the response token-by-token using the OpenAI Responses API
+   * SSE protocol. Yields each text delta as it arrives. If the upstream
+   * does not return an SSE body (e.g. unusual environments without
+   * ReadableStream), falls back to a single non-streaming chunk.
    */
   async *streamText(prompt) {
-    const result = await this.completeText(prompt);
-    yield result.text;
+    const response = await fetch(this.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({
+        model: this.model,
+        input: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+        max_output_tokens: 1024,
+        stream: true,
+      }),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${errorBody}`);
+    }
+    if (!response.body) {
+      // Non-streaming environment fallback.
+      const fallback = await this.completeText(prompt);
+      yield fallback.text;
+      return;
+    }
+    for await (const { event, data } of _sseEvents(response)) {
+      if (data === "[DONE]") return;
+      // The Responses API emits multiple event types; we want only the
+      // text-delta events. Unknown / non-text events are skipped.
+      if (event && event !== "response.output_text.delta") continue;
+      try {
+        const payload = JSON.parse(data);
+        if (typeof payload.delta === "string") yield payload.delta;
+      } catch {
+        // Skip malformed event payloads rather than fail the stream.
+      }
+    }
   }
 }
 
@@ -359,12 +460,47 @@ export class AnthropicConduit extends ConduitProvider {
   }
 
   /**
-   * Non-streaming fallback — yields the full response as one chunk.
-   * Override for true SSE streaming.
+   * Streams the response token-by-token using the Anthropic Messages
+   * API SSE protocol. Yields each `text_delta` chunk as it arrives.
+   * Falls back to a single non-streaming chunk if the upstream does
+   * not return an SSE body.
    */
   async *streamText(prompt) {
-    const result = await this.completeText(prompt);
-    yield result.text;
+    const response = await fetch(this.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": this.apiKey,
+        "anthropic-version": "2023-06-01",
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+        max_tokens: 1024,
+        stream: true,
+      }),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Anthropic API error: ${response.status} ${errorBody}`);
+    }
+    if (!response.body) {
+      const fallback = await this.completeText(prompt);
+      yield fallback.text;
+      return;
+    }
+    for await (const { event, data } of _sseEvents(response)) {
+      if (event !== "content_block_delta") continue;
+      try {
+        const payload = JSON.parse(data);
+        if (payload?.delta?.type === "text_delta" && typeof payload.delta.text === "string") {
+          yield payload.delta.text;
+        }
+      } catch {
+        // Skip malformed event payloads.
+      }
+    }
   }
 }
 
@@ -431,9 +567,49 @@ export class OpenAiCompatConduit extends ConduitProvider {
     return { text: _extractText(body) };
   }
 
+  /**
+   * Streams the response token-by-token using the OpenAI Chat
+   * Completions SSE protocol (the canonical wire format for every
+   * compat provider listed in `_OPENAI_COMPAT_ENDPOINTS`). Yields
+   * each `choices[0].delta.content` chunk as it arrives. Falls back
+   * to a single non-streaming chunk if the upstream lacks an SSE body.
+   */
   async *streamText(prompt) {
-    const result = await this.completeText(prompt);
-    yield result.text;
+    const response = await fetch(this.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+        max_tokens: 1024,
+        stream: true,
+      }),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`OpenAI-compat API error: ${response.status} ${errorBody}`);
+    }
+    if (!response.body) {
+      const fallback = await this.completeText(prompt);
+      yield fallback.text;
+      return;
+    }
+    for await (const { data } of _sseEvents(response)) {
+      if (data === "[DONE]") return;
+      try {
+        const payload = JSON.parse(data);
+        const content = payload?.choices?.[0]?.delta?.content;
+        if (typeof content === "string" && content.length > 0) {
+          yield content;
+        }
+      } catch {
+        // Skip malformed event payloads.
+      }
+    }
   }
 }
 

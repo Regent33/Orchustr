@@ -1,5 +1,6 @@
 //! Security & parsing tests for the sentinel's decision and plan parsing.
 
+use or_core::CoreError;
 use or_sentinel::SentinelError;
 
 // This test verifies the fixture module is accessible.
@@ -26,8 +27,24 @@ fn sentinel_error_equality() {
         SentinelError::Forge("a".into()),
         SentinelError::Forge("a".into()),
     );
+    // `Core` now wraps a typed `CoreError`. `Forge("a")` and a `Core`
+    // variant are still distinguishable.
     assert_ne!(
         SentinelError::Forge("a".into()),
-        SentinelError::Core("a".into()),
+        SentinelError::Core(CoreError::InvalidState("a".into())),
     );
+}
+
+#[test]
+fn sentinel_error_preserves_typed_loom_chain() {
+    // Regression for the audit's "errors lose layer information" note:
+    // wrapping a `LoomError` in `SentinelError` no longer flattens to a
+    // string. Callers can pattern-match on the underlying graph error.
+    use or_loom::LoomError;
+    let original = LoomError::UnknownNode("missing".to_owned());
+    let wrapped: SentinelError = original.clone().into();
+    match wrapped {
+        SentinelError::Loom(LoomError::UnknownNode(name)) => assert_eq!(name, "missing"),
+        other => panic!("expected typed Loom chain, got {other:?}"),
+    }
 }

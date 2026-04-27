@@ -1,6 +1,6 @@
 # or-tools-search
 
-**Status**: Implemented | **Version**: `0.1.2` | **Default features**: `(none)` | **Feature flags**: `tavily`, `exa`, `brave`, `serper`, `searxng`, `youcom`, `bing`, `all`
+**Status**: Implemented | **Version**: `0.1.3` | **Default features**: `(none)` | **Feature flags**: `tavily`, `exa`, `brave`, `serper`, `searxng`, `youcom`, `bing`, `all`
 
 Feature-gated search-provider integrations for Orchustr tools. The crate defines the shared search query and response model, a fallback-oriented `SearchOrchestrator`, and a `SearchProviderTool` adapter that exposes a provider as an `or-tools-core::Tool`.
 

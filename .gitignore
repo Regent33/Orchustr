@@ -3,6 +3,7 @@
 /node_modules
 /bindings/python/.pytest_cache
 /bindings/python/pytest-cache-files-*
+/bindings/python/tests/pytest-cache-files-*
 /bindings/python/**/__pycache__/
 /bindings/python/**/*.pyc
 /bindings/dart/.dart_tool
@@ -12,3 +13,6 @@
 Cargo.lock
 .DS_Store
 .claude/
+.agent/
+.codex/
+.gemini/

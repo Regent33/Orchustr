@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 use or_tools_core::{Tool, ToolError, ToolInput};
+use or_tools_vector::application::orchestrators::VectorStoreTool;
 use or_tools_vector::{
     CollectionConfig, DeleteRequest, Distance, QueryFilter, RagOrchestrator, UpsertBatch,
     UpsertItem, VectorError, VectorMatch, VectorStoreClient,
 };
-use or_tools_vector::application::orchestrators::VectorStoreTool;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 struct StubVectorStore {
     store: std::sync::Arc<tokio::sync::Mutex<Vec<UpsertItem>>>,
@@ -13,15 +13,21 @@ struct StubVectorStore {
 
 impl StubVectorStore {
     fn new() -> Self {
-        Self { store: Default::default() }
+        Self {
+            store: Default::default(),
+        }
     }
 }
 
 #[async_trait]
 impl VectorStoreClient for StubVectorStore {
-    fn name(&self) -> &'static str { "stub" }
+    fn name(&self) -> &'static str {
+        "stub"
+    }
 
-    async fn ensure_collection(&self, _cfg: CollectionConfig) -> Result<(), VectorError> { Ok(()) }
+    async fn ensure_collection(&self, _cfg: CollectionConfig) -> Result<(), VectorError> {
+        Ok(())
+    }
 
     async fn upsert(&self, batch: UpsertBatch) -> Result<(), VectorError> {
         self.store.lock().await.extend(batch.items);
@@ -36,11 +42,15 @@ impl VectorStoreClient for StubVectorStore {
 
     async fn query(&self, filter: QueryFilter) -> Result<Vec<VectorMatch>, VectorError> {
         let store = self.store.lock().await;
-        Ok(store.iter().take(filter.top_k as usize).map(|item| VectorMatch {
-            id: item.id.clone(),
-            score: 0.9,
-            metadata: item.metadata.clone(),
-        }).collect())
+        Ok(store
+            .iter()
+            .take(filter.top_k as usize)
+            .map(|item| VectorMatch {
+                id: item.id.clone(),
+                score: 0.9,
+                metadata: item.metadata.clone(),
+            })
+            .collect())
     }
 }
 
@@ -69,12 +79,15 @@ async fn query_returns_matches() {
     let store = StubVectorStore::new();
     let orch = RagOrchestrator::new(store);
     orch.upsert(make_batch()).await.unwrap();
-    let matches = orch.query(QueryFilter {
-        collection: "test".into(),
-        vector: vec![0.1, 0.2, 0.3],
-        top_k: 5,
-        filter: None,
-    }).await.unwrap();
+    let matches = orch
+        .query(QueryFilter {
+            collection: "test".into(),
+            vector: vec![0.1, 0.2, 0.3],
+            top_k: 5,
+            filter: None,
+        })
+        .await
+        .unwrap();
     assert_eq!(matches.len(), 1);
     assert_eq!(matches[0].id, "id1");
 }
@@ -82,20 +95,29 @@ async fn query_returns_matches() {
 #[tokio::test]
 async fn tool_dispatch_upsert() {
     let tool = VectorStoreTool::new(StubVectorStore::new());
-    let out = tool.invoke(ToolInput::new("vector.stub", json!({
-        "op": "upsert",
-        "data": {
-            "collection": "test",
-            "items": [{ "id": "x", "vector": [0.1], "metadata": {} }]
-        }
-    }))).await.unwrap();
+    let out = tool
+        .invoke(ToolInput::new(
+            "vector.stub",
+            json!({
+                "op": "upsert",
+                "data": {
+                    "collection": "test",
+                    "items": [{ "id": "x", "vector": [0.1], "metadata": {} }]
+                }
+            }),
+        ))
+        .await
+        .unwrap();
     assert_eq!(out.payload["status"], "ok");
 }
 
 #[tokio::test]
 async fn tool_dispatch_unknown_op() {
     let tool = VectorStoreTool::new(StubVectorStore::new());
-    let err = tool.invoke(ToolInput::new("vector.stub", json!({ "op": "bork" }))).await.unwrap_err();
+    let err = tool
+        .invoke(ToolInput::new("vector.stub", json!({ "op": "bork" })))
+        .await
+        .unwrap_err();
     assert!(matches!(err, ToolError::InvalidInput { .. }));
 }
 

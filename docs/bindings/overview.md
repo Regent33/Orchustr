@@ -16,9 +16,12 @@ Orchustr ships three language packages: Python under `bindings/python`, TypeScri
 
 ## Availability Model
 
-- **Native bridge path**: `RustCrateBridge` can list the workspace catalog and invoke Rust-backed operations for crates such as the `or-tools-*` family.
-- **Binding-local path**: graph, state, result, prompt, workflow, and many higher-level orchestration helpers are implemented directly in the binding language for safer and more natural APIs.
-- **Mixed path**: some concepts such as prompts, conduits, observability helpers, and MCP clients have both bridge-backed and binding-local entry points depending on the package.
+- **Native bridge path**: `RustCrateBridge` can list the workspace catalog and invoke Rust-backed operations for crates such as the `or-tools-*` family. All HTTP-backed providers (search, web, vector, loaders, exec, file, comms, productivity) live on this path.
+- **Binding-local path**: graph execution, conduit clients (LLM providers), forge registries, sentinel/colony/pipeline/relay/recall/checkpoint orchestrators, and other callback-heavy workflows are implemented directly in the binding language. This avoids needing an async-callback FFI bridge for host-language node handlers.
+- **Mixed path**: prompt rendering, state normalization, observability helpers, and MCP clients have both bridge-backed and binding-local entry points depending on the package.
+
+For the per-class breakdown of which surface is which in each package,
+see the workspace [README](../../README.md#what-runs-in-rust-vs-the-host-language).
 
 ## Current High-Level Surfaces
 

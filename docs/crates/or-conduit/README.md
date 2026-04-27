@@ -1,6 +1,6 @@
 # or-conduit
 
-**Status**: 🟢 Complete | **Version**: `0.1.2` | **Deps**: futures, reqwest, serde, serde_json, thiserror, tokio, tracing
+**Status**: 🟢 Complete | **Version**: `0.1.3` | **Deps**: futures, reqwest, serde, serde_json, thiserror, tokio, tracing
 
 Provider abstraction for text and multimodal completions. Supports 19 LLM providers and aggregators with retry, token-budget enforcement, configurable timeouts, and key redaction.
 

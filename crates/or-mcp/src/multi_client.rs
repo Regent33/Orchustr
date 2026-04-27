@@ -150,12 +150,14 @@ impl MultiMcpSession {
         registered_name: &str,
         args: serde_json::Value,
     ) -> Result<serde_json::Value, McpError> {
-        let (server_index, original_name) =
-            self.inner
-                .routes
-                .get(registered_name)
-                .cloned()
-                .ok_or_else(|| McpError::ToolExecution(format!("unknown merged tool: {registered_name}")))?;
+        let (server_index, original_name) = self
+            .inner
+            .routes
+            .get(registered_name)
+            .cloned()
+            .ok_or_else(|| {
+                McpError::ToolExecution(format!("unknown merged tool: {registered_name}"))
+            })?;
         self.inner.servers[server_index]
             .client
             .invoke_tool(&original_name, args)
@@ -193,7 +195,9 @@ impl MultiMcpClient {
                 let server_index = servers
                     .iter()
                     .position(|server| server.config.name == tool.server_name)
-                    .ok_or_else(|| McpError::Protocol("merged tool referenced a missing server".to_owned()))?;
+                    .ok_or_else(|| {
+                        McpError::Protocol("merged tool referenced a missing server".to_owned())
+                    })?;
                 Ok((
                     tool.registered_name.clone(),
                     (server_index, tool.original_name.clone()),

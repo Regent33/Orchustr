@@ -75,3 +75,54 @@ async fn server_traces_endpoint_returns_json() {
     assert_eq!(response.len(), 1);
     assert_eq!(response[0].trace_id, "trace-1");
 }
+
+#[test]
+fn collector_caps_spans_per_trace_and_evicts_oldest() {
+    // Per-trace cap of 3: any insert beyond 3 should drop the oldest
+    // span (lowest `started_at_ms`).
+    let collector = SpanCollector::with_capacity(3, 16);
+    for ts in [10, 20, 30, 40, 50] {
+        collector.record_span(sample_span(&format!("step-{ts}"), ts));
+    }
+    let stored = collector
+        .trace("trace-1")
+        .expect("trace should still exist");
+    assert_eq!(stored.len(), 3);
+    let timestamps = stored
+        .iter()
+        .map(|span| span.started_at_ms)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        timestamps,
+        vec![30, 40, 50],
+        "oldest spans (10, 20) should have been evicted"
+    );
+}
+
+#[test]
+fn collector_caps_total_traces_and_evicts_least_recent() {
+    // Trace cap of 2: a third trace forces eviction of the
+    // least-recently-active trace.
+    let collector = SpanCollector::with_capacity(8, 2);
+
+    let mut span_a = sample_span("a", 10);
+    span_a.trace_id = "trace-a".to_owned();
+    collector.record_span(span_a);
+
+    let mut span_b = sample_span("b", 50);
+    span_b.trace_id = "trace-b".to_owned();
+    collector.record_span(span_b);
+
+    let mut span_c = sample_span("c", 100);
+    span_c.trace_id = "trace-c".to_owned();
+    collector.record_span(span_c);
+
+    let traces = collector.traces();
+    let ids: Vec<_> = traces.into_iter().map(|t| t.trace_id).collect();
+    assert!(
+        !ids.contains(&"trace-a".to_owned()),
+        "oldest trace 'trace-a' should have been evicted; got {ids:?}"
+    );
+    assert!(ids.contains(&"trace-b".to_owned()));
+    assert!(ids.contains(&"trace-c".to_owned()));
+}

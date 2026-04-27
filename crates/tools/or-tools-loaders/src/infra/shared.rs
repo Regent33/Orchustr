@@ -6,15 +6,19 @@ pub(crate) async fn read_source(req: &LoaderRequest) -> Result<String, LoaderErr
     match &req.source {
         LoaderSource::Raw { content } => Ok(content.clone()),
         LoaderSource::Path { path } => {
-            let mut file = tokio::fs::File::open(path).await.map_err(|e| LoaderError::Io {
-                path: path.clone(),
-                reason: e.to_string(),
-            })?;
+            let mut file = tokio::fs::File::open(path)
+                .await
+                .map_err(|e| LoaderError::Io {
+                    path: path.clone(),
+                    reason: e.to_string(),
+                })?;
             let mut buf = String::new();
-            file.read_to_string(&mut buf).await.map_err(|e| LoaderError::Io {
-                path: path.clone(),
-                reason: e.to_string(),
-            })?;
+            file.read_to_string(&mut buf)
+                .await
+                .map_err(|e| LoaderError::Io {
+                    path: path.clone(),
+                    reason: e.to_string(),
+                })?;
             Ok(buf)
         }
     }

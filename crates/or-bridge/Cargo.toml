@@ -17,20 +17,20 @@ node = ["dep:napi", "dep:napi-derive"]
 dart = []
 
 [dependencies]
-or-beacon = { path = "../or-beacon", version = "0.1.2" }
-or-conduit = { path = "../or-conduit", version = "0.1.2" }
-or-core = { path = "../or-core", version = "0.1.2" }
-or-loom = { path = "../or-loom", version = "0.1.2" }
-or-prism = { path = "../or-prism", version = "0.1.2" }
-or-sieve = { path = "../or-sieve", version = "0.1.2" }
-or-tools-comms = { path = "../tools/or-tools-comms", version = "0.1.2", features = ["all"] }
-or-tools-exec = { path = "../tools/or-tools-exec", version = "0.1.2", features = ["all"] }
-or-tools-file = { path = "../tools/or-tools-file", version = "0.1.2", features = ["all"] }
-or-tools-loaders = { path = "../tools/or-tools-loaders", version = "0.1.2", features = ["all"] }
-or-tools-productivity = { path = "../tools/or-tools-productivity", version = "0.1.2", features = ["all"] }
-or-tools-search = { path = "../tools/or-tools-search", version = "0.1.2", features = ["all"] }
-or-tools-vector = { path = "../tools/or-tools-vector", version = "0.1.2", features = ["all"] }
-or-tools-web = { path = "../tools/or-tools-web", version = "0.1.2", features = ["all"] }
+or-beacon = { path = "../or-beacon", version = "0.1.3" }
+or-conduit = { path = "../or-conduit", version = "0.1.3" }
+or-core = { path = "../or-core", version = "0.1.3" }
+or-loom = { path = "../or-loom", version = "0.1.3" }
+or-prism = { path = "../or-prism", version = "0.1.3" }
+or-sieve = { path = "../or-sieve", version = "0.1.3" }
+or-tools-comms = { path = "../tools/or-tools-comms", version = "0.1.3", features = ["all"] }
+or-tools-exec = { path = "../tools/or-tools-exec", version = "0.1.3", features = ["all"] }
+or-tools-file = { path = "../tools/or-tools-file", version = "0.1.3", features = ["all"] }
+or-tools-loaders = { path = "../tools/or-tools-loaders", version = "0.1.3", features = ["all"] }
+or-tools-productivity = { path = "../tools/or-tools-productivity", version = "0.1.3", features = ["all"] }
+or-tools-search = { path = "../tools/or-tools-search", version = "0.1.3", features = ["all"] }
+or-tools-vector = { path = "../tools/or-tools-vector", version = "0.1.3", features = ["all"] }
+or-tools-web = { path = "../tools/or-tools-web", version = "0.1.3", features = ["all"] }
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true

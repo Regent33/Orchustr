@@ -14,8 +14,7 @@ pub use application::orchestrators::{
 #[cfg(feature = "dart")]
 pub use dart::{
     orchustr_bridge_free_string, orchustr_bridge_version, orchustr_invoke_crate_json,
-    orchustr_normalize_state_json, orchustr_render_prompt_json,
-    orchustr_workspace_catalog_json,
+    orchustr_normalize_state_json, orchustr_render_prompt_json, orchustr_workspace_catalog_json,
 };
 pub use domain::errors::BridgeError;
 
